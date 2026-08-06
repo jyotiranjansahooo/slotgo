@@ -1,15 +1,26 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, {
+  Schema,
+  HydratedDocument,
+  Model,
+} from "mongoose";
 import bcrypt from "bcrypt";
-import { USER_ROLES, USER_ROLE_VALUES, UserRole } from "../constants/roles.js";
 
-export interface IUser extends Document {
+import {
+  USER_ROLES,
+  USER_ROLE_VALUES,
+  UserRole,
+} from "../constants/roles.js";
+
+export interface IUser {
   name: {
     first: string;
     last: string;
   };
 
   email: string;
+
   phoneNumber: string;
+
   password: string;
 
   role: UserRole;
@@ -22,24 +33,32 @@ export interface IUser extends Document {
   refreshToken?: string;
 
   isVerified: boolean;
+
   verifiedAt?: Date;
 
   isActive: boolean;
+
   deletedAt?: Date;
 
   lastLogin?: Date;
 
   loginCount: number;
+}
 
+export interface IUserMethods {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
-const userSchema = new Schema<IUser>(
+export type UserDocument = HydratedDocument<IUser, IUserMethods>;
+
+type UserModel = Model<IUser, {}, IUserMethods>;
+
+const userSchema = new Schema<IUser, UserModel, IUserMethods>(
   {
     name: {
       first: {
         type: String,
-        required: [true, "First name is required"],
+        required: true,
         trim: true,
         minlength: 3,
         maxlength: 30,
@@ -47,7 +66,7 @@ const userSchema = new Schema<IUser>(
 
       last: {
         type: String,
-        required: [true, "Last name is required"],
+        required: true,
         trim: true,
         minlength: 3,
         maxlength: 30,
@@ -56,16 +75,16 @@ const userSchema = new Schema<IUser>(
 
     email: {
       type: String,
-      required: [true, "Email is required"],
+      required: true,
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Invalid email address"],
+      match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
 
     phoneNumber: {
       type: String,
-      required: [true, "Phone number is required"],
+      required: true,
       unique: true,
       trim: true,
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],
@@ -73,8 +92,8 @@ const userSchema = new Schema<IUser>(
 
     password: {
       type: String,
-      required: [true, "Password is required"],
-      minlength: 6,
+      required: true,
+      minlength: 8,
       select: false,
     },
 
@@ -87,7 +106,7 @@ const userSchema = new Schema<IUser>(
     avatar: {
       url: {
         type: String,
-        default: " ",
+        default: "",
       },
 
       publicId: {
@@ -99,7 +118,7 @@ const userSchema = new Schema<IUser>(
     refreshToken: {
       type: String,
       default: "",
-      select: false, 
+      select: false,
     },
 
     isVerified: {
@@ -107,9 +126,7 @@ const userSchema = new Schema<IUser>(
       default: false,
     },
 
-    verifiedAt: {
-      type: Date,
-    },
+    verifiedAt: Date,
 
     isActive: {
       type: Boolean,
@@ -121,9 +138,7 @@ const userSchema = new Schema<IUser>(
       default: null,
     },
 
-    lastLogin: {
-      type: Date,
-    },
+    lastLogin: Date,
 
     loginCount: {
       type: Number,
@@ -132,30 +147,29 @@ const userSchema = new Schema<IUser>(
   },
   {
     timestamps: true,
-  },
+    versionKey: false,
+  }
 );
 
-/* Indexes */
-userSchema.index({ email: 1 });
-userSchema.index({ phoneNumber: 1 });
-userSchema.index({ role: 1 });
+userSchema.index({
+  role: 1,
+});
 
-/* Hash Password */
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) {
-    return;
-  }
+  if (!this.isModified("password")) return;
+
   this.password = await bcrypt.hash(this.password, 12);
 });
 
-/* Compare Password */
-userSchema.methods.comparePassword = async function (
-  candidatePassword: string,
-): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
-};
+userSchema.method(
+  "comparePassword",
+  async function (candidatePassword: string) {
+    return bcrypt.compare(candidatePassword, this.password);
+  }
+);
 
-/* Model */
-const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
+const User =
+  (mongoose.models.User as UserModel) ||
+  mongoose.model<IUser, UserModel>("User", userSchema);
 
 export default User;

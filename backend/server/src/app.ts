@@ -20,7 +20,7 @@ app.use(
   cors({
     origin: env.CLIENT_URL,
     credentials: true,
-  })
+  }),
 );
 
 // Body Parser

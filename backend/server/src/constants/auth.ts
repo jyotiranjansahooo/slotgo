@@ -4,9 +4,11 @@ export const AUTH = {
     MAX_LENGTH: 32,
   },
 
-  ACCESS_TOKEN_EXPIRES_IN: "15m",
+  ACCESS_TOKEN: {
+    EXPIRES_IN: "15m",
+  },
 
-  REFRESH_TOKEN_EXPIRES_IN: "7d",
-
-  MAX_LOGIN_ATTEMPTS: 5,
-};
+  REFRESH_TOKEN: {
+    EXPIRES_IN: "7d",
+  },
+} as const;
