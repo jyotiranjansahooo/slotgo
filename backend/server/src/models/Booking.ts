@@ -37,7 +37,9 @@ export interface IBooking {
   endTime: Date;
 
   parkingAmount: number;
+  discountAmount: number;
 
+  actualAmount: number;
   ownerCommission: number;
 
   driverServiceFee: number;
@@ -46,14 +48,14 @@ export interface IBooking {
 
   driverPays: number;
   payment: {
-  method: string;
+    method: string;
 
-  gateway: string;
+    gateway: string;
 
-  transactionId: string;
+    transactionId: string;
 
-  paidAt?: Date;
-};
+    paidAt?: Date;
+  };
 
   paymentStatus: PaymentStatus;
 
@@ -75,6 +77,12 @@ export interface IBooking {
   parkingSnapshot: {
     parkingName: string;
     address: string;
+  };
+  vehicleSnapshot: {
+    registrationNumber: string;
+    manufacturer: string;
+    vehicleModel: string;
+    vehicleType: VehicleType;
   };
 
   cancellation?: {
@@ -104,7 +112,7 @@ const driverSnapshotSchema = new Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const parkingSnapshotSchema = new Schema(
@@ -121,7 +129,34 @@ const parkingSnapshotSchema = new Schema(
   },
   {
     _id: false,
-  }
+  },
+);
+
+const vehicleSnapshotSchema = new Schema(
+  {
+    registrationNumber: {
+      type: String,
+      required: true,
+    },
+
+    manufacturer: {
+      type: String,
+      required: true,
+    },
+
+    vehicleModel: {
+      type: String,
+      required: true,
+    },
+
+    vehicleType: {
+      type: String,
+      required: true,
+    },
+  },
+  {
+    _id: false,
+  },
 );
 
 const cancellationSchema = new Schema(
@@ -154,7 +189,7 @@ const cancellationSchema = new Schema(
   },
   {
     _id: false,
-  }
+  },
 );
 
 const paymentSchema = new Schema(
@@ -176,6 +211,17 @@ const paymentSchema = new Schema(
 
     paidAt: {
       type: Date,
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    actualAmount: {
+      type: Number,
+      required: true,
+      min: 0,
     },
   },
   {
@@ -311,6 +357,10 @@ const bookingSchema = new Schema<IBooking>(
       type: parkingSnapshotSchema,
       required: true,
     },
+    vehicleSnapshot: {
+      type: vehicleSnapshotSchema,
+      required: true,
+    },
 
     cancellation: cancellationSchema,
   },
@@ -343,15 +393,7 @@ bookingSchema.index({
   paymentStatus: 1,
 });
 
-bookingSchema.index({
-  bookingNumber: 1,
-});
-
 const Booking =
-  mongoose.models.Booking ||
-  mongoose.model<IBooking>(
-    "Booking",
-    bookingSchema,
-  );
+  mongoose.models.Booking || mongoose.model<IBooking>("Booking", bookingSchema);
 
 export default Booking;

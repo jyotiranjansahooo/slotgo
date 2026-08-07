@@ -117,6 +117,7 @@ const paymentSchema = new Schema<IPayment>(
     refundAmount: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     refundStatus: {
@@ -125,19 +126,19 @@ const paymentSchema = new Schema<IPayment>(
       default: REFUND_STATUS.NONE,
     },
 
-    paidAt: Date,
+    paidAt: {
+      type: Date,
+    },
 
-    refundedAt: Date,
+    refundedAt: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
     versionKey: false,
   },
 );
-
-paymentSchema.index({
-  bookingId: 1,
-});
 
 paymentSchema.index({
   driverId: 1,
@@ -147,18 +148,6 @@ paymentSchema.index({
 paymentSchema.index({
   ownerId: 1,
   createdAt: -1,
-});
-
-paymentSchema.index({
-  paymentId: 1,
-});
-
-paymentSchema.index({
-  orderId: 1,
-});
-
-paymentSchema.index({
-  status: 1,
 });
 
 const Payment =

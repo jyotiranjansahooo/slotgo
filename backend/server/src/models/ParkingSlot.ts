@@ -18,10 +18,12 @@ export interface IParkingSlot {
   supportedVehicleTypes: VehicleType[];
 
   status: SlotStatus;
-
+  reservedUntil?: Date;
   displayOrder: number;
 
   isActive: boolean;
+  lastOccupiedAt?: Date;
+  notes?: string;
 }
 
 const parkingSlotSchema = new Schema<IParkingSlot>(
@@ -60,6 +62,10 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
       enum: SLOT_STATUS_VALUES,
       default: SLOT_STATUS.AVAILABLE,
     },
+    reservedUntil: {
+      type: Date,
+      default: null,
+    },
 
     displayOrder: {
       type: Number,
@@ -70,6 +76,15 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
       type: Boolean,
       default: true,
     },
+    lastOccupiedAt: {
+      type: Date,
+    },
+    notes: {
+  type: String,
+  default: "",
+  trim: true,
+  maxlength: 200,
+},
   },
   {
     timestamps: true,
