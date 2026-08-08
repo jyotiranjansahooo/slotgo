@@ -21,6 +21,7 @@ export interface IBooking {
   bookingNumber: string;
 
   driverId: Types.ObjectId;
+  ownerId: Types.ObjectId;
 
   parkingId: Types.ObjectId;
 
@@ -245,6 +246,13 @@ const bookingSchema = new Schema<IBooking>(
       immutable: true,
       index: true,
     },
+    ownerId: {
+  type: Schema.Types.ObjectId,
+  ref: "User",
+  required: true,
+  immutable: true,
+  index: true,
+},
 
     parkingId: {
       type: Schema.Types.ObjectId,

@@ -18,10 +18,10 @@ export interface IParkingSlot {
   supportedVehicleTypes: VehicleType[];
 
   status: SlotStatus;
-  reservedUntil?: Date;
   displayOrder: number;
-
   isActive: boolean;
+  reservedUntil?: Date;
+
   lastOccupiedAt?: Date;
   notes?: string;
 }

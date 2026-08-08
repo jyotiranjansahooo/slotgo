@@ -18,7 +18,16 @@ class RazorpayService {
     orderId: string,
     paymentId: string,
     signature: string,
-  ) {
+  ): boolean {
+    const keySecret =
+      process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keySecret) {
+      throw new Error(
+        "RAZORPAY_KEY_SECRET is not configured.",
+      );
+    }
+
     const body =
       `${orderId}|${paymentId}`;
 
@@ -26,7 +35,7 @@ class RazorpayService {
       crypto
         .createHmac(
           "sha256",
-          process.env.RAZORPAY_KEY_SECRET!,
+          keySecret,
         )
         .update(body)
         .digest("hex");
@@ -42,7 +51,7 @@ class RazorpayService {
   ) {
     return razorpay.payments.refund(
       paymentId,
-      amount
+      amount !== undefined
         ? {
             amount,
           }

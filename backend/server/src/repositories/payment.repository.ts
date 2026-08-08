@@ -27,23 +27,13 @@ class PaymentRepository {
     });
   }
 
-  async update(
-    id: string,
-    data: Partial<IPayment>,
-  ) {
-    return Payment.findByIdAndUpdate(
-      id,
-      data,
-      {
-        new: true,
-      },
-    );
+  async update(id: string, data: Partial<IPayment>) {
+    return Payment.findByIdAndUpdate(id, data, {
+      new: true,
+    });
   }
 
-  async updateStatus(
-    id: string,
-    status: IPayment["status"],
-  ) {
+  async updateStatus(id: string, status: IPayment["status"]) {
     return Payment.findByIdAndUpdate(
       id,
       {

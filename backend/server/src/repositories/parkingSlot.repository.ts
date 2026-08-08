@@ -1,20 +1,12 @@
-import ParkingSlot, {
-  IParkingSlot,
-} from "../models/ParkingSlot.js";
+import { ClientSession } from "mongoose";
+import ParkingSlot, { IParkingSlot } from "../models/ParkingSlot.js";
 
-import {
-  SLOT_STATUS,
-  SlotStatus,
-} from "../constants/slot.js";
+import { SLOT_STATUS, SlotStatus } from "../constants/slot.js";
 
-import {
-  VehicleType,
-} from "../constants/vehicle.js";
+import { VehicleType } from "../constants/vehicle.js";
 
 class ParkingSlotRepository {
-  async create(
-    data: Partial<IParkingSlot>,
-  ) {
+  async create(data: Partial<IParkingSlot>) {
     return ParkingSlot.create(data);
   }
 
@@ -22,9 +14,7 @@ class ParkingSlotRepository {
     return ParkingSlot.findById(id);
   }
 
-  async findByParking(
-    parkingId: string,
-  ) {
+  async findByParking(parkingId: string) {
     return ParkingSlot.find({
       parkingId,
     }).sort({
@@ -32,9 +22,7 @@ class ParkingSlotRepository {
     });
   }
 
-  async findAvailable(
-    parkingId: string,
-  ) {
+  async findAvailable(parkingId: string) {
     return ParkingSlot.find({
       parkingId,
       status: SLOT_STATUS.AVAILABLE,
@@ -44,10 +32,7 @@ class ParkingSlotRepository {
     });
   }
 
-  async findFirstAvailable(
-    parkingId: string,
-    vehicleType: VehicleType,
-  ) {
+  async findFirstAvailable(parkingId: string, vehicleType: VehicleType) {
     return ParkingSlot.findOne({
       parkingId,
       status: SLOT_STATUS.AVAILABLE,
@@ -58,21 +43,23 @@ class ParkingSlotRepository {
     });
   }
 
-  async reserve(
-    slotId: string,
-    reservedUntil: Date,
-  ) {
-    return ParkingSlot.findByIdAndUpdate(
-      slotId,
-      {
-        status: SLOT_STATUS.RESERVED,
-        reservedUntil,
-      },
-      {
-        new: true,
-      },
-    );
-  }
+ async reserve(
+  slotId: string,
+  reservedUntil: Date,
+  session?: ClientSession,
+) {
+  return ParkingSlot.findByIdAndUpdate(
+    slotId,
+    {
+      status: SLOT_STATUS.RESERVED,
+      reservedUntil,
+    },
+    {
+      new: true,
+      session,
+    },
+  );
+}
 
   async occupy(slotId: string) {
     return ParkingSlot.findByIdAndUpdate(
@@ -100,23 +87,13 @@ class ParkingSlotRepository {
     );
   }
 
-  async update(
-    id: string,
-    data: Partial<IParkingSlot>,
-  ) {
-    return ParkingSlot.findByIdAndUpdate(
-      id,
-      data,
-      {
-        new: true,
-      },
-    );
+  async update(id: string, data: Partial<IParkingSlot>) {
+    return ParkingSlot.findByIdAndUpdate(id, data, {
+      new: true,
+    });
   }
 
-  async updateStatus(
-    id: string,
-    status: SlotStatus,
-  ) {
+  async updateStatus(id: string, status: SlotStatus) {
     return ParkingSlot.findByIdAndUpdate(
       id,
       {

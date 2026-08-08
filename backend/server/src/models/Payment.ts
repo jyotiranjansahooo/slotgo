@@ -151,10 +151,6 @@ paymentSchema.index({
 });
 
 const Payment =
-  mongoose.models.Payment ||
-  mongoose.model<IPayment>(
-    "Payment",
-    paymentSchema,
-  );
+  mongoose.models.Payment || mongoose.model<IPayment>("Payment", paymentSchema);
 
 export default Payment;

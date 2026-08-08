@@ -1,7 +1,14 @@
 import Booking, { IBooking } from "../models/Booking.js";
+import { ClientSession } from "mongoose";
 
 class BookingRepository {
-  async create(data: Partial<IBooking>) {
+  async create(data: Partial<IBooking>, session?: ClientSession) {
+    if (session) {
+      const booking = await Booking.create([data], { session });
+
+      return booking[0];
+    }
+
     return Booking.create(data);
   }
 

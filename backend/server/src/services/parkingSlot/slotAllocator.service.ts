@@ -5,7 +5,7 @@ import parkingSlotRepository from "../../repositories/parkingSlot.repository.js"
 import { VehicleType } from "../../constants/vehicle.js";
 
 class SlotAllocatorService {
-  async reserveAvailableSlot(
+  async findAvailableSlot(
     parkingId: string,
     vehicleType: VehicleType,
   ) {
@@ -15,10 +15,23 @@ class SlotAllocatorService {
         vehicleType,
       );
 
+    return slot;
+  }
+
+  async reserveAvailableSlot(
+    parkingId: string,
+    vehicleType: VehicleType,
+  ) {
+    const slot =
+      await this.findAvailableSlot(
+        parkingId,
+        vehicleType,
+      );
+
     if (!slot) {
       throw new ApiError(
-        400,
-        "No parking slot available.",
+        409,
+        "No parking slot is available for this vehicle type.",
       );
     }
 
@@ -26,10 +39,50 @@ class SlotAllocatorService {
       Date.now() + 15 * 60 * 1000,
     );
 
-    await parkingSlotRepository.reserve(
-      slot._id.toString(),
-      reservedUntil,
-    );
+    const reservedSlot =
+      await parkingSlotRepository.reserve(
+        slot._id.toString(),
+        reservedUntil,
+      );
+
+    if (!reservedSlot) {
+      throw new ApiError(
+        409,
+        "Unable to reserve the parking slot.",
+      );
+    }
+
+    return reservedSlot;
+  }
+
+  async releaseSlot(slotId: string) {
+    const slot =
+      await parkingSlotRepository.release(
+        slotId,
+      );
+
+    if (!slot) {
+      throw new ApiError(
+        404,
+        "Parking slot not found.",
+      );
+    }
+
+    return slot;
+  }
+
+  async occupySlot(slotId: string) {
+    const slot =
+      await parkingSlotRepository.occupy(
+        slotId,
+      );
+
+    if (!slot) {
+      throw new ApiError(
+        404,
+        "Parking slot not found.",
+      );
+    }
 
     return slot;
   }
