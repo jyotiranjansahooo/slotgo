@@ -7,7 +7,6 @@ import vehicleRoutes from "./vehicle.routes.js";
 import parkingSlotRoutes from "./parkingSlot.routes.js";
 import bookingRoutes from "./booking.routes.js";
 
-
 const router = Router();
 
 router.use("/vehicles", vehicleRoutes);
@@ -17,9 +16,6 @@ router.get("/health", (_req, res) => {
 });
 router.use("/payments", paymentRoutes);
 router.use("/auth", authRoutes);
-router.use(
-  "/parking-slots",
-  parkingSlotRoutes,
-);
+router.use("/parking-slots", parkingSlotRoutes);
 
 export default router;

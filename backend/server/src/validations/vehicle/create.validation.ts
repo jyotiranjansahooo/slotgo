@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { VEHICLE_TYPES } from "../../constants/vehicle.js";
 
 export const createVehicleSchema = z.object({
@@ -18,11 +19,24 @@ export const createVehicleSchema = z.object({
       "Invalid registration number",
     ),
 
-  manufacturer: z.string().trim().min(2, "Manufacturer is required").max(50),
+  brand: z
+    .string()
+    .trim()
+    .min(2, "Brand is required")
+    .max(40, "Brand cannot exceed 40 characters"),
 
-  vehicleModel: z.string().trim().min(1, "Vehicle model is required").max(50),
+  vehicleModel: z
+    .string()
+    .trim()
+    .min(1, "Vehicle model is required")
+    .max(40, "Vehicle model cannot exceed 40 characters"),
 
-  color: z.string().trim().min(2, "Color is required").max(30),
+  color: z
+    .string()
+    .trim()
+    .min(2, "Color is required")
+    .max(20, "Color cannot exceed 20 characters"),
 });
 
-export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
+export type CreateVehicleInput =
+  z.infer<typeof createVehicleSchema>;

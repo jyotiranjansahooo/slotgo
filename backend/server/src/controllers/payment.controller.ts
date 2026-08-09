@@ -1,21 +1,26 @@
 import { Request, Response } from "express";
-
+import { createPaymentSchema } from "../validations/payment/create.validation.js";
+import { refundPaymentSchema } from "../validations/payment/refund.validation.js";
 import asyncHandler from "../utils/asyncHandler.js";
+import ApiResponse from "../utils/ApiResponse.js";
 
 import paymentService from "../services/payment/payment.service.js";
 
-import ApiResponse from "../utils/ApiResponse.js";
+import { verifyPaymentSchema } from "../validations/payment/verify.validation.js";
 
 export const createPayment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { bookingId } = req.body;
+    const data =
+      createPaymentSchema.parse(
+        req.body,
+      );
 
     const result =
       await paymentService.createPayment(
-        bookingId,
+        data.bookingId,
       );
 
-    return res.status(201).json(
+    res.status(201).json(
       new ApiResponse(
         201,
         result,
@@ -27,43 +32,34 @@ export const createPayment = asyncHandler(
 
 export const verifyPayment = asyncHandler(
   async (req: Request, res: Response) => {
-    const {
-      orderId,
-      paymentId,
-      signature,
-    } = req.body;
+    const data = verifyPaymentSchema.parse(req.body);
 
-    const result =
-      await paymentService.verifyPayment(
-        orderId,
-        paymentId,
-        signature,
-      );
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        result,
-        "Payment verified successfully.",
-      ),
+    const result = await paymentService.verifyPayment(
+      data.orderId,
+      data.paymentId,
+      data.signature,
     );
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, "Payment verified successfully.", result));
   },
 );
 
 export const refundPayment = asyncHandler(
   async (req: Request, res: Response) => {
-    const {
-      paymentId,
-      amount,
-    } = req.body;
+    const data =
+      refundPaymentSchema.parse(
+        req.body,
+      );
 
     const result =
       await paymentService.refundPayment(
-        paymentId,
-        amount,
+        data.paymentId,
+        data.amount,
       );
 
-    return res.status(200).json(
+    res.status(200).json(
       new ApiResponse(
         200,
         result,

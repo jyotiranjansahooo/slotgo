@@ -11,7 +11,6 @@ import { BookingMode } from "../../constants/booking.js";
 import { PAYMENT_STATUS } from "../../constants/booking.js";
 import parkingRepository from "../../repositories/parking.repository.js";
 import vehicleRepository from "../../repositories/vehicle.repository.js";
-
 import { PARKING_STATUS } from "../../constants/parking.js";
 
 import { CreateBookingInput } from "../../validations/booking/create.validation.js";
@@ -127,10 +126,19 @@ class BookingService {
     };
   }
 
- async verifyPayment(
-  data: unknown,
+async verifyPayment(
+  orderId: string,
+  paymentId: string,
+  signature: string,
 ) {
-  return data;
+  const result =
+    await paymentService.verifyPayment(
+      orderId,
+      paymentId,
+      signature,
+    );
+
+  return result;
 }
 
 async cancelBooking(

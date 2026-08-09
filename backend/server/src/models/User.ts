@@ -2,6 +2,7 @@ import mongoose, {
   Schema,
   HydratedDocument,
   Model,
+  Types,
 } from "mongoose";
 import bcrypt from "bcrypt";
 
@@ -12,6 +13,7 @@ import {
 } from "../constants/roles.js";
 
 export interface IUser {
+  _id: Types.ObjectId;
   name: {
     first: string;
     last: string;

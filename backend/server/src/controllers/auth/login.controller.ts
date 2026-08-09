@@ -18,12 +18,19 @@ export const loginController = asyncHandler(
     res.status(200).json(
       new ApiResponse(
         200,
-        "Login successful",
         {
-          user: result.user,
+          user: {
+            id: result.user._id.toString(),
+            firstName: result.user.name.first,
+            lastName: result.user.name.last,
+            email: result.user.email,
+            phoneNumber: result.user.phoneNumber,
+            role: result.user.role,
+          },
           accessToken: result.accessToken,
-        }
-      )
+        },
+        "Login successful",
+      ),
     );
-  }
+  },
 );

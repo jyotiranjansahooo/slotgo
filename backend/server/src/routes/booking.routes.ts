@@ -4,7 +4,6 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 import {
   createBooking,
-  verifyPayment,
   cancelBooking,
   checkIn,
   checkOut,
@@ -22,15 +21,6 @@ router.post(
   createBooking,
 );
 
-/*
- * Verify Razorpay payment
- * Driver must be authenticated.
- */
-router.post(
-  "/verify-payment",
-  authMiddleware,
-  verifyPayment,
-);
 
 /*
  * Cancel booking

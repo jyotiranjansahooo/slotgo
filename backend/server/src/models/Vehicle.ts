@@ -84,7 +84,6 @@ const vehicleSchema = new Schema<IVehicle>(
   },
 );
 
-
 vehicleSchema.index({
   ownerId: 1,
   isDefault: 1,

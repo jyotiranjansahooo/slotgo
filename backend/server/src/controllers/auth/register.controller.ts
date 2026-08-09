@@ -3,7 +3,6 @@ import { Request, Response } from "express";
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiResponse from "../../utils/ApiResponse.js";
 import { registerService } from "../../services/auth/register.service.js";
-import { AUTH } from "../../constants/auth.js";
 
 export const registerController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -17,10 +16,22 @@ export const registerController = asyncHandler(
     });
 
     res.status(201).json(
-      new ApiResponse(201, "User registered successfully", {
-        user: result.user,
-        accessToken: result.accessToken,
-      })
+      new ApiResponse(
+        201,
+        {
+          user: {
+            id: result.user._id.toString(),
+            firstName: result.user.name.first,
+            lastName: result.user.name.last,
+            email: result.user.email,
+            phoneNumber: result.user.phoneNumber,
+            role: result.user.role,
+          },
+
+          accessToken: result.accessToken,
+        },
+        "User registered successfully",
+      ),
     );
-  }
+  },
 );
