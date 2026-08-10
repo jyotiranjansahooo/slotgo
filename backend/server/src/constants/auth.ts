@@ -5,7 +5,7 @@ export const AUTH = {
   },
 
   ACCESS_TOKEN: {
-    EXPIRES_IN: "15m",
+    EXPIRES_IN: "1d",
   },
 
   REFRESH_TOKEN: {

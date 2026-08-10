@@ -9,13 +9,14 @@ class ParkingRepository {
     return Parking.findById(id);
   }
 
-  async findByOwner(ownerId: string) {
-    return Parking.find({
-      ownerId,
-    }).sort({
-      createdAt: -1,
-    });
-  }
+async findByOwner(ownerId: string) {
+  return Parking.find({
+    ownerId,
+    isActive: true,
+  }).sort({
+    createdAt: -1,
+  });
+}
 
   async findAll() {
     return Parking.find().sort({
@@ -23,19 +24,23 @@ class ParkingRepository {
     });
   }
 
-  async update(
-    id: string,
-    data: Partial<IParking>,
-  ) {
-    return Parking.findByIdAndUpdate(
-      id,
-      data,
-      {
-        new: true,
-      },
-    );
+  async update(id: string, data: Partial<IParking>) {
+    return Parking.findByIdAndUpdate(id, data, {
+      new: true,
+    });
   }
-
+async deactivate(id: string) {
+  return Parking.findByIdAndUpdate(
+    id,
+    {
+      isActive: false,
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  );
+}
   async delete(id: string) {
     return Parking.findByIdAndDelete(id);
   }

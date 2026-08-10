@@ -11,7 +11,7 @@ export const updateVehicleSchema = z.object({
     ])
     .optional(),
 
-  manufacturer: z.string().trim().min(2).max(50).optional(),
+  brand: z.string().trim().min(2).max(50).optional(),
 
   vehicleModel: z.string().trim().min(1).max(50).optional(),
 

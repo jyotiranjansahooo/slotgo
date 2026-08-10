@@ -332,10 +332,6 @@ const parkingSchema = new Schema<IParking>(
 );
 
 const Parking =
-  mongoose.models.Parking ||
-  mongoose.model<IParking>(
-    "Parking",
-    parkingSchema,
-  );
+  mongoose.models.Parking || mongoose.model<IParking>("Parking", parkingSchema);
 
 export default Parking;
