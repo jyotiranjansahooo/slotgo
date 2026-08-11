@@ -53,6 +53,24 @@ export const getParking = asyncHandler(
     );
   },
 );
+export const updateParking = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parking =
+      await parkingService.updateParking(
+        req.user!._id.toString(),
+        req.params.id as string,
+        req.body,
+      );
+
+    res.status(200).json(
+      new ApiResponse(
+        200,
+        parking,
+        "Parking updated successfully.",
+      ),
+    );
+  },
+);
 
 export const deleteParking = asyncHandler(
   async (req: Request, res: Response) => {

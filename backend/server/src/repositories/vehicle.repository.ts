@@ -7,7 +7,7 @@ export interface CreateVehicleData {
 
   registrationNumber: string;
 
-  manufacturer: string;
+ brand: string;
 
   vehicleModel: string;
 

@@ -1,16 +1,7 @@
-import mongoose, {
-  Schema,
-  HydratedDocument,
-  Model,
-  Types,
-} from "mongoose";
+import mongoose, { Schema, HydratedDocument, Model, Types } from "mongoose";
 import bcrypt from "bcrypt";
 
-import {
-  USER_ROLES,
-  USER_ROLE_VALUES,
-  UserRole,
-} from "../constants/roles.js";
+import { USER_ROLES, USER_ROLE_VALUES, UserRole } from "../constants/roles.js";
 
 export interface IUser {
   _id: Types.ObjectId;
@@ -150,7 +141,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
   {
     timestamps: true,
     versionKey: false,
-  }
+  },
 );
 
 userSchema.index({
@@ -167,7 +158,7 @@ userSchema.method(
   "comparePassword",
   async function (candidatePassword: string) {
     return bcrypt.compare(candidatePassword, this.password);
-  }
+  },
 );
 
 const User =

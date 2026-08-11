@@ -1,16 +1,13 @@
-import { BOOKING_MODE } from "../../constants/booking.js";
 import { VehicleType } from "../../constants/vehicle.js";
 import { IParking } from "../../models/Parking.js";
 
 export interface PricingResult {
   parkingAmount: number;
-
+  discountAmount: number;
+  actualAmount: number;
   ownerCommission: number;
-
   driverServiceFee: number;
-
   ownerReceives: number;
-
   driverPays: number;
 }
 
@@ -52,11 +49,23 @@ class PricingService {
         break;
     }
 
-    const ownerCommission =
-      Number((parkingAmount * 0.05).toFixed(2));
+    if (parkingAmount <= 0) {
+      throw new Error(
+        "Parking price is not configured for this vehicle type and booking mode.",
+      );
+    }
+
+    const discountAmount = 0;
+
+    const actualAmount =
+      parkingAmount - discountAmount;
+
+    const ownerCommission = Number(
+      (actualAmount * 0.05).toFixed(2),
+    );
 
     let driverServiceFee = Math.round(
-      parkingAmount * 0.05,
+      actualAmount * 0.05,
     );
 
     driverServiceFee = Math.max(
@@ -64,18 +73,20 @@ class PricingService {
       Math.min(driverServiceFee, 35),
     );
 
+    const ownerReceives =
+      actualAmount - ownerCommission;
+
+    const driverPays =
+      actualAmount + driverServiceFee;
+
     return {
       parkingAmount,
-
+      discountAmount,
+      actualAmount,
       ownerCommission,
-
       driverServiceFee,
-
-      ownerReceives:
-        parkingAmount - ownerCommission,
-
-      driverPays:
-        parkingAmount + driverServiceFee,
+      ownerReceives,
+      driverPays,
     };
   }
 }

@@ -79,12 +79,12 @@ export interface IBooking {
     parkingName: string;
     address: string;
   };
-  vehicleSnapshot: {
-    registrationNumber: string;
-    manufacturer: string;
-    vehicleModel: string;
-    vehicleType: VehicleType;
-  };
+ vehicleSnapshot: {
+  registrationNumber: string;
+  brand: string;
+  vehicleModel: string;
+  vehicleType: VehicleType;
+};
 
   cancellation?: {
     cancelledBy: CancelledBy;
@@ -140,7 +140,7 @@ const vehicleSnapshotSchema = new Schema(
       required: true,
     },
 
-    manufacturer: {
+  brand: {
       type: String,
       required: true,
     },
@@ -213,17 +213,6 @@ const paymentSchema = new Schema(
     paidAt: {
       type: Date,
     },
-    discountAmount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    actualAmount: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
   },
   {
     _id: false,
@@ -247,12 +236,12 @@ const bookingSchema = new Schema<IBooking>(
       index: true,
     },
     ownerId: {
-  type: Schema.Types.ObjectId,
-  ref: "User",
-  required: true,
-  immutable: true,
-  index: true,
-},
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      immutable: true,
+      index: true,
+    },
 
     parkingId: {
       type: Schema.Types.ObjectId,
@@ -303,7 +292,17 @@ const bookingSchema = new Schema<IBooking>(
       required: true,
       min: 0,
     },
+    discountAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
+    actualAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
     ownerCommission: {
       type: Number,
       required: true,

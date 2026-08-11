@@ -7,42 +7,43 @@ interface CreateVehicleServiceInput extends CreateVehicleInput {
 }
 
 export const createVehicleService = async (
-  data: CreateVehicleServiceInput
+  data: CreateVehicleServiceInput,
 ) => {
-  const {
-    ownerId,
-    vehicleType,
-    registrationNumber,
-    manufacturer,
-    vehicleModel,
-    color,
-  } = data;
+const {
+  ownerId,
+  vehicleType,
+  registrationNumber,
+  brand,
+  vehicleModel,
+  color,
+} = data;
 
-  // Check registration number
   const existingVehicle =
     await vehicleRepository.findByRegistrationNumber(
-      registrationNumber
+      registrationNumber,
     );
 
   if (existingVehicle) {
     throw new ApiError(
       409,
-      "Vehicle with this registration number already exists"
+      "Vehicle with this registration number already exists",
     );
   }
 
-  // Check if user already has vehicles
   const vehicles =
     await vehicleRepository.findByOwnerId(ownerId);
 
   const isDefault = vehicles.length === 0;
 
-  // Create vehicle
   const vehicle = await vehicleRepository.create({
     ownerId,
     vehicleType,
     registrationNumber,
-    manufacturer,
+
+    // API/service uses manufacturer,
+    // database model uses brand.
+    brand,
+
     vehicleModel,
     color,
     isDefault,

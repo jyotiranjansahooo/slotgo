@@ -50,14 +50,11 @@ export const BOOKING_DURATION = {
 export type BookingDuration =
   (typeof BOOKING_DURATION)[keyof typeof BOOKING_DURATION];
 
-export const BOOKING_DURATION_VALUES =
-  Object.values(BOOKING_DURATION);
+export const BOOKING_DURATION_VALUES = Object.values(BOOKING_DURATION);
 
-export type CancelledBy =
-  (typeof CANCELLED_BY)[keyof typeof CANCELLED_BY];
+export type CancelledBy = (typeof CANCELLED_BY)[keyof typeof CANCELLED_BY];
 
-export const CANCELLED_BY_VALUES =
-  Object.values(CANCELLED_BY);
+export const CANCELLED_BY_VALUES = Object.values(CANCELLED_BY);
 
 export type BookingMode = (typeof BOOKING_MODE)[keyof typeof BOOKING_MODE];
 

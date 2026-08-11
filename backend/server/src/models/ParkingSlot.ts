@@ -80,11 +80,11 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
       type: Date,
     },
     notes: {
-  type: String,
-  default: "",
-  trim: true,
-  maxlength: 200,
-},
+      type: String,
+      default: "",
+      trim: true,
+      maxlength: 200,
+    },
   },
   {
     timestamps: true,
