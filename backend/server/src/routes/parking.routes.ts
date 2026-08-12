@@ -2,14 +2,11 @@ import { Router } from "express";
 
 import authMiddleware from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
+import requireRole from "../middleware/role.middleware.js";
+import { USER_ROLES } from "../constants/roles.js";
+import { createParkingSchema } from "../validations/parking/create.validation.js";
 
-import {
-  createParkingSchema,
-} from "../validations/parking/create.validation.js";
-
-import {
-  updateParkingSchema,
-} from "../validations/parking/update.validation.js";
+import { updateParkingSchema } from "../validations/parking/update.validation.js";
 
 import {
   createParking,
@@ -21,33 +18,16 @@ import {
 
 const router = Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware, requireRole(USER_ROLES.PARKING_OWNER));
 
-router.post(
-  "/",
-  validate(createParkingSchema),
-  createParking,
-);
+router.post("/", validate(createParkingSchema), createParking);
 
-router.get(
-  "/",
-  getMyParkings,
-);
+router.get("/", getMyParkings);
 
-router.get(
-  "/:id",
-  getParking,
-);
+router.get("/:id", getParking);
 
-router.patch(
-  "/:id",
-  validate(updateParkingSchema),
-  updateParking,
-);
+router.patch("/:id", validate(updateParkingSchema), updateParking);
 
-router.delete(
-  "/:id",
-  deleteParking,
-);
+router.delete("/:id", deleteParking);
 
 export default router;

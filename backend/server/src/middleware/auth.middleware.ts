@@ -1,45 +1,64 @@
 import { Request, Response, NextFunction } from "express";
 
-import asyncHandler from "../utils/asyncHandler.js";
 import ApiError from "../utils/ApiError.js";
-
-import userRepository from "../repositories/user.repository.js";
 import { verifyAccessToken } from "../utils/jwt.js";
+import User from "../models/User.js";
 
-const authMiddleware = asyncHandler(
-  async (
-    req: Request,
-    _res: Response,
-    next: NextFunction
-  ) => {
-    const authHeader = req.headers.authorization;
+const authMiddleware = async (
+  req: Request,
+  _res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const authorization =
+      req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new ApiError(401, "Access token is missing");
+    if (!authorization?.startsWith("Bearer ")) {
+      throw new ApiError(
+        401,
+        "Authentication required.",
+      );
     }
 
-    const token = authHeader.split(" ")[1];
+    const token =
+      authorization.split(" ")[1];
 
     if (!token) {
-      throw new ApiError(401, "Invalid access token");
+      throw new ApiError(
+        401,
+        "Access token is required.",
+      );
     }
 
-    const payload = verifyAccessToken(token);
+    const decoded =
+      verifyAccessToken(token);
 
-    const user = await userRepository.findById(payload.userId);
+    const user = await User.findById(
+      decoded.userId,
+    ).select(
+      "_id name email phoneNumber role isActive isVerified",
+    );
 
     if (!user) {
-      throw new ApiError(401, "User not found");
+      throw new ApiError(
+        401,
+        "User account not found.",
+      );
     }
 
     if (!user.isActive) {
-      throw new ApiError(403, "Account is inactive");
+      throw new ApiError(
+        403,
+        "Your account has been deactivated.",
+      );
     }
 
     req.user = user;
 
     next();
+  } catch (error) {
+    next(error);
   }
-);
+};
 
 export default authMiddleware;

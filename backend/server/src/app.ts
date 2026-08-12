@@ -4,6 +4,10 @@ import cors from "cors";
 import compression from "compression";
 import cookieParser from "cookie-parser";
 import morgan from "morgan";
+import reviewRoutes from "./routes/review.routes.js";
+import adminParkingRoutes from "./routes/admin/parking.routes.js";
+import adminUserRoutes from "./routes/admin/user.routes.js";
+import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
 
 import { env } from "./config/env.js";
 import routes from "./routes/index.js";
@@ -38,6 +42,10 @@ app.use(morgan("dev"));
 
 // Routes
 app.use("/api/v1", routes);
+app.use("/api/v1/reviews", reviewRoutes);
+app.use("/api/v1/admin/parkings", adminParkingRoutes);
+app.use("/api/v1/admin/users", adminUserRoutes);
+app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
 
 // 404 Handler
 app.use(notFoundMiddleware);

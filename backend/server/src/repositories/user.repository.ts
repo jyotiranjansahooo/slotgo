@@ -44,10 +44,7 @@ class UserRepository {
     }));
   }
 
-  async updateRefreshToken(
-    userId: string,
-    refreshToken: string
-  ) {
+  async updateRefreshToken(userId: string, refreshToken: string) {
     return User.findByIdAndUpdate(userId, {
       refreshToken,
     });
@@ -61,6 +58,37 @@ class UserRepository {
       },
     });
   }
+  async findAll() {
+  return User.find()
+    .select("-password -refreshToken")
+    .sort({
+      createdAt: -1,
+    });
+}
+
+async findByIdForAdmin(id: string) {
+  return User.findById(id)
+    .select("-password -refreshToken");
+}
+
+async updateStatus(
+  id: string,
+  isActive: boolean,
+) {
+  return User.findByIdAndUpdate(
+    id,
+    {
+      isActive,
+      ...(isActive
+        ? { deletedAt: null }
+        : { deletedAt: new Date() }),
+    },
+    {
+      new: true,
+      runValidators: true,
+    },
+  ).select("-password -refreshToken");
+}
 }
 
 export default new UserRepository();

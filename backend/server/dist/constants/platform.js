@@ -1,0 +1,16 @@
+export const PLATFORM = {
+    /* Revenue */
+    OWNER_COMMISSION_PERCENT: 5,
+    DRIVER_SERVICE_FEE_PERCENT: 5,
+    DRIVER_SERVICE_FEE_MIN: 5,
+    DRIVER_SERVICE_FEE_MAX: 35,
+    /* Wallet */
+    MIN_OWNER_WITHDRAWAL: 500,
+    /* Cancellation */
+    FREE_CANCELLATION_HOURS: 12,
+    HOURLY_BOOKING_PENALTY_PERCENT: 50,
+    DAILY_BOOKING_PENALTY_PER_DAY: 300,
+    /* Booking */
+    BOOKING_EXPIRY_MINUTES: 15,
+};
+//# sourceMappingURL=platform.js.map

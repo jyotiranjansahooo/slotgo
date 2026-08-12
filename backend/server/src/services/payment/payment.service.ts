@@ -4,6 +4,7 @@ import bookingRepository from "../../repositories/booking.repository.js";
 import paymentRepository from "../../repositories/payment.repository.js";
 
 import razorpayService from "./razorpay.service.js";
+import slotAllocatorService from "../parkingSlot/slotAllocator.service.js";
 
 import {
   PAYMENT_STATUS,
@@ -15,15 +16,24 @@ import {
   BOOKING_STATUS,
   PAYMENT_STATUS as BOOKING_PAYMENT_STATUS,
 } from "../../constants/booking.js";
+
 class PaymentService {
   async createPayment(bookingId: string) {
-    const booking = await bookingRepository.findById(bookingId);
+    const booking =
+      await bookingRepository.findById(bookingId);
 
     if (!booking) {
-      throw new ApiError(404, "Booking not found.");
+      throw new ApiError(
+        404,
+        "Booking not found.",
+      );
     }
 
-    const existingPayment = await paymentRepository.findByBookingId(bookingId);
+    // Prevent creating duplicate payment orders
+    const existingPayment =
+      await paymentRepository.findByBookingId(
+        bookingId,
+      );
 
     if (existingPayment) {
       return {
@@ -37,34 +47,39 @@ class PaymentService {
       };
     }
 
-    const amountInPaise = Math.round(booking.driverPays * 100);
-
-    const razorpayOrder = await razorpayService.createOrder(
-      amountInPaise,
-      booking.bookingNumber,
+    // Razorpay expects amount in paise
+    const amountInPaise = Math.round(
+      booking.driverPays * 100,
     );
 
-    const payment = await paymentRepository.create({
-      bookingId: booking._id,
+    const razorpayOrder =
+      await razorpayService.createOrder(
+        amountInPaise,
+        booking.bookingNumber,
+      );
 
-      driverId: booking.driverId,
+    const payment =
+      await paymentRepository.create({
+        bookingId: booking._id,
 
-      ownerId: booking.ownerId,
+        driverId: booking.driverId,
 
-      gateway: PAYMENT_GATEWAY.RAZORPAY,
+        ownerId: booking.ownerId,
 
-      orderId: razorpayOrder.id,
+        gateway: PAYMENT_GATEWAY.RAZORPAY,
 
-      amount: booking.driverPays,
+        orderId: razorpayOrder.id,
 
-      currency: "INR",
+        amount: booking.driverPays,
 
-      status: PAYMENT_STATUS.CREATED,
+        currency: "INR",
 
-      refundAmount: 0,
+        status: PAYMENT_STATUS.CREATED,
 
-      refundStatus: REFUND_STATUS.NONE,
-    });
+        refundAmount: 0,
+
+        refundStatus: REFUND_STATUS.NONE,
+      });
 
     return {
       booking,
@@ -73,62 +88,115 @@ class PaymentService {
     };
   }
 
-  async verifyPayment(orderId: string, paymentId: string, signature: string) {
-    const payment = await paymentRepository.findByOrderId(orderId);
+  async verifyPayment(
+    orderId: string,
+    paymentId: string,
+    signature: string,
+  ) {
+    const payment =
+      await paymentRepository.findByOrderId(
+        orderId,
+      );
 
     if (!payment) {
-      throw new ApiError(404, "Payment record not found.");
+      throw new ApiError(
+        404,
+        "Payment record not found.",
+      );
     }
 
+    // Prevent processing the same payment twice
     if (payment.status === PAYMENT_STATUS.SUCCESS) {
       return payment;
     }
 
-const isValid =
-  razorpayService.verifySignature(
-    orderId,
-    paymentId,
-    signature,
-  );
-
-if (!isValid) {
-  await paymentRepository.update(
-    payment._id.toString(),
-    {
-      status:
-        PAYMENT_STATUS.FAILED,
-    },
-  );
-
-  throw new ApiError(
-    400,
-    "Invalid payment signature.",
-  );
-}
-
-    const updatedPayment = await paymentRepository.update(
-      payment._id.toString(),
-      {
+    // Verify Razorpay signature
+    const isValid =
+      razorpayService.verifySignature(
+        orderId,
         paymentId,
         signature,
-        status: PAYMENT_STATUS.SUCCESS,
-        paidAt: new Date(),
-      },
-    );
+      );
 
-    if (!updatedPayment) {
-      throw new ApiError(500, "Unable to update payment.");
+    if (!isValid) {
+      await paymentRepository.update(
+        payment._id.toString(),
+        {
+          status: PAYMENT_STATUS.FAILED,
+        },
+      );
+
+      // Release temporarily reserved slot
+      const failedBooking =
+        await bookingRepository.findById(
+          payment.bookingId.toString(),
+        );
+
+      if (failedBooking) {
+        await slotAllocatorService.releaseSlot(
+          failedBooking.slotId.toString(),
+        );
+      }
+
+      throw new ApiError(
+        400,
+        "Invalid payment signature.",
+      );
     }
 
-    const booking = await bookingRepository.update(
-      payment.bookingId.toString(),
-      {
-        paymentStatus: BOOKING_PAYMENT_STATUS.PAID,
-        bookingStatus: BOOKING_STATUS.CONFIRMED,
-      },
-    );
+    // Mark payment as successful
+    const updatedPayment =
+      await paymentRepository.update(
+        payment._id.toString(),
+        {
+          paymentId,
+          signature,
+          status: PAYMENT_STATUS.SUCCESS,
+          paidAt: new Date(),
+        },
+      );
+
+    if (!updatedPayment) {
+      throw new ApiError(
+        500,
+        "Unable to update payment.",
+      );
+    }
+
+    // Get booking associated with payment
+    const booking =
+      await bookingRepository.findById(
+        payment.bookingId.toString(),
+      );
 
     if (!booking) {
+      throw new ApiError(
+        404,
+        "Booking not found.",
+      );
+    }
+
+    // Convert temporary 15-minute slot reservation
+    // into reservation lasting until booking end time
+    await slotAllocatorService.finalizeReservation(
+      booking.slotId.toString(),
+      booking.endTime,
+    );
+
+    // Confirm booking
+    const updatedBooking =
+      await bookingRepository.update(
+        booking._id.toString(),
+        {
+          paymentStatus:
+            BOOKING_PAYMENT_STATUS.PAID,
+
+          bookingStatus:
+            BOOKING_STATUS.CONFIRMED,
+        },
+      );
+
+    if (!updatedBooking) {
       throw new ApiError(
         500,
         "Payment succeeded but booking could not be confirmed.",
@@ -137,57 +205,101 @@ if (!isValid) {
 
     return {
       payment: updatedPayment,
-      booking,
+      booking: updatedBooking,
     };
   }
 
-  async refundPayment(paymentId: string, amount?: number) {
-    const payment = await paymentRepository.findById(paymentId);
+  async refundPayment(
+    paymentId: string,
+    amount?: number,
+  ) {
+    const payment =
+      await paymentRepository.findById(
+        paymentId,
+      );
 
     if (!payment) {
-      throw new ApiError(404, "Payment not found.");
+      throw new ApiError(
+        404,
+        "Payment not found.",
+      );
     }
 
-    if (payment.status !== PAYMENT_STATUS.SUCCESS) {
-      throw new ApiError(400, "Only successful payments can be refunded.");
+    if (
+      payment.status !==
+      PAYMENT_STATUS.SUCCESS
+    ) {
+      throw new ApiError(
+        400,
+        "Only successful payments can be refunded.",
+      );
     }
 
-    const refundableAmount = payment.amount - payment.refundAmount;
+    const refundableAmount =
+      payment.amount - payment.refundAmount;
 
-    const refundAmount = amount ?? refundableAmount;
+    const refundAmount =
+      amount ?? refundableAmount;
 
     if (refundAmount <= 0) {
-      throw new ApiError(400, "Refund amount must be greater than zero.");
+      throw new ApiError(
+        400,
+        "Refund amount must be greater than zero.",
+      );
     }
 
     if (refundAmount > refundableAmount) {
-      throw new ApiError(400, "Refund amount exceeds the refundable amount.");
+      throw new ApiError(
+        400,
+        "Refund amount exceeds the refundable amount.",
+      );
     }
 
-    const refund = await razorpayService.refundPayment(
-      payment.paymentId!,
-      Math.round(refundAmount * 100),
-    );
+    if (!payment.paymentId) {
+      throw new ApiError(
+        400,
+        "Payment transaction ID is missing.",
+      );
+    }
 
-    const totalRefunded = payment.refundAmount + refundAmount;
+    const refund =
+      await razorpayService.refundPayment(
+        payment.paymentId,
+        Math.round(refundAmount * 100),
+      );
 
-    const fullyRefunded = totalRefunded >= payment.amount;
+    const totalRefunded =
+      payment.refundAmount + refundAmount;
 
-    const updatedPayment = await paymentRepository.update(
-      payment._id.toString(),
-      {
-        refundId: refund.id,
-        refundAmount: totalRefunded,
-        refundStatus: REFUND_STATUS.SUCCESS,
-        status: fullyRefunded
-          ? PAYMENT_STATUS.REFUNDED
-          : PAYMENT_STATUS.PARTIALLY_REFUNDED,
-        refundedAt: fullyRefunded ? new Date() : undefined,
-      },
-    );
+    const fullyRefunded =
+      totalRefunded >= payment.amount;
+
+    const updatedPayment =
+      await paymentRepository.update(
+        payment._id.toString(),
+        {
+          refundId: refund.id,
+
+          refundAmount: totalRefunded,
+
+          refundStatus:
+            REFUND_STATUS.SUCCESS,
+
+          status: fullyRefunded
+            ? PAYMENT_STATUS.REFUNDED
+            : PAYMENT_STATUS.PARTIALLY_REFUNDED,
+
+          refundedAt: fullyRefunded
+            ? new Date()
+            : undefined,
+        },
+      );
 
     if (!updatedPayment) {
-      throw new ApiError(500, "Unable to update refund information.");
+      throw new ApiError(
+        500,
+        "Unable to update refund information.",
+      );
     }
 
     return {

@@ -13,7 +13,25 @@ class SlotAllocatorService {
 
     return slot;
   }
+async finalizeReservation(
+  slotId: string,
+  endTime: Date,
+) {
+  const slot =
+    await parkingSlotRepository.finalizeReservation(
+      slotId,
+      endTime,
+    );
 
+  if (!slot) {
+    throw new ApiError(
+      404,
+      "Parking slot reservation not found.",
+    );
+  }
+
+  return slot;
+}
   async reserveAvailableSlot(parkingId: string, vehicleType: VehicleType) {
     const slot = await this.findAvailableSlot(parkingId, vehicleType);
 

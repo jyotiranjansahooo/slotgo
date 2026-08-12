@@ -1,13 +1,13 @@
 import mongoose, { Schema, Types } from "mongoose";
 
 import {
-  BOOKING_MODE,
+  // BOOKING_MODE,
   BOOKING_MODE_VALUES,
   BOOKING_STATUS,
   BOOKING_STATUS_VALUES,
   PAYMENT_STATUS,
   PAYMENT_STATUS_VALUES,
-  CANCELLED_BY,
+  // CANCELLED_BY,
   CANCELLED_BY_VALUES,
   BookingMode,
   BookingStatus,

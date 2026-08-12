@@ -3,7 +3,7 @@ import mongoose, { Schema, Types } from "mongoose";
 import {
   WALLET_TRANSACTION_STATUS,
   WALLET_TRANSACTION_STATUS_VALUES,
-  WALLET_TRANSACTION_TYPE,
+  // WALLET_TRANSACTION_TYPE,
   WALLET_TRANSACTION_TYPE_VALUES,
   WalletTransactionStatus,
   WalletTransactionType,

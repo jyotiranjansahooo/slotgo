@@ -1,0 +1,11 @@
+export declare const PLATFORM: {
+    readonly OWNER_COMMISSION_PERCENT: 5;
+    readonly DRIVER_SERVICE_FEE_PERCENT: 5;
+    readonly DRIVER_SERVICE_FEE_MIN: 5;
+    readonly DRIVER_SERVICE_FEE_MAX: 35;
+    readonly MIN_OWNER_WITHDRAWAL: 500;
+    readonly FREE_CANCELLATION_HOURS: 12;
+    readonly HOURLY_BOOKING_PENALTY_PERCENT: 50;
+    readonly DAILY_BOOKING_PENALTY_PER_DAY: 300;
+    readonly BOOKING_EXPIRY_MINUTES: 15;
+};
