@@ -2,6 +2,8 @@ import { CreateBookingInput } from "../../validations/booking/create.validation.
 import { CancelBookingInput } from "../../validations/booking/cancel.validation.js";
 import { CheckInInput } from "../../validations/booking/checkIn.validation.js";
 declare class BookingService {
+    private validateBookingDuration;
+    private calculateCancellationRefund;
     createBooking(driverId: string, data: CreateBookingInput): Promise<{
         booking: any;
         payment: {
@@ -18,7 +20,10 @@ declare class BookingService {
             razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
         };
     }>;
-    verifyPayment(orderId: string, paymentId: string, signature: string): Promise<any>;
+    verifyPayment(orderId: string, paymentId: string, signature: string): Promise<{
+        payment: any;
+        booking: any;
+    }>;
     getBooking(userId: string, bookingId: string): Promise<any>;
     getDriverBookings(driverId: string): Promise<any[]>;
     getOwnerBookings(ownerId: string): Promise<any[]>;

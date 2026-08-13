@@ -2,15 +2,9 @@ import Booking, { IBooking } from "../models/Booking.js";
 import { ClientSession } from "mongoose";
 
 class BookingRepository {
-  async create(
-    data: Partial<IBooking>,
-    session?: ClientSession,
-  ) {
+  async create(data: Partial<IBooking>, session?: ClientSession) {
     if (session) {
-      const booking = await Booking.create(
-        [data],
-        { session },
-      );
+      const booking = await Booking.create([data], { session });
 
       return booking[0];
     }
@@ -22,29 +16,21 @@ class BookingRepository {
     return Booking.findById(id);
   }
 
-  async findByBookingNumber(
-    bookingNumber: string,
-  ) {
+  async findByBookingNumber(bookingNumber: string) {
     return Booking.findOne({
       bookingNumber,
     });
   }
 
-  async findByVerificationPin(
-    pin: string,
-  ) {
+  async findByVerificationPin(pin: string) {
     return Booking.findOne({
       verificationPin: pin,
     });
   }
 
-  // ----------------------------------------------------------
   // Driver bookings
-  // ----------------------------------------------------------
 
-  async findByDriver(
-    driverId: string,
-  ) {
+  async findByDriver(driverId: string) {
     return Booking.find({
       driverId,
     }).sort({
@@ -52,27 +38,43 @@ class BookingRepository {
     });
   }
 
-  // ----------------------------------------------------------
   // Owner bookings
-  // ----------------------------------------------------------
 
-  async findByOwner(
-    ownerId: string,
-  ) {
+  async findByOwner(ownerId: string) {
     return Booking.find({
       ownerId,
     }).sort({
       createdAt: -1,
     });
   }
+async findOverlappingBooking(
+  vehicleId: string,
+  startTime: Date,
+  endTime: Date,
+) {
+  return Booking.findOne({
+    vehicleId,
 
-  // ----------------------------------------------------------
+    bookingStatus: {
+      $in: [
+        "pending",
+        "confirmed",
+        "active",
+      ],
+    },
+
+    startTime: {
+      $lt: endTime,
+    },
+
+    endTime: {
+      $gt: startTime,
+    },
+  });
+}
   // Parking bookings
-  // ----------------------------------------------------------
 
-  async findByParking(
-    parkingId: string,
-  ) {
+  async findByParking(parkingId: string) {
     return Booking.find({
       parkingId,
     }).sort({
@@ -80,13 +82,9 @@ class BookingRepository {
     });
   }
 
-  // ----------------------------------------------------------
   // Expired pending bookings
-  // ----------------------------------------------------------
 
-  async findExpiredPendingBookings(
-    now: Date,
-  ) {
+  async findExpiredPendingBookings(now: Date) {
     return Booking.find({
       bookingStatus: "pending",
       paymentStatus: "pending",
@@ -96,19 +94,12 @@ class BookingRepository {
     });
   }
 
-  // ----------------------------------------------------------
   // Expired confirmed/active bookings
-  // ----------------------------------------------------------
 
-  async findExpiredConfirmedBookings(
-    now: Date,
-  ) {
+  async findExpiredConfirmedBookings(now: Date) {
     return Booking.find({
       bookingStatus: {
-        $in: [
-          "confirmed",
-          "active",
-        ],
+        $in: ["confirmed", "active"],
       },
       endTime: {
         $lte: now,
@@ -116,26 +107,15 @@ class BookingRepository {
     });
   }
 
-  // ----------------------------------------------------------
   // Update
-  // ----------------------------------------------------------
 
-  async update(
-    id: string,
-    data: Partial<IBooking>,
-  ) {
-    return Booking.findByIdAndUpdate(
-      id,
-      data,
-      {
-        new: true,
-      },
-    );
+  async update(id: string, data: Partial<IBooking>) {
+    return Booking.findByIdAndUpdate(id, data, {
+      new: true,
+    });
   }
 
-  // ----------------------------------------------------------
   // Delete
-  // ----------------------------------------------------------
 
   async delete(id: string) {
     return Booking.findByIdAndDelete(id);

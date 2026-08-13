@@ -6,34 +6,39 @@ import { VehicleType } from "../../constants/vehicle.js";
 
 class SlotAllocatorService {
   async findAvailableSlot(parkingId: string, vehicleType: VehicleType) {
-    const slot = await parkingSlotRepository.findFirstAvailable(
-      parkingId,
-      vehicleType,
-    );
+    await parkingSlotRepository.releaseExpiredReservations();
 
-    return slot;
+    return parkingSlotRepository.findFirstAvailable(parkingId, vehicleType);
   }
-async finalizeReservation(
+async confirmReservation(
   slotId: string,
-  endTime: Date,
 ) {
   const slot =
-    await parkingSlotRepository.finalizeReservation(
+    await parkingSlotRepository.confirmReservation(
       slotId,
-      endTime,
     );
 
   if (!slot) {
     throw new ApiError(
-      404,
-      "Parking slot reservation not found.",
+      409,
+      "Parking slot reservation could not be confirmed.",
     );
   }
 
   return slot;
 }
+
   async reserveAvailableSlot(parkingId: string, vehicleType: VehicleType) {
-    const slot = await this.findAvailableSlot(parkingId, vehicleType);
+    // Release expired temporary reservations first.
+    await parkingSlotRepository.releaseExpiredReservations();
+
+    const reservedUntil = new Date(Date.now() + 15 * 60 * 1000);
+
+    const slot = await parkingSlotRepository.reserve(
+      parkingId,
+      vehicleType,
+      reservedUntil,
+    );
 
     if (!slot) {
       throw new ApiError(
@@ -42,20 +47,8 @@ async finalizeReservation(
       );
     }
 
-    const reservedUntil = new Date(Date.now() + 15 * 60 * 1000);
-
-    const reservedSlot = await parkingSlotRepository.reserve(
-      slot._id.toString(),
-      reservedUntil,
-    );
-
-    if (!reservedSlot) {
-      throw new ApiError(409, "Unable to reserve the parking slot.");
-    }
-
-    return reservedSlot;
+    return slot;
   }
-
   async releaseSlot(slotId: string) {
     const slot = await parkingSlotRepository.release(slotId);
 

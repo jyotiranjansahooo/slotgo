@@ -20,9 +20,7 @@ class BookingRepository {
             verificationPin: pin,
         });
     }
-    // ----------------------------------------------------------
     // Driver bookings
-    // ----------------------------------------------------------
     async findByDriver(driverId) {
         return Booking.find({
             driverId,
@@ -30,9 +28,7 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // ----------------------------------------------------------
     // Owner bookings
-    // ----------------------------------------------------------
     async findByOwner(ownerId) {
         return Booking.find({
             ownerId,
@@ -40,9 +36,25 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // ----------------------------------------------------------
+    async findOverlappingBooking(vehicleId, startTime, endTime) {
+        return Booking.findOne({
+            vehicleId,
+            bookingStatus: {
+                $in: [
+                    "pending",
+                    "confirmed",
+                    "active",
+                ],
+            },
+            startTime: {
+                $lt: endTime,
+            },
+            endTime: {
+                $gt: startTime,
+            },
+        });
+    }
     // Parking bookings
-    // ----------------------------------------------------------
     async findByParking(parkingId) {
         return Booking.find({
             parkingId,
@@ -50,9 +62,7 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // ----------------------------------------------------------
     // Expired pending bookings
-    // ----------------------------------------------------------
     async findExpiredPendingBookings(now) {
         return Booking.find({
             bookingStatus: "pending",
@@ -62,33 +72,24 @@ class BookingRepository {
             },
         });
     }
-    // ----------------------------------------------------------
     // Expired confirmed/active bookings
-    // ----------------------------------------------------------
     async findExpiredConfirmedBookings(now) {
         return Booking.find({
             bookingStatus: {
-                $in: [
-                    "confirmed",
-                    "active",
-                ],
+                $in: ["confirmed", "active"],
             },
             endTime: {
                 $lte: now,
             },
         });
     }
-    // ----------------------------------------------------------
     // Update
-    // ----------------------------------------------------------
     async update(id, data) {
         return Booking.findByIdAndUpdate(id, data, {
             new: true,
         });
     }
-    // ----------------------------------------------------------
     // Delete
-    // ----------------------------------------------------------
     async delete(id) {
         return Booking.findByIdAndDelete(id);
     }

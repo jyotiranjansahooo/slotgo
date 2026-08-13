@@ -1,4 +1,5 @@
 import { VehicleType } from "../../constants/vehicle.js";
+import { BookingMode } from "../../constants/booking.js";
 import { IParking } from "../../models/Parking.js";
 export interface PricingResult {
     parkingAmount: number;
@@ -10,7 +11,7 @@ export interface PricingResult {
     driverPays: number;
 }
 declare class PricingService {
-    calculate(parking: IParking, vehicleType: VehicleType, bookingMode: string): PricingResult;
+    calculate(parking: IParking, vehicleType: VehicleType, bookingMode: BookingMode, startTime: Date, endTime: Date): PricingResult;
 }
 declare const _default: PricingService;
 export default _default;

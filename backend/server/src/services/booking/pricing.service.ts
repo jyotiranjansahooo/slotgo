@@ -1,4 +1,5 @@
 import { VehicleType } from "../../constants/vehicle.js";
+import { BookingMode } from "../../constants/booking.js";
 import { IParking } from "../../models/Parking.js";
 
 export interface PricingResult {
@@ -15,69 +16,161 @@ class PricingService {
   calculate(
     parking: IParking,
     vehicleType: VehicleType,
-    bookingMode: string,
+    bookingMode: BookingMode,
+    startTime: Date,
+    endTime: Date,
   ): PricingResult {
-    let parkingAmount = 0;
+    const durationMs =
+      endTime.getTime() - startTime.getTime();
+
+    const durationHours =
+      durationMs / (1000 * 60 * 60);
+
+    let rate = 0;
 
     switch (vehicleType) {
       case "twoWheeler":
-        parkingAmount =
+        rate =
           parking.pricing.twoWheeler[
-            bookingMode as keyof typeof parking.pricing.twoWheeler
+            bookingMode
           ] ?? 0;
         break;
 
       case "fourWheeler":
-        parkingAmount =
+        rate =
           parking.pricing.fourWheeler[
-            bookingMode as keyof typeof parking.pricing.fourWheeler
+            bookingMode
           ] ?? 0;
         break;
 
       case "vanMinibus":
-        parkingAmount =
+        rate =
           parking.pricing.vanMinibus[
-            bookingMode as keyof typeof parking.pricing.vanMinibus
+            bookingMode
           ] ?? 0;
         break;
 
       case "heavyVehicle":
-        parkingAmount =
+        rate =
           parking.pricing.heavyVehicle[
-            bookingMode as keyof typeof parking.pricing.heavyVehicle
+            bookingMode
           ] ?? 0;
         break;
     }
 
-    if (parkingAmount <= 0) {
+    if (rate <= 0) {
       throw new Error(
-        "Parking price is not configured for this vehicle type and booking mode.",
+        "Parking price is not configured.",
       );
     }
 
+    let parkingAmount = 0;
+
+    
+    // HOURLY
+    
+
+    if (bookingMode === "hourly") {
+      const hours = Math.ceil(
+        durationHours,
+      );
+
+      parkingAmount =
+        rate * hours;
+    }
+
+    
+    // DAILY
+    
+
+    if (bookingMode === "daily") {
+      const days = Math.ceil(
+        durationHours / 24,
+      );
+
+      parkingAmount =
+        rate * days;
+    }
+
+    
+    // MONTHLY
+    
+
+    if (bookingMode === "monthly") {
+      const months = Math.ceil(
+        durationHours /
+          (24 * 30),
+      );
+
+      parkingAmount =
+        rate * months;
+    }
+
+    
+    // Discount
+    
+
     const discountAmount = 0;
 
+    
+    // Actual parking amount
+    
+
     const actualAmount =
-      parkingAmount - discountAmount;
+      parkingAmount -
+      discountAmount;
 
-    const ownerCommission = Number(
-      (actualAmount * 0.05).toFixed(2),
-    );
+    
+    // Owner commission
+    
 
-    let driverServiceFee = Math.round(
-      actualAmount * 0.05,
-    );
+    const ownerCommission =
+      Number(
+        (
+          actualAmount * 0.05
+        ).toFixed(2),
+      );
+
+    
+    // Driver service fee
+    
+
+    let driverServiceFee =
+      Math.round(
+        actualAmount * 0.05,
+      );
 
     driverServiceFee = Math.max(
       5,
-      Math.min(driverServiceFee, 35),
+      Math.min(
+        driverServiceFee,
+        35,
+      ),
     );
 
+    
+    // Owner receives
+    
+
     const ownerReceives =
-      actualAmount - ownerCommission;
+      Number(
+        (
+          actualAmount -
+          ownerCommission
+        ).toFixed(2),
+      );
+
+    
+    // Driver pays
+    
 
     const driverPays =
-      actualAmount + driverServiceFee;
+      Number(
+        (
+          actualAmount +
+          driverServiceFee
+        ).toFixed(2),
+      );
 
     return {
       parkingAmount,

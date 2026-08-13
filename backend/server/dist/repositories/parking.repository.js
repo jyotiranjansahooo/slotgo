@@ -6,6 +6,13 @@ class ParkingRepository {
     async findById(id) {
         return Parking.findById(id);
     }
+    async findApprovedById(id) {
+        return Parking.findOne({
+            _id: id,
+            status: "approved",
+            isActive: true,
+        });
+    }
     async findByOwner(ownerId) {
         return Parking.find({
             ownerId,
@@ -47,6 +54,32 @@ class ParkingRepository {
             status: "rejected",
         }, {
             new: true,
+        });
+    }
+    async findApprovedParkings() {
+        return Parking.find({
+            status: "approved",
+            isActive: true,
+        }).sort({
+            createdAt: -1,
+        });
+    }
+    async searchParkings(filters) {
+        const query = {
+            status: "approved",
+            isActive: true,
+        };
+        if (filters.city) {
+            query.city = {
+                $regex: filters.city,
+                $options: "i",
+            };
+        }
+        if (filters.parkingType) {
+            query.parkingType = filters.parkingType;
+        }
+        return Parking.find(query).sort({
+            createdAt: -1,
         });
     }
 }

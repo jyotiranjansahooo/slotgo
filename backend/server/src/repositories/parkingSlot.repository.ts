@@ -1,4 +1,3 @@
-import { ClientSession } from "mongoose";
 import ParkingSlot, { IParkingSlot } from "../models/ParkingSlot.js";
 
 import { SLOT_STATUS, SlotStatus } from "../constants/slot.js";
@@ -27,6 +26,19 @@ class ParkingSlotRepository {
       displayOrder: 1,
     });
   }
+  async findAvailableByVehicleType(
+    parkingId: string,
+    vehicleType: VehicleType,
+  ) {
+    return ParkingSlot.find({
+      parkingId,
+      status: SLOT_STATUS.AVAILABLE,
+      isActive: true,
+      supportedVehicleTypes: vehicleType,
+    }).sort({
+      displayOrder: 1,
+    });
+  }
 
   async findAvailable(parkingId: string) {
     return ParkingSlot.find({
@@ -39,23 +51,12 @@ class ParkingSlotRepository {
   }
 
   async findFirstAvailable(parkingId: string, vehicleType: VehicleType) {
-    const now = new Date();
-
     return ParkingSlot.findOne({
       parkingId,
-      isActive: true,
 
-      $or: [
-        {
-          status: SLOT_STATUS.AVAILABLE,
-        },
-        {
-          status: SLOT_STATUS.RESERVED,
-          reservedUntil: {
-            $lte: now,
-          },
-        },
-      ],
+      status: SLOT_STATUS.AVAILABLE,
+
+      isActive: true,
 
       supportedVehicleTypes: vehicleType,
     }).sort({
@@ -63,33 +64,32 @@ class ParkingSlotRepository {
     });
   }
 
-  async reserve(slotId: string, reservedUntil: Date, session?: ClientSession) {
-    const now = new Date();
-
+  async reserve(
+    parkingId: string,
+    vehicleType: VehicleType,
+    reservedUntil: Date,
+  ) {
     return ParkingSlot.findOneAndUpdate(
       {
-        _id: slotId,
+        parkingId,
+
+        status: SLOT_STATUS.AVAILABLE,
+
         isActive: true,
 
-        $or: [
-          {
-            status: SLOT_STATUS.AVAILABLE,
-          },
-          {
-            status: SLOT_STATUS.RESERVED,
-            reservedUntil: {
-              $lte: now,
-            },
-          },
-        ],
+        supportedVehicleTypes: vehicleType,
       },
       {
-        status: SLOT_STATUS.RESERVED,
-        reservedUntil,
+        $set: {
+          status: SLOT_STATUS.RESERVED,
+          reservedUntil,
+        },
       },
       {
         new: true,
-        session,
+        sort: {
+          displayOrder: 1,
+        },
       },
     );
   }
@@ -106,9 +106,23 @@ class ParkingSlotRepository {
       },
     );
   }
-async finalizeReservation(
+  async finalizeReservation(slotId: string, reservedUntil: Date) {
+    return ParkingSlot.findOneAndUpdate(
+      {
+        _id: slotId,
+        status: SLOT_STATUS.RESERVED,
+      },
+      {
+        reservedUntil,
+      },
+      {
+        new: true,
+      },
+    );
+  }
+
+async confirmReservation(
   slotId: string,
-  reservedUntil: Date,
 ) {
   return ParkingSlot.findOneAndUpdate(
     {
@@ -116,7 +130,9 @@ async finalizeReservation(
       status: SLOT_STATUS.RESERVED,
     },
     {
-      reservedUntil,
+      $set: {
+        reservedUntil: null,
+      },
     },
     {
       new: true,
@@ -153,7 +169,22 @@ async finalizeReservation(
       },
     );
   }
-
+  async releaseExpiredReservations() {
+    return ParkingSlot.updateMany(
+      {
+        status: SLOT_STATUS.RESERVED,
+        reservedUntil: {
+          $lte: new Date(),
+        },
+      },
+      {
+        $set: {
+          status: SLOT_STATUS.AVAILABLE,
+          reservedUntil: null,
+        },
+      },
+    );
+  }
   async delete(id: string) {
     return ParkingSlot.findByIdAndDelete(id);
   }

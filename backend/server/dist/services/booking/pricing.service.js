@@ -1,34 +1,65 @@
 class PricingService {
-    calculate(parking, vehicleType, bookingMode) {
-        let parkingAmount = 0;
+    calculate(parking, vehicleType, bookingMode, startTime, endTime) {
+        const durationMs = endTime.getTime() - startTime.getTime();
+        const durationHours = durationMs / (1000 * 60 * 60);
+        let rate = 0;
         switch (vehicleType) {
             case "twoWheeler":
-                parkingAmount =
+                rate =
                     parking.pricing.twoWheeler[bookingMode] ?? 0;
                 break;
             case "fourWheeler":
-                parkingAmount =
+                rate =
                     parking.pricing.fourWheeler[bookingMode] ?? 0;
                 break;
             case "vanMinibus":
-                parkingAmount =
+                rate =
                     parking.pricing.vanMinibus[bookingMode] ?? 0;
                 break;
             case "heavyVehicle":
-                parkingAmount =
+                rate =
                     parking.pricing.heavyVehicle[bookingMode] ?? 0;
                 break;
         }
-        if (parkingAmount <= 0) {
-            throw new Error("Parking price is not configured for this vehicle type and booking mode.");
+        if (rate <= 0) {
+            throw new Error("Parking price is not configured.");
         }
+        let parkingAmount = 0;
+        // HOURLY
+        if (bookingMode === "hourly") {
+            const hours = Math.ceil(durationHours);
+            parkingAmount =
+                rate * hours;
+        }
+        // DAILY
+        if (bookingMode === "daily") {
+            const days = Math.ceil(durationHours / 24);
+            parkingAmount =
+                rate * days;
+        }
+        // MONTHLY
+        if (bookingMode === "monthly") {
+            const months = Math.ceil(durationHours /
+                (24 * 30));
+            parkingAmount =
+                rate * months;
+        }
+        // Discount
         const discountAmount = 0;
-        const actualAmount = parkingAmount - discountAmount;
+        // Actual parking amount
+        const actualAmount = parkingAmount -
+            discountAmount;
+        // Owner commission
         const ownerCommission = Number((actualAmount * 0.05).toFixed(2));
+        // Driver service fee
         let driverServiceFee = Math.round(actualAmount * 0.05);
         driverServiceFee = Math.max(5, Math.min(driverServiceFee, 35));
-        const ownerReceives = actualAmount - ownerCommission;
-        const driverPays = actualAmount + driverServiceFee;
+        // Owner receives
+        const ownerReceives = Number((actualAmount -
+            ownerCommission).toFixed(2));
+        // Driver pays
+        const driverPays = Number((actualAmount +
+            driverServiceFee).toFixed(2));
         return {
             parkingAmount,
             discountAmount,

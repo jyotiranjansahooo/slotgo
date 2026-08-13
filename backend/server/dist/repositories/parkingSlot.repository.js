@@ -20,6 +20,16 @@ class ParkingSlotRepository {
             displayOrder: 1,
         });
     }
+    async findAvailableByVehicleType(parkingId, vehicleType) {
+        return ParkingSlot.find({
+            parkingId,
+            status: SLOT_STATUS.AVAILABLE,
+            isActive: true,
+            supportedVehicleTypes: vehicleType,
+        }).sort({
+            displayOrder: 1,
+        });
+    }
     async findAvailable(parkingId) {
         return ParkingSlot.find({
             parkingId,
@@ -30,48 +40,31 @@ class ParkingSlotRepository {
         });
     }
     async findFirstAvailable(parkingId, vehicleType) {
-        const now = new Date();
         return ParkingSlot.findOne({
             parkingId,
+            status: SLOT_STATUS.AVAILABLE,
             isActive: true,
-            $or: [
-                {
-                    status: SLOT_STATUS.AVAILABLE,
-                },
-                {
-                    status: SLOT_STATUS.RESERVED,
-                    reservedUntil: {
-                        $lte: now,
-                    },
-                },
-            ],
             supportedVehicleTypes: vehicleType,
         }).sort({
             displayOrder: 1,
         });
     }
-    async reserve(slotId, reservedUntil, session) {
-        const now = new Date();
+    async reserve(parkingId, vehicleType, reservedUntil) {
         return ParkingSlot.findOneAndUpdate({
-            _id: slotId,
+            parkingId,
+            status: SLOT_STATUS.AVAILABLE,
             isActive: true,
-            $or: [
-                {
-                    status: SLOT_STATUS.AVAILABLE,
-                },
-                {
-                    status: SLOT_STATUS.RESERVED,
-                    reservedUntil: {
-                        $lte: now,
-                    },
-                },
-            ],
+            supportedVehicleTypes: vehicleType,
         }, {
-            status: SLOT_STATUS.RESERVED,
-            reservedUntil,
+            $set: {
+                status: SLOT_STATUS.RESERVED,
+                reservedUntil,
+            },
         }, {
             new: true,
-            session,
+            sort: {
+                displayOrder: 1,
+            },
         });
     }
     async occupy(slotId) {
@@ -88,6 +81,18 @@ class ParkingSlotRepository {
             status: SLOT_STATUS.RESERVED,
         }, {
             reservedUntil,
+        }, {
+            new: true,
+        });
+    }
+    async confirmReservation(slotId) {
+        return ParkingSlot.findOneAndUpdate({
+            _id: slotId,
+            status: SLOT_STATUS.RESERVED,
+        }, {
+            $set: {
+                reservedUntil: null,
+            },
         }, {
             new: true,
         });
@@ -110,6 +115,19 @@ class ParkingSlotRepository {
             status,
         }, {
             new: true,
+        });
+    }
+    async releaseExpiredReservations() {
+        return ParkingSlot.updateMany({
+            status: SLOT_STATUS.RESERVED,
+            reservedUntil: {
+                $lte: new Date(),
+            },
+        }, {
+            $set: {
+                status: SLOT_STATUS.AVAILABLE,
+                reservedUntil: null,
+            },
         });
     }
     async delete(id) {

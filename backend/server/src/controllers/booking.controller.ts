@@ -5,9 +5,9 @@ import ApiResponse from "../utils/ApiResponse.js";
 
 import bookingService from "../services/booking/booking.service.js";
 
-// ============================================================
+
 // CREATE BOOKING
-// ============================================================
+
 
 export const createBooking = asyncHandler(
   async (req: Request, res: Response) => {
@@ -22,9 +22,9 @@ export const createBooking = asyncHandler(
   },
 );
 
-// ============================================================
+
 // VERIFY PAYMENT
-// ============================================================
+
 
 export const verifyPayment = asyncHandler(
   async (req: Request, res: Response) => {
@@ -42,9 +42,9 @@ export const verifyPayment = asyncHandler(
   },
 );
 
-// ============================================================
+
 // GET DRIVER BOOKINGS
-// ============================================================
+
 
 export const getDriverBookings = asyncHandler(
   async (req: Request, res: Response) => {
@@ -58,9 +58,9 @@ export const getDriverBookings = asyncHandler(
   },
 );
 
-// ============================================================
+
 // GET OWNER BOOKINGS
-// ============================================================
+
 
 export const getOwnerBookings = asyncHandler(
   async (req: Request, res: Response) => {
@@ -76,9 +76,9 @@ export const getOwnerBookings = asyncHandler(
   },
 );
 
-// ============================================================
+
 // GET SINGLE BOOKING
-// ============================================================
+
 
 export const getBooking = asyncHandler(async (req: Request, res: Response) => {
   const booking = await bookingService.getBooking(
@@ -91,9 +91,9 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, booking, "Booking fetched successfully."));
 });
 
-// ============================================================
+
 // CANCEL BOOKING
-// ============================================================
+
 
 export const cancelBooking = asyncHandler(
   async (req: Request, res: Response) => {
@@ -109,9 +109,9 @@ export const cancelBooking = asyncHandler(
   },
 );
 
-// ============================================================
+
 // CHECK-IN
-// ============================================================
+
 
 export const checkIn = asyncHandler(async (req: Request, res: Response) => {
   const booking = await bookingService.checkIn(
@@ -125,9 +125,9 @@ export const checkIn = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, booking, "Driver checked in successfully."));
 });
 
-// ============================================================
+
 // CHECK-OUT
-// ============================================================
+
 
 export const checkOut = asyncHandler(async (req: Request, res: Response) => {
   const booking = await bookingService.checkOut(

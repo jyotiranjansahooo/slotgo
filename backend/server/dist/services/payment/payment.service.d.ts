@@ -12,7 +12,10 @@ declare class PaymentService {
         payment: any;
         razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
     }>;
-    verifyPayment(orderId: string, paymentId: string, signature: string): Promise<any>;
+    verifyPayment(orderId: string, paymentId: string, signature: string): Promise<{
+        payment: any;
+        booking: any;
+    }>;
     refundPayment(paymentId: string, amount?: number): Promise<{
         payment: any;
         refund: import("razorpay/dist/types/refunds.js").Refunds.RazorpayRefund;

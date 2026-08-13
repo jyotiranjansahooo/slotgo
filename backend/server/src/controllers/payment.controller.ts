@@ -40,9 +40,15 @@ export const verifyPayment = asyncHandler(
       data.signature,
     );
 
-    res
-      .status(200)
-      .json(new ApiResponse(200, "Payment verified successfully.", result));
+    return res
+  .status(200)
+  .json(
+    new ApiResponse(
+      200,
+      result,
+      "Payment verified successfully.",
+    ),
+  );
   },
 );
 

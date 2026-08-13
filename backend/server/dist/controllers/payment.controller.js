@@ -12,9 +12,9 @@ export const createPayment = asyncHandler(async (req, res) => {
 export const verifyPayment = asyncHandler(async (req, res) => {
     const data = verifyPaymentSchema.parse(req.body);
     const result = await paymentService.verifyPayment(data.orderId, data.paymentId, data.signature);
-    res
+    return res
         .status(200)
-        .json(new ApiResponse(200, "Payment verified successfully.", result));
+        .json(new ApiResponse(200, result, "Payment verified successfully."));
 });
 export const refundPayment = asyncHandler(async (req, res) => {
     const data = refundPaymentSchema.parse(req.body);

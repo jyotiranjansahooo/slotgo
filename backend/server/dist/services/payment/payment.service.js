@@ -11,6 +11,7 @@ class PaymentService {
         if (!booking) {
             throw new ApiError(404, "Booking not found.");
         }
+        await slotAllocatorService.confirmReservation(booking.slotId.toString());
         // Prevent creating duplicate payment orders
         const existingPayment = await paymentRepository.findByBookingId(bookingId);
         if (existingPayment) {
@@ -50,9 +51,31 @@ class PaymentService {
         if (!payment) {
             throw new ApiError(404, "Payment record not found.");
         }
-        // Prevent processing the same payment twice
-        if (payment.status === PAYMENT_STATUS.SUCCESS) {
-            return payment;
+        // Already processed
+        if (payment.status ===
+            PAYMENT_STATUS.SUCCESS) {
+            const booking = await bookingRepository.findById(payment.bookingId.toString());
+            if (!booking) {
+                throw new ApiError(404, "Booking not found.");
+            }
+            if (booking.bookingStatus ===
+                BOOKING_STATUS.PENDING ||
+                booking.paymentStatus !==
+                    BOOKING_PAYMENT_STATUS.PAID) {
+                await slotAllocatorService.confirmReservation(booking.slotId.toString());
+                const updatedBooking = await bookingRepository.update(booking._id.toString(), {
+                    paymentStatus: BOOKING_PAYMENT_STATUS.PAID,
+                    bookingStatus: BOOKING_STATUS.CONFIRMED,
+                });
+                return {
+                    payment,
+                    booking: updatedBooking ?? booking,
+                };
+            }
+            return {
+                payment,
+                booking,
+            };
         }
         // Verify Razorpay signature
         const isValid = razorpayService.verifySignature(orderId, paymentId, signature);
@@ -60,14 +83,9 @@ class PaymentService {
             await paymentRepository.update(payment._id.toString(), {
                 status: PAYMENT_STATUS.FAILED,
             });
-            // Release temporarily reserved slot
-            const failedBooking = await bookingRepository.findById(payment.bookingId.toString());
-            if (failedBooking) {
-                await slotAllocatorService.releaseSlot(failedBooking.slotId.toString());
-            }
             throw new ApiError(400, "Invalid payment signature.");
         }
-        // Mark payment as successful
+        // Update payment
         const updatedPayment = await paymentRepository.update(payment._id.toString(), {
             paymentId,
             signature,
@@ -77,14 +95,13 @@ class PaymentService {
         if (!updatedPayment) {
             throw new ApiError(500, "Unable to update payment.");
         }
-        // Get booking associated with payment
+        // Get booking
         const booking = await bookingRepository.findById(payment.bookingId.toString());
         if (!booking) {
             throw new ApiError(404, "Booking not found.");
         }
-        // Convert temporary 15-minute slot reservation
-        // into reservation lasting until booking end time
-        await slotAllocatorService.finalizeReservation(booking.slotId.toString(), booking.endTime);
+        // Confirm slot reservation
+        await slotAllocatorService.confirmReservation(booking.slotId.toString());
         // Confirm booking
         const updatedBooking = await bookingRepository.update(booking._id.toString(), {
             paymentStatus: BOOKING_PAYMENT_STATUS.PAID,
@@ -103,8 +120,7 @@ class PaymentService {
         if (!payment) {
             throw new ApiError(404, "Payment not found.");
         }
-        if (payment.status !==
-            PAYMENT_STATUS.SUCCESS) {
+        if (payment.status !== PAYMENT_STATUS.SUCCESS) {
             throw new ApiError(400, "Only successful payments can be refunded.");
         }
         const refundableAmount = payment.amount - payment.refundAmount;
@@ -128,9 +144,7 @@ class PaymentService {
             status: fullyRefunded
                 ? PAYMENT_STATUS.REFUNDED
                 : PAYMENT_STATUS.PARTIALLY_REFUNDED,
-            refundedAt: fullyRefunded
-                ? new Date()
-                : undefined,
+            refundedAt: fullyRefunded ? new Date() : undefined,
         });
         if (!updatedPayment) {
             throw new ApiError(500, "Unable to update refund information.");

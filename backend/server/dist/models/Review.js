@@ -1,4 +1,4 @@
-import mongoose, { Schema, } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 const reviewSchema = new Schema({
     bookingId: {
         type: Schema.Types.ObjectId,
@@ -53,7 +53,6 @@ reviewSchema.index({
     parkingId: 1,
     createdAt: -1,
 });
-const Review = mongoose.models.Review ||
-    mongoose.model("Review", reviewSchema);
+const Review = mongoose.models.Review || mongoose.model("Review", reviewSchema);
 export default Review;
 //# sourceMappingURL=Review.js.map

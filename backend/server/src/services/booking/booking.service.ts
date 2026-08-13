@@ -30,14 +30,126 @@ import { CancelBookingInput } from "../../validations/booking/cancel.validation.
 import { CheckInInput } from "../../validations/booking/checkIn.validation.js";
 
 class BookingService {
-  // ============================================================
+  // VALIDATE BOOKING DURATION
+
+  private validateBookingDuration(
+    startTime: Date,
+    endTime: Date,
+    bookingMode: BookingMode,
+  ) {
+    const durationMs = endTime.getTime() - startTime.getTime();
+
+    const durationHours = durationMs / (1000 * 60 * 60);
+
+    switch (bookingMode) {
+      // --------------------------------------------------------
+      // HOURLY
+      // --------------------------------------------------------
+
+      case "hourly": {
+        if (durationHours < 1) {
+          throw new ApiError(400, "Hourly booking must be at least 1 hour.");
+        }
+
+        if (!Number.isInteger(durationHours)) {
+          throw new ApiError(
+            400,
+            "Hourly booking duration must be a whole number of hours.",
+          );
+        }
+
+        break;
+      }
+
+      // --------------------------------------------------------
+      // DAILY
+      // --------------------------------------------------------
+
+      case "daily": {
+        if (durationHours < 24) {
+          throw new ApiError(400, "Daily booking must be at least 24 hours.");
+        }
+
+        if (durationHours % 24 !== 0) {
+          throw new ApiError(
+            400,
+            "Daily booking duration must be in complete days.",
+          );
+        }
+
+        break;
+      }
+
+      // --------------------------------------------------------
+      // MONTHLY
+      // --------------------------------------------------------
+
+      case "monthly": {
+        if (durationHours < 24 * 28) {
+          throw new ApiError(400, "Monthly booking must be at least 28 days.");
+        }
+
+        break;
+      }
+
+      default:
+        throw new ApiError(400, "Invalid booking mode.");
+    }
+  }
+
+  // CALCULATE CANCELLATION REFUND
+
+  private calculateCancellationRefund(booking: {
+    driverPays: number;
+    startTime: Date;
+  }) {
+    const now = new Date();
+
+    const remainingMs = booking.startTime.getTime() - now.getTime();
+
+    const remainingHours = remainingMs / (1000 * 60 * 60);
+
+    let refundPercentage = 0;
+
+    // More than 24 hours before booking
+    if (remainingHours > 24) {
+      refundPercentage = 100;
+    }
+
+    // Between 2 and 24 hours
+    else if (remainingHours > 2) {
+      refundPercentage = 75;
+    }
+
+    // Between 1 and 2 hours
+    else if (remainingHours > 1) {
+      refundPercentage = 50;
+    }
+
+    // Less than 1 hour
+    else {
+      refundPercentage = 0;
+    }
+
+    const refundAmount = Number(
+      (booking.driverPays * (refundPercentage / 100)).toFixed(2),
+    );
+
+    const penaltyAmount = Number(
+      (booking.driverPays - refundAmount).toFixed(2),
+    );
+
+    return {
+      refundAmount,
+      penaltyAmount,
+      refundPercentage,
+    };
+  }
+
   // CREATE BOOKING
-  // ============================================================
 
   async createBooking(driverId: string, data: CreateBookingInput) {
-    // ----------------------------------------------------------
-    // Driver validation
-    // ----------------------------------------------------------
+    // DRIVER VALIDATION
 
     const driver = await userRepository.findById(driverId);
 
@@ -49,9 +161,7 @@ class BookingService {
       throw new ApiError(400, "Driver account is inactive.");
     }
 
-    // ----------------------------------------------------------
-    // Vehicle validation
-    // ----------------------------------------------------------
+    // VEHICLE VALIDATION
 
     const vehicle = await vehicleRepository.findById(data.vehicleId);
 
@@ -67,9 +177,7 @@ class BookingService {
       throw new ApiError(400, "Vehicle is inactive.");
     }
 
-    // ----------------------------------------------------------
-    // Time validation
-    // ----------------------------------------------------------
+    // TIME VALIDATION
 
     if (data.startTime >= data.endTime) {
       throw new ApiError(400, "End time must be after start time.");
@@ -79,9 +187,28 @@ class BookingService {
       throw new ApiError(400, "Booking start time cannot be in the past.");
     }
 
-    // ----------------------------------------------------------
-    // Parking validation
-    // ----------------------------------------------------------
+    this.validateBookingDuration(
+      data.startTime,
+      data.endTime,
+      data.bookingMode as BookingMode,
+    );
+
+    // VEHICLE BOOKING OVERLAP
+
+    const overlappingBooking = await bookingRepository.findOverlappingBooking(
+      vehicle._id.toString(),
+      data.startTime,
+      data.endTime,
+    );
+
+    if (overlappingBooking) {
+      throw new ApiError(
+        409,
+        "This vehicle already has an overlapping booking.",
+      );
+    }
+
+    // PARKING VALIDATION
 
     const parking = await parkingRepository.findById(data.parkingId);
 
@@ -97,9 +224,7 @@ class BookingService {
       throw new ApiError(400, "Parking is inactive.");
     }
 
-    // ----------------------------------------------------------
-    // Booking mode validation
-    // ----------------------------------------------------------
+    // BOOKING MODE VALIDATION
 
     const bookingEnabled = parking.bookingModes[data.bookingMode];
 
@@ -107,9 +232,7 @@ class BookingService {
       throw new ApiError(400, `${data.bookingMode} booking is unavailable.`);
     }
 
-    // ----------------------------------------------------------
-    // Reserve compatible slot
-    // ----------------------------------------------------------
+    // RESERVE PARKING SLOT
 
     const slot = await slotAllocatorService.reserveAvailableSlot(
       parking._id.toString(),
@@ -117,18 +240,26 @@ class BookingService {
     );
 
     if (!slot) {
-      throw new ApiError(400, "No parking slot available.");
+      throw new ApiError(409, "No parking slot available.");
     }
 
-    // ----------------------------------------------------------
-    // Calculate pricing
-    // ----------------------------------------------------------
+    // CALCULATE PRICING
 
-    const pricing = pricingService.calculate(
-      parking,
-      vehicle.vehicleType,
-      data.bookingMode,
-    );
+    let pricing;
+
+    try {
+      pricing = pricingService.calculate(
+        parking,
+        vehicle.vehicleType,
+        data.bookingMode as BookingMode,
+        data.startTime,
+        data.endTime,
+      );
+    } catch (error) {
+      await slotAllocatorService.releaseSlot(slot._id.toString());
+
+      throw error;
+    }
 
     if (pricing.parkingAmount <= 0) {
       await slotAllocatorService.releaseSlot(slot._id.toString());
@@ -139,9 +270,7 @@ class BookingService {
       );
     }
 
-    // ----------------------------------------------------------
-    // Generate booking information
-    // ----------------------------------------------------------
+    // GENERATE BOOKING DATA
 
     const bookingNumber = bookingNumberService.generate();
 
@@ -149,9 +278,7 @@ class BookingService {
 
     const qrCode = await qrService.generate(bookingNumber);
 
-    // ----------------------------------------------------------
-    // Create booking
-    // ----------------------------------------------------------
+    // CREATE BOOKING
 
     let booking;
 
@@ -179,12 +306,9 @@ class BookingService {
 
         parkingAmount: pricing.parkingAmount,
 
-        // Discount system is not implemented yet.
-        discountAmount: 0,
+        discountAmount: pricing.discountAmount,
 
-        // Currently actual amount equals
-        // the parking amount.
-        actualAmount: pricing.parkingAmount,
+        actualAmount: pricing.actualAmount,
 
         ownerCommission: pricing.ownerCommission,
 
@@ -215,22 +339,23 @@ class BookingService {
 
         vehicleSnapshot: {
           registrationNumber: vehicle.registrationNumber,
+
           brand: vehicle.brand,
+
           vehicleModel: vehicle.vehicleModel,
+
           vehicleType: vehicle.vehicleType,
         },
       });
     } catch (error) {
-      // Booking creation failed,
-      // so release temporary slot reservation.
+      // Release slot if booking creation fails.
+
       await slotAllocatorService.releaseSlot(slot._id.toString());
 
       throw error;
     }
 
-    // ----------------------------------------------------------
-    // Create payment
-    // ----------------------------------------------------------
+    // CREATE PAYMENT
 
     try {
       const payment = await paymentService.createPayment(
@@ -242,28 +367,25 @@ class BookingService {
         payment,
       };
     } catch (error) {
-      // Payment creation failed.
-      // Release temporary slot.
+      // Release slot.
+
       await slotAllocatorService.releaseSlot(slot._id.toString());
 
-      // Remove incomplete booking.
+      // Delete incomplete booking.
+
       await bookingRepository.delete(booking._id.toString());
 
       throw error;
     }
   }
 
-  // ============================================================
   // VERIFY PAYMENT
-  // ============================================================
 
   async verifyPayment(orderId: string, paymentId: string, signature: string) {
     return paymentService.verifyPayment(orderId, paymentId, signature);
   }
 
-  // ============================================================
   // GET SINGLE BOOKING
-  // ============================================================
 
   async getBooking(userId: string, bookingId: string) {
     const booking = await bookingRepository.findById(bookingId);
@@ -283,25 +405,20 @@ class BookingService {
     return booking;
   }
 
-  // ============================================================
-  // DRIVER BOOKINGS
-  // ============================================================
+  // GET DRIVER BOOKINGS
 
   async getDriverBookings(driverId: string) {
     return bookingRepository.findByDriver(driverId);
   }
+  async getOwnerBookings(
+  ownerId: string,
+) {
+  return bookingRepository.findByOwner(
+    ownerId,
+  );
+}
 
-  // ============================================================
-  // OWNER BOOKINGS
-  // ============================================================
-
-  async getOwnerBookings(ownerId: string) {
-    return bookingRepository.findByOwner(ownerId);
-  }
-
-  // ============================================================
   // CANCEL BOOKING
-  // ============================================================
 
   async cancelBooking(
     driverId: string,
@@ -314,14 +431,13 @@ class BookingService {
       throw new ApiError(404, "Booking not found.");
     }
 
-    // Only booking driver can cancel.
+    // DRIVER AUTHORIZATION
+
     if (booking.driverId.toString() !== driverId) {
       throw new ApiError(403, "You are not authorized to cancel this booking.");
     }
 
-    // ----------------------------------------------------------
-    // Status validation
-    // ----------------------------------------------------------
+    // STATUS VALIDATION
 
     if (booking.bookingStatus === BOOKING_STATUS.CANCELLED) {
       throw new ApiError(400, "Booking is already cancelled.");
@@ -339,21 +455,20 @@ class BookingService {
       throw new ApiError(400, "Expired bookings cannot be cancelled.");
     }
 
-    // ----------------------------------------------------------
-    // Refund calculation
-    // ----------------------------------------------------------
+    // CALCULATE REFUND
 
     let refundAmount = 0;
-
-    const penaltyAmount = 0;
+    let penaltyAmount = 0;
 
     if (booking.paymentStatus === BOOKING_PAYMENT_STATUS.PAID) {
-      refundAmount = booking.driverPays;
+      const cancellation = this.calculateCancellationRefund(booking);
+
+      refundAmount = cancellation.refundAmount;
+
+      penaltyAmount = cancellation.penaltyAmount;
     }
 
-    // ----------------------------------------------------------
-    // Refund payment
-    // ----------------------------------------------------------
+    // REFUND PAYMENT
 
     if (refundAmount > 0) {
       const payment = await paymentRepository.findByBookingId(
@@ -372,20 +487,28 @@ class BookingService {
       }
     }
 
-    // ----------------------------------------------------------
-    // Release slot
-    // ----------------------------------------------------------
+    // RELEASE SLOT
 
     await slotAllocatorService.releaseSlot(booking.slotId.toString());
 
-    // ----------------------------------------------------------
-    // Update booking
-    // ----------------------------------------------------------
+    // DETERMINE PAYMENT STATUS
+
+    let paymentStatus = booking.paymentStatus;
+
+    if (booking.paymentStatus === BOOKING_PAYMENT_STATUS.PAID) {
+      if (refundAmount >= booking.driverPays) {
+        paymentStatus = BOOKING_PAYMENT_STATUS.REFUNDED;
+      }
+    }
+
+    // UPDATE BOOKING
 
     const updatedBooking = await bookingRepository.update(
       booking._id.toString(),
       {
         bookingStatus: BOOKING_STATUS.CANCELLED,
+
+        paymentStatus,
 
         cancellation: {
           cancelledBy: CANCELLED_BY.DRIVER,
@@ -408,9 +531,7 @@ class BookingService {
     return updatedBooking;
   }
 
-  // ============================================================
-  // CHECK-IN
-  // ============================================================
+  // CHECK IN
 
   async checkIn(ownerId: string, bookingId: string, data: CheckInInput) {
     const booking = await bookingRepository.findById(bookingId);
@@ -419,7 +540,8 @@ class BookingService {
       throw new ApiError(404, "Booking not found.");
     }
 
-    // Only parking owner can check in.
+    // OWNER AUTHORIZATION
+
     if (booking.ownerId.toString() !== ownerId) {
       throw new ApiError(
         403,
@@ -427,7 +549,8 @@ class BookingService {
       );
     }
 
-    // Must be confirmed.
+    // BOOKING STATUS
+
     if (booking.bookingStatus !== BOOKING_STATUS.CONFIRMED) {
       throw new ApiError(
         400,
@@ -435,32 +558,35 @@ class BookingService {
       );
     }
 
-    // Verify PIN.
+    // PAYMENT STATUS
+
+    if (booking.paymentStatus !== BOOKING_PAYMENT_STATUS.PAID) {
+      throw new ApiError(400, "Booking payment has not been completed.");
+    }
+
+    // VERIFY PIN
+
     if (booking.verificationPin !== data.verificationPin) {
       throw new ApiError(400, "Invalid verification PIN.");
     }
 
+    // CHECK BOOKING TIME
+
     const now = new Date();
 
-    // Booking hasn't started.
     if (now < booking.startTime) {
       throw new ApiError(400, "Check-in time has not started yet.");
     }
 
-    // Booking has already ended.
     if (now >= booking.endTime) {
       throw new ApiError(400, "Booking has already expired.");
     }
 
-    // ----------------------------------------------------------
-    // Occupy slot
-    // ----------------------------------------------------------
+    // OCCUPY SLOT
 
     await slotAllocatorService.occupySlot(booking.slotId.toString());
 
-    // ----------------------------------------------------------
-    // Update booking
-    // ----------------------------------------------------------
+    // UPDATE BOOKING
 
     const updatedBooking = await bookingRepository.update(
       booking._id.toString(),
@@ -472,7 +598,8 @@ class BookingService {
     );
 
     if (!updatedBooking) {
-      // Restore slot if update fails.
+      // Restore slot if booking update fails.
+
       await slotAllocatorService.releaseSlot(booking.slotId.toString());
 
       throw new ApiError(500, "Unable to complete check-in.");
@@ -481,9 +608,7 @@ class BookingService {
     return updatedBooking;
   }
 
-  // ============================================================
-  // CHECK-OUT
-  // ============================================================
+  // CHECK OUT
 
   async checkOut(ownerId: string, bookingId: string) {
     const booking = await bookingRepository.findById(bookingId);
@@ -492,7 +617,8 @@ class BookingService {
       throw new ApiError(404, "Booking not found.");
     }
 
-    // Only parking owner can check out.
+    // OWNER AUTHORIZATION
+
     if (booking.ownerId.toString() !== ownerId) {
       throw new ApiError(
         403,
@@ -500,7 +626,8 @@ class BookingService {
       );
     }
 
-    // Must be active.
+    // STATUS VALIDATION
+
     if (booking.bookingStatus !== BOOKING_STATUS.ACTIVE) {
       throw new ApiError(
         400,
@@ -510,15 +637,11 @@ class BookingService {
 
     const now = new Date();
 
-    // ----------------------------------------------------------
-    // Release slot
-    // ----------------------------------------------------------
+    // RELEASE SLOT
 
     await slotAllocatorService.releaseSlot(booking.slotId.toString());
 
-    // ----------------------------------------------------------
-    // Complete booking
-    // ----------------------------------------------------------
+    // COMPLETE BOOKING
 
     const updatedBooking = await bookingRepository.update(
       booking._id.toString(),
@@ -530,7 +653,8 @@ class BookingService {
     );
 
     if (!updatedBooking) {
-      // Restore occupied state.
+      // Restore occupied state if update fails.
+
       await slotAllocatorService.occupySlot(booking.slotId.toString());
 
       throw new ApiError(500, "Unable to complete check-out.");
@@ -539,9 +663,7 @@ class BookingService {
     return updatedBooking;
   }
 
-  // ============================================================
   // EXPIRE BOOKINGS
-  // ============================================================
 
   async expireBooking() {
     const now = new Date();
@@ -549,9 +671,7 @@ class BookingService {
     let pendingExpired = 0;
     let confirmedExpired = 0;
 
-    // ----------------------------------------------------------
-    // Expire pending bookings
-    // ----------------------------------------------------------
+    // EXPIRE UNPAID BOOKINGS
 
     const pendingBookings =
       await bookingRepository.findExpiredPendingBookings(now);
@@ -566,9 +686,7 @@ class BookingService {
       pendingExpired++;
     }
 
-    // ----------------------------------------------------------
-    // Expire confirmed/active bookings
-    // ----------------------------------------------------------
+    // EXPIRE CONFIRMED BOOKINGS
 
     const confirmedBookings =
       await bookingRepository.findExpiredConfirmedBookings(now);
