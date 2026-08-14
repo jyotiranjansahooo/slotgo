@@ -1,37 +1,33 @@
-import Review, { IReview } from "../models/Review.js";
+import Review, {
+  IReview,
+} from "../models/Review.js";
 
 class ReviewRepository {
-  // ============================================================
-  // CREATE REVIEW
-  // ============================================================
-
-  async create(data: Partial<IReview>) {
+  async create(
+    data: Partial<IReview>,
+  ) {
     return Review.create(data);
   }
 
-  // ============================================================
-  // FIND BY ID
-  // ============================================================
-
-  async findById(id: string) {
-    return Review.findById(id);
+  async findById(
+    reviewId: string,
+  ) {
+    return Review.findById(
+      reviewId,
+    );
   }
 
-  // ============================================================
-  // FIND BY BOOKING
-  // ============================================================
-
-  async findByBookingId(bookingId: string) {
+  async findByBookingId(
+    bookingId: string,
+  ) {
     return Review.findOne({
       bookingId,
     });
   }
 
-  // ============================================================
-  // FIND BY DRIVER
-  // ============================================================
-
-  async findByDriver(driverId: string) {
+  async findByDriver(
+    driverId: string,
+  ) {
     return Review.find({
       driverId,
       isActive: true,
@@ -40,11 +36,20 @@ class ReviewRepository {
     });
   }
 
-  // ============================================================
-  // FIND BY PARKING
-  // ============================================================
+  async findByOwner(
+    ownerId: string,
+  ) {
+    return Review.find({
+      ownerId,
+      isActive: true,
+    }).sort({
+      createdAt: -1,
+    });
+  }
 
-  async findByParking(parkingId: string) {
+  async findByParking(
+    parkingId: string,
+  ) {
     return Review.find({
       parkingId,
       isActive: true,
@@ -53,23 +58,26 @@ class ReviewRepository {
     });
   }
 
-  // ============================================================
-  // UPDATE REVIEW
-  // ============================================================
-
-  async update(id: string, data: Partial<IReview>) {
-    return Review.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
+  async update(
+    reviewId: string,
+    data: Partial<IReview>,
+  ) {
+    return Review.findByIdAndUpdate(
+      reviewId,
+      data,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
   }
 
-  // ============================================================
-  // DELETE REVIEW
-  // ============================================================
-
-  async delete(id: string) {
-    return Review.findByIdAndDelete(id);
+  async delete(
+    reviewId: string,
+  ) {
+    return Review.findByIdAndDelete(
+      reviewId,
+    );
   }
 }
 

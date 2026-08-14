@@ -5,10 +5,8 @@ import bookingRepository from "../../repositories/booking.repository.js";
 
 import {
   BOOKING_STATUS,
+  PAYMENT_STATUS as BOOKING_PAYMENT_STATUS,
 } from "../../constants/booking.js";
-
-import { CreateReviewInput } from "../../validations/review/create.validation.js";
-import { UpdateReviewInput } from "../../validations/review/update.validation.js";
 
 class ReviewService {
   // ============================================================
@@ -17,94 +15,85 @@ class ReviewService {
 
   async createReview(
     driverId: string,
-    data: CreateReviewInput,
+    data: {
+      bookingId: string;
+      rating: number;
+      comment?: string;
+    },
   ) {
+    // ----------------------------------------------------------
+    // VALIDATE RATING
+    // ----------------------------------------------------------
+
+    if (!Number.isInteger(data.rating) || data.rating < 1 || data.rating > 5) {
+      throw new ApiError(400, "Rating must be an integer between 1 and 5.");
+    }
+
     // ----------------------------------------------------------
     // FIND BOOKING
     // ----------------------------------------------------------
 
-    const booking =
-      await bookingRepository.findById(
-        data.bookingId,
-      );
+    const booking = await bookingRepository.findById(data.bookingId);
 
     if (!booking) {
-      throw new ApiError(
-        404,
-        "Booking not found.",
-      );
+      throw new ApiError(404, "Booking not found.");
     }
 
     // ----------------------------------------------------------
     // DRIVER AUTHORIZATION
     // ----------------------------------------------------------
 
-    if (
-      booking.driverId.toString() !==
-      driverId
-    ) {
-      throw new ApiError(
-        403,
-        "You are not authorized to review this booking.",
-      );
+    if (booking.driverId.toString() !== driverId) {
+      throw new ApiError(403, "You are not authorized to review this booking.");
     }
 
     // ----------------------------------------------------------
-    // BOOKING STATUS
+    // BOOKING MUST BE COMPLETED
     // ----------------------------------------------------------
 
-    if (
-      booking.bookingStatus !==
-      BOOKING_STATUS.COMPLETED
-    ) {
-      throw new ApiError(
-        400,
-        "You can only review a completed booking.",
-      );
+    if (booking.bookingStatus !== BOOKING_STATUS.COMPLETED) {
+      throw new ApiError(400, "Only completed bookings can be reviewed.");
     }
 
     // ----------------------------------------------------------
-    // CHECK EXISTING REVIEW
+    // PAYMENT MUST BE COMPLETED
     // ----------------------------------------------------------
 
-    const existingReview =
-      await reviewRepository.findByBookingId(
-        data.bookingId,
-      );
+    if (booking.paymentStatus !== BOOKING_PAYMENT_STATUS.PAID) {
+      throw new ApiError(400, "Only paid bookings can be reviewed.");
+    }
+
+    // ----------------------------------------------------------
+    // PREVENT DUPLICATE REVIEW
+    // ----------------------------------------------------------
+
+    const existingReview = await reviewRepository.findByBookingId(
+      data.bookingId,
+    );
 
     if (existingReview) {
-      throw new ApiError(
-        409,
-        "This booking has already been reviewed.",
-      );
+      throw new ApiError(409, "A review already exists for this booking.");
     }
 
     // ----------------------------------------------------------
     // CREATE REVIEW
     // ----------------------------------------------------------
 
-    const review =
-      await reviewRepository.create({
-        bookingId:
-          booking._id,
+    const review = await reviewRepository.create({
+      bookingId: booking._id,
 
-        driverId:
-          booking.driverId,
+      driverId: booking.driverId,
 
-        ownerId:
-          booking.ownerId,
+      ownerId: booking.ownerId,
 
-        parkingId:
-          booking.parkingId,
+      parkingId: booking.parkingId,
 
-        rating:
-          data.rating,
+      rating: data.rating,
 
-        comment:
-          data.comment ?? "",
+      comment: data.comment?.trim() ?? "",
 
-        isActive: true,
-      });
+      isActive: true,
+    });
 
     return review;
   }
@@ -113,49 +102,37 @@ class ReviewService {
   // GET REVIEW BY ID
   // ============================================================
 
-  async getReviewById(
-    reviewId: string,
-  ) {
-    const review =
-      await reviewRepository.findById(
-        reviewId,
-      );
+  async getReviewById(reviewId: string) {
+    const review = await reviewRepository.findById(reviewId);
 
-    if (
-      !review ||
-      !review.isActive
-    ) {
-      throw new ApiError(
-        404,
-        "Review not found.",
-      );
+    if (!review) {
+      throw new ApiError(404, "Review not found.");
     }
-
     return review;
-  }
-
-  // ============================================================
-  // GET DRIVER REVIEWS
-  // ============================================================
-
-  async getDriverReviews(
-    driverId: string,
-  ) {
-    return reviewRepository.findByDriver(
-      driverId,
-    );
   }
 
   // ============================================================
   // GET PARKING REVIEWS
   // ============================================================
 
-  async getParkingReviews(
-    parkingId: string,
-  ) {
-    return reviewRepository.findByParking(
-      parkingId,
-    );
+  async getParkingReviews(parkingId: string) {
+    return reviewRepository.findByParking(parkingId);
+  }
+
+  // ============================================================
+  // GET OWNER REVIEWS
+  // ============================================================
+
+  async getOwnerReviews(ownerId: string) {
+    return reviewRepository.findByOwner(ownerId);
+  }
+
+  // ============================================================
+  // GET DRIVER REVIEWS
+  // ============================================================
+
+  async getDriverReviews(driverId: string) {
+    return reviewRepository.findByDriver(driverId);
   }
 
   // ============================================================
@@ -165,52 +142,64 @@ class ReviewService {
   async updateReview(
     driverId: string,
     reviewId: string,
-    data: UpdateReviewInput,
+    data: {
+      rating?: number;
+      comment?: string;
+    },
   ) {
-    const review =
-      await reviewRepository.findById(
-        reviewId,
-      );
+    const review = await reviewRepository.findById(reviewId);
 
-    if (
-      !review ||
-      !review.isActive
-    ) {
-      throw new ApiError(
-        404,
-        "Review not found.",
-      );
+    if (!review) {
+      throw new ApiError(404, "Review not found.");
     }
 
     // ----------------------------------------------------------
     // DRIVER AUTHORIZATION
     // ----------------------------------------------------------
 
-    if (
-      review.driverId.toString() !==
-      driverId
-    ) {
-      throw new ApiError(
-        403,
-        "You are not authorized to update this review.",
-      );
+    if (review.driverId.toString() !== driverId) {
+      throw new ApiError(403, "You are not authorized to update this review.");
+    }
+
+    // ----------------------------------------------------------
+    // VALIDATE RATING
+    // ----------------------------------------------------------
+
+    if (data.rating !== undefined) {
+      if (
+        !Number.isInteger(data.rating) ||
+        data.rating < 1 ||
+        data.rating > 5
+      ) {
+        throw new ApiError(400, "Rating must be an integer between 1 and 5.");
+      }
+    }
+
+    // ----------------------------------------------------------
+    // PREPARE UPDATE
+    // ----------------------------------------------------------
+
+    const updateData: {
+      rating?: number;
+      comment?: string;
+    } = {};
+
+    if (data.rating !== undefined) {
+      updateData.rating = data.rating;
+    }
+
+    if (data.comment !== undefined) {
+      updateData.comment = data.comment.trim();
     }
 
     // ----------------------------------------------------------
     // UPDATE
     // ----------------------------------------------------------
 
-    const updatedReview =
-      await reviewRepository.update(
-        reviewId,
-        data,
-      );
+    const updatedReview = await reviewRepository.update(reviewId, updateData);
 
     if (!updatedReview) {
-      throw new ApiError(
-        500,
-        "Unable to update review.",
-      );
+      throw new ApiError(500, "Unable to update review.");
     }
 
     return updatedReview;
@@ -220,59 +209,34 @@ class ReviewService {
   // DELETE REVIEW
   // ============================================================
 
-  async deleteReview(
-    driverId: string,
-    reviewId: string,
-  ) {
-    const review =
-      await reviewRepository.findById(
-        reviewId,
-      );
+  async deleteReview(driverId: string, reviewId: string) {
+    const review = await reviewRepository.findById(reviewId);
 
-    if (
-      !review ||
-      !review.isActive
-    ) {
-      throw new ApiError(
-        404,
-        "Review not found.",
-      );
+    if (!review) {
+      throw new ApiError(404, "Review not found.");
     }
 
     // ----------------------------------------------------------
     // DRIVER AUTHORIZATION
     // ----------------------------------------------------------
 
-    if (
-      review.driverId.toString() !==
-      driverId
-    ) {
-      throw new ApiError(
-        403,
-        "You are not authorized to delete this review.",
-      );
+    if (review.driverId.toString() !== driverId) {
+      throw new ApiError(403, "You are not authorized to delete this review.");
     }
 
     // ----------------------------------------------------------
     // SOFT DELETE
     // ----------------------------------------------------------
 
-    const deletedReview =
-      await reviewRepository.update(
-        reviewId,
-        {
-          isActive: false,
-        },
-      );
+    const updatedReview = await reviewRepository.update(reviewId, {
+      isActive: false,
+    });
 
-    if (!deletedReview) {
-      throw new ApiError(
-        500,
-        "Unable to delete review.",
-      );
+    if (!updatedReview) {
+      throw new ApiError(500, "Unable to delete review.");
     }
 
-    return deletedReview;
+    return updatedReview;
   }
 }
 

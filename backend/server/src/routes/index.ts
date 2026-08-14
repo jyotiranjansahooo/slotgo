@@ -11,7 +11,6 @@ import adminParkingRoutes from "./adminParking.routes.js";
 import parkingDiscoveryRoutes from "./parkingDiscovery.routes.js";
 import reviewRoutes from "./review.routes.js";
 import walletRoutes from "./wallet.routes.js";
-
 const router = Router();
 
 router.use("/vehicles", vehicleRoutes);
