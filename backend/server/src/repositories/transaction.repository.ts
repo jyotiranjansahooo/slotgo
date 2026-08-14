@@ -1,15 +1,11 @@
-import Transaction, {
-  ITransaction,
-} from "../models/Transaction.js";
+import Transaction, { ITransaction } from "../models/Transaction.js";
 
 class TransactionRepository {
   // ============================================================
   // CREATE TRANSACTION
   // ============================================================
 
-  async create(
-    data: Partial<ITransaction>,
-  ) {
+  async create(data: Partial<ITransaction>) {
     return Transaction.create(data);
   }
 
@@ -25,9 +21,7 @@ class TransactionRepository {
   // FIND BY REFERENCE
   // ============================================================
 
-  async findByReferenceId(
-    referenceId: string,
-  ) {
+  async findByReferenceId(referenceId: string) {
     return Transaction.findOne({
       referenceId,
     });
@@ -37,9 +31,7 @@ class TransactionRepository {
   // FIND WALLET TRANSACTIONS
   // ============================================================
 
-  async findByWalletId(
-    walletId: string,
-  ) {
+  async findByWalletId(walletId: string) {
     return Transaction.find({
       walletId,
     }).sort({
@@ -51,9 +43,7 @@ class TransactionRepository {
   // FIND OWNER TRANSACTIONS
   // ============================================================
 
-  async findByOwnerId(
-    ownerId: string,
-  ) {
+  async findByOwnerId(ownerId: string) {
     return Transaction.find({
       ownerId,
     }).sort({
@@ -65,9 +55,7 @@ class TransactionRepository {
   // FIND DRIVER TRANSACTIONS
   // ============================================================
 
-  async findByDriverId(
-    driverId: string,
-  ) {
+  async findByDriverId(driverId: string) {
     return Transaction.find({
       driverId,
     }).sort({
@@ -79,18 +67,11 @@ class TransactionRepository {
   // UPDATE TRANSACTION
   // ============================================================
 
-  async update(
-    id: string,
-    data: Partial<ITransaction>,
-  ) {
-    return Transaction.findByIdAndUpdate(
-      id,
-      data,
-      {
-        new: true,
-        runValidators: true,
-      },
-    );
+  async update(id: string, data: Partial<ITransaction>) {
+    return Transaction.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
+    });
   }
 }
 

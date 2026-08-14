@@ -59,36 +59,28 @@ class UserRepository {
     });
   }
   async findAll() {
-  return User.find()
-    .select("-password -refreshToken")
-    .sort({
+    return User.find().select("-password -refreshToken").sort({
       createdAt: -1,
     });
-}
+  }
 
-async findByIdForAdmin(id: string) {
-  return User.findById(id)
-    .select("-password -refreshToken");
-}
+  async findByIdForAdmin(id: string) {
+    return User.findById(id).select("-password -refreshToken");
+  }
 
-async updateStatus(
-  id: string,
-  isActive: boolean,
-) {
-  return User.findByIdAndUpdate(
-    id,
-    {
-      isActive,
-      ...(isActive
-        ? { deletedAt: null }
-        : { deletedAt: new Date() }),
-    },
-    {
-      new: true,
-      runValidators: true,
-    },
-  ).select("-password -refreshToken");
-}
+  async updateStatus(id: string, isActive: boolean) {
+    return User.findByIdAndUpdate(
+      id,
+      {
+        isActive,
+        ...(isActive ? { deletedAt: null } : { deletedAt: new Date() }),
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).select("-password -refreshToken");
+  }
 }
 
 export default new UserRepository();

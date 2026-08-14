@@ -1,28 +1,16 @@
 import Review from "../models/Review.js";
 class ReviewRepository {
-    // ============================================================
-    // CREATE REVIEW
-    // ============================================================
     async create(data) {
         return Review.create(data);
     }
-    // ============================================================
-    // FIND BY ID
-    // ============================================================
-    async findById(id) {
-        return Review.findById(id);
+    async findById(reviewId) {
+        return Review.findById(reviewId);
     }
-    // ============================================================
-    // FIND BY BOOKING
-    // ============================================================
     async findByBookingId(bookingId) {
         return Review.findOne({
             bookingId,
         });
     }
-    // ============================================================
-    // FIND BY DRIVER
-    // ============================================================
     async findByDriver(driverId) {
         return Review.find({
             driverId,
@@ -31,9 +19,14 @@ class ReviewRepository {
             createdAt: -1,
         });
     }
-    // ============================================================
-    // FIND BY PARKING
-    // ============================================================
+    async findByOwner(ownerId) {
+        return Review.find({
+            ownerId,
+            isActive: true,
+        }).sort({
+            createdAt: -1,
+        });
+    }
     async findByParking(parkingId) {
         return Review.find({
             parkingId,
@@ -42,20 +35,14 @@ class ReviewRepository {
             createdAt: -1,
         });
     }
-    // ============================================================
-    // UPDATE REVIEW
-    // ============================================================
-    async update(id, data) {
-        return Review.findByIdAndUpdate(id, data, {
+    async update(reviewId, data) {
+        return Review.findByIdAndUpdate(reviewId, data, {
             new: true,
             runValidators: true,
         });
     }
-    // ============================================================
-    // DELETE REVIEW
-    // ============================================================
-    async delete(id) {
-        return Review.findByIdAndDelete(id);
+    async delete(reviewId) {
+        return Review.findByIdAndDelete(reviewId);
     }
 }
 export default new ReviewRepository();

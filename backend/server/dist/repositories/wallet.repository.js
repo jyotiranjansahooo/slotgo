@@ -1,51 +1,43 @@
 import Wallet from "../models/Wallet.js";
 class WalletRepository {
+    // ============================================================
+    // CREATE WALLET
+    // ============================================================
     async create(data) {
         return Wallet.create(data);
     }
+    // ============================================================
+    // FIND BY ID
+    // ============================================================
     async findById(id) {
         return Wallet.findById(id);
     }
-    async findByOwner(ownerId) {
-        return Wallet.findOne({ ownerId });
+    // ============================================================
+    // FIND BY OWNER
+    // ============================================================
+    async findByOwnerId(ownerId) {
+        return Wallet.findOne({
+            ownerId,
+        });
     }
+    // ============================================================
+    // UPDATE WALLET
+    // ============================================================
     async update(id, data) {
         return Wallet.findByIdAndUpdate(id, data, {
             new: true,
+            runValidators: true,
         });
     }
-    async delete(id) {
-        return Wallet.findByIdAndDelete(id);
-    }
-    async incrementPendingBalance(ownerId, amount) {
-        return Wallet.findOneAndUpdate({ ownerId }, {
-            $inc: {
-                pendingBalance: amount,
-                totalEarnings: amount,
-            },
+    // ============================================================
+    // UPDATE BALANCE
+    // ============================================================
+    async updateBalance(id, data) {
+        return Wallet.findByIdAndUpdate(id, {
+            $set: data,
         }, {
             new: true,
-        });
-    }
-    async transferPendingToAvailable(ownerId, amount) {
-        return Wallet.findOneAndUpdate({ ownerId }, {
-            $inc: {
-                pendingBalance: -amount,
-                availableBalance: amount,
-            },
-        }, {
-            new: true,
-        });
-    }
-    async withdraw(ownerId, amount) {
-        return Wallet.findOneAndUpdate({ ownerId }, {
-            $inc: {
-                availableBalance: -amount,
-                totalWithdrawn: amount,
-            },
-            lastWithdrawalAt: new Date(),
-        }, {
-            new: true,
+            runValidators: true,
         });
     }
 }

@@ -26,6 +26,11 @@ class PaymentRepository {
             new: true,
         });
     }
+    async findAll() {
+        return Payment.find().sort({
+            createdAt: -1,
+        });
+    }
     async updateStatus(id, status) {
         return Payment.findByIdAndUpdate(id, {
             status,

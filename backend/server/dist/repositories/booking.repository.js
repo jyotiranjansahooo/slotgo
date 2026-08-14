@@ -7,6 +7,11 @@ class BookingRepository {
         }
         return Booking.create(data);
     }
+    async findAll() {
+        return Booking.find().sort({
+            createdAt: -1,
+        });
+    }
     async findById(id) {
         return Booking.findById(id);
     }
@@ -40,11 +45,7 @@ class BookingRepository {
         return Booking.findOne({
             vehicleId,
             bookingStatus: {
-                $in: [
-                    "pending",
-                    "confirmed",
-                    "active",
-                ],
+                $in: ["pending", "confirmed", "active"],
             },
             startTime: {
                 $lt: endTime,

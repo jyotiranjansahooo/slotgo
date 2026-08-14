@@ -6,6 +6,7 @@ declare class PaymentRepository {
     findByOrderId(orderId: string): Promise<any>;
     findByPaymentId(paymentId: string): Promise<any>;
     update(id: string, data: Partial<IPayment>): Promise<any>;
+    findAll(): Promise<any[]>;
     updateStatus(id: string, status: IPayment["status"]): Promise<any>;
 }
 declare const _default: PaymentRepository;

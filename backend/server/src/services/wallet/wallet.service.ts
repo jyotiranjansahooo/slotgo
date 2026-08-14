@@ -16,32 +16,25 @@ class WalletService {
   // ============================================================
 
   async getOrCreateWallet(ownerId: string) {
-    let wallet =
-      await walletRepository.findByOwnerId(
-        ownerId,
-      );
+    let wallet = await walletRepository.findByOwnerId(ownerId);
 
     if (wallet) {
       return wallet;
     }
 
-    wallet =
-      await walletRepository.create({
-        ownerId:
-          new mongoose.Types.ObjectId(
-            ownerId,
-          ),
+    wallet = await walletRepository.create({
+      ownerId: new mongoose.Types.ObjectId(ownerId),
 
-        availableBalance: 0,
+      availableBalance: 0,
 
-        pendingBalance: 0,
+      pendingBalance: 0,
 
-        totalEarnings: 0,
+      totalEarnings: 0,
 
-        totalWithdrawn: 0,
+      totalWithdrawn: 0,
 
-        isActive: true,
-      });
+      isActive: true,
+    });
 
     return wallet;
   }
@@ -51,9 +44,7 @@ class WalletService {
   // ============================================================
 
   async getWallet(ownerId: string) {
-    return this.getOrCreateWallet(
-      ownerId,
-    );
+    return this.getOrCreateWallet(ownerId);
   }
 
   // ============================================================
@@ -65,26 +56,16 @@ class WalletService {
     amount: number,
     bookingId?: string,
     referenceId?: string,
-    description =
-      "Parking booking earnings",
+    description = "Parking booking earnings",
   ) {
     if (amount <= 0) {
-      throw new ApiError(
-        400,
-        "Credit amount must be greater than zero.",
-      );
+      throw new ApiError(400, "Credit amount must be greater than zero.");
     }
 
-    const wallet =
-      await this.getOrCreateWallet(
-        ownerId,
-      );
+    const wallet = await this.getOrCreateWallet(ownerId);
 
     if (!wallet.isActive) {
-      throw new ApiError(
-        400,
-        "Wallet is inactive.",
-      );
+      throw new ApiError(400, "Wallet is inactive.");
     }
 
     // ----------------------------------------------------------
@@ -93,15 +74,12 @@ class WalletService {
 
     if (referenceId) {
       const existingTransaction =
-        await transactionRepository.findByReferenceId(
-          referenceId,
-        );
+        await transactionRepository.findByReferenceId(referenceId);
 
       if (existingTransaction) {
         return {
           wallet,
-          transaction:
-            existingTransaction,
+          transaction: existingTransaction,
         };
       }
     }
@@ -110,71 +88,52 @@ class WalletService {
     // CALCULATE BALANCE
     // ----------------------------------------------------------
 
-    const balanceBefore =
-      wallet.availableBalance;
+    const balanceBefore = wallet.availableBalance;
 
-    const balanceAfter =
-      balanceBefore + amount;
+    const balanceAfter = balanceBefore + amount;
 
     // ----------------------------------------------------------
     // UPDATE WALLET
     // ----------------------------------------------------------
 
-    const updatedWallet =
-      await walletRepository.updateBalance(
-        wallet._id.toString(),
-        {
-          availableBalance:
-            balanceAfter,
+    const updatedWallet = await walletRepository.updateBalance(
+      wallet._id.toString(),
+      {
+        availableBalance: balanceAfter,
 
-          totalEarnings:
-            wallet.totalEarnings +
-            amount,
-        },
-      );
+        totalEarnings: wallet.totalEarnings + amount,
+      },
+    );
 
     if (!updatedWallet) {
-      throw new ApiError(
-        500,
-        "Unable to update wallet balance.",
-      );
+      throw new ApiError(500, "Unable to update wallet balance.");
     }
 
     // ----------------------------------------------------------
     // CREATE TRANSACTION
     // ----------------------------------------------------------
 
-    const transaction =
-      await transactionRepository.create({
-        walletId:
-          updatedWallet._id,
+    const transaction = await transactionRepository.create({
+      walletId: updatedWallet._id,
 
-        ownerId:
-          updatedWallet.ownerId,
+      ownerId: updatedWallet.ownerId,
 
-        bookingId: bookingId
-          ? new mongoose.Types.ObjectId(
-              bookingId,
-            )
-          : undefined,
+      bookingId: bookingId ? new mongoose.Types.ObjectId(bookingId) : undefined,
 
-        amount,
+      amount,
 
-        type:
-          WALLET_TRANSACTION_TYPE.BOOKING_CREDIT,
+      type: WALLET_TRANSACTION_TYPE.BOOKING_CREDIT,
 
-        status:
-          WALLET_TRANSACTION_STATUS.COMPLETED,
+      status: WALLET_TRANSACTION_STATUS.COMPLETED,
 
-        description,
+      description,
 
-        referenceId:
-          referenceId ?? "",
+      referenceId: referenceId ?? "",
 
-        balanceBefore,
+      balanceBefore,
 
-        balanceAfter,
-      });
+      balanceAfter,
+    });
 
     return {
       wallet: updatedWallet,
@@ -182,119 +141,92 @@ class WalletService {
     };
   }
 
-// ============================================================
-// REVERSE OWNER EARNINGS
-// ============================================================
+  // ============================================================
+  // REVERSE OWNER EARNINGS
+  // ============================================================
 
-async reverseOwnerEarnings(
-  ownerId: string,
-  amount: number,
-  bookingId: string,
-  referenceId: string,
-  description = "Booking refund",
-) {
-  if (amount <= 0) {
-    throw new ApiError(
-      400,
-      "Refund reversal amount must be greater than zero.",
-    );
-  }
-
-  const wallet =
-    await this.getOrCreateWallet(ownerId);
-
-  if (!wallet.isActive) {
-    throw new ApiError(
-      400,
-      "Wallet is inactive.",
-    );
-  }
-
-  // ----------------------------------------------------------
-  // PREVENT DUPLICATE REFUND REVERSAL
-  // ----------------------------------------------------------
-
-  const existingTransaction =
-    await transactionRepository.findByReferenceId(
-      referenceId,
-    );
-
-  if (existingTransaction) {
-    return {
-      wallet,
-      transaction: existingTransaction,
-    };
-  }
-
-  // ----------------------------------------------------------
-  // CHECK OWNER BALANCE
-  // ----------------------------------------------------------
-
-  if (
-    wallet.availableBalance < amount
+  async reverseOwnerEarnings(
+    ownerId: string,
+    amount: number,
+    bookingId: string,
+    referenceId: string,
+    description = "Booking refund",
   ) {
-    throw new ApiError(
-      400,
-      "Owner wallet balance is insufficient for refund reversal.",
-    );
-  }
+    if (amount <= 0) {
+      throw new ApiError(
+        400,
+        "Refund reversal amount must be greater than zero.",
+      );
+    }
 
-  // ----------------------------------------------------------
-  // CALCULATE BALANCE
-  // ----------------------------------------------------------
+    const wallet = await this.getOrCreateWallet(ownerId);
 
-  const balanceBefore =
-    wallet.availableBalance;
+    if (!wallet.isActive) {
+      throw new ApiError(400, "Wallet is inactive.");
+    }
 
-  const balanceAfter =
-    balanceBefore - amount;
+    // ----------------------------------------------------------
+    // PREVENT DUPLICATE REFUND REVERSAL
+    // ----------------------------------------------------------
 
-  const updatedWallet =
-    await walletRepository.updateBalance(
+    const existingTransaction =
+      await transactionRepository.findByReferenceId(referenceId);
+
+    if (existingTransaction) {
+      return {
+        wallet,
+        transaction: existingTransaction,
+      };
+    }
+
+    // ----------------------------------------------------------
+    // CHECK OWNER BALANCE
+    // ----------------------------------------------------------
+
+    if (wallet.availableBalance < amount) {
+      throw new ApiError(
+        400,
+        "Owner wallet balance is insufficient for refund reversal.",
+      );
+    }
+
+    // ----------------------------------------------------------
+    // CALCULATE BALANCE
+    // ----------------------------------------------------------
+
+    const balanceBefore = wallet.availableBalance;
+
+    const balanceAfter = balanceBefore - amount;
+
+    const updatedWallet = await walletRepository.updateBalance(
       wallet._id.toString(),
       {
-        availableBalance:
-          balanceAfter,
+        availableBalance: balanceAfter,
 
-        totalEarnings:
-          Math.max(
-            0,
-            wallet.totalEarnings - amount,
-          ),
+        totalEarnings: Math.max(0, wallet.totalEarnings - amount),
       },
     );
 
-  if (!updatedWallet) {
-    throw new ApiError(
-      500,
-      "Unable to update wallet balance.",
-    );
-  }
+    if (!updatedWallet) {
+      throw new ApiError(500, "Unable to update wallet balance.");
+    }
 
-  // ----------------------------------------------------------
-  // CREATE REFUND TRANSACTION
-  // ----------------------------------------------------------
+    // ----------------------------------------------------------
+    // CREATE REFUND TRANSACTION
+    // ----------------------------------------------------------
 
-  const transaction =
-    await transactionRepository.create({
-      walletId:
-        updatedWallet._id,
+    const transaction = await transactionRepository.create({
+      walletId: updatedWallet._id,
 
-      ownerId:
-        updatedWallet.ownerId,
+      ownerId: updatedWallet.ownerId,
 
-      bookingId:
-        new mongoose.Types.ObjectId(
-          bookingId,
-        ),
+      bookingId: new mongoose.Types.ObjectId(bookingId),
 
       amount,
 
-      type:
-        WALLET_TRANSACTION_TYPE.REFUND,
+      type: WALLET_TRANSACTION_TYPE.REFUND,
 
-      status:
-        WALLET_TRANSACTION_STATUS.COMPLETED,
+      status: WALLET_TRANSACTION_STATUS.COMPLETED,
 
       description,
 
@@ -305,35 +237,25 @@ async reverseOwnerEarnings(
       balanceAfter,
     });
 
-  return {
-    wallet: updatedWallet,
-    transaction,
-  };
-}
+    return {
+      wallet: updatedWallet,
+      transaction,
+    };
+  }
   async withdraw(
     ownerId: string,
     amount: number,
     referenceId?: string,
-    description =
-      "Wallet withdrawal",
+    description = "Wallet withdrawal",
   ) {
     if (amount <= 0) {
-      throw new ApiError(
-        400,
-        "Withdrawal amount must be greater than zero.",
-      );
+      throw new ApiError(400, "Withdrawal amount must be greater than zero.");
     }
 
-    const wallet =
-      await this.getOrCreateWallet(
-        ownerId,
-      );
+    const wallet = await this.getOrCreateWallet(ownerId);
 
     if (!wallet.isActive) {
-      throw new ApiError(
-        400,
-        "Wallet is inactive.",
-      );
+      throw new ApiError(400, "Wallet is inactive.");
     }
 
     // ----------------------------------------------------------
@@ -342,15 +264,12 @@ async reverseOwnerEarnings(
 
     if (referenceId) {
       const existingTransaction =
-        await transactionRepository.findByReferenceId(
-          referenceId,
-        );
+        await transactionRepository.findByReferenceId(referenceId);
 
       if (existingTransaction) {
         return {
           wallet,
-          transaction:
-            existingTransaction,
+          transaction: existingTransaction,
         };
       }
     }
@@ -359,82 +278,60 @@ async reverseOwnerEarnings(
     // BALANCE CHECK
     // ----------------------------------------------------------
 
-    if (
-      wallet.availableBalance <
-      amount
-    ) {
-      throw new ApiError(
-        400,
-        "Insufficient wallet balance.",
-      );
+    if (wallet.availableBalance < amount) {
+      throw new ApiError(400, "Insufficient wallet balance.");
     }
 
     // ----------------------------------------------------------
     // CALCULATE BALANCE
     // ----------------------------------------------------------
 
-    const balanceBefore =
-      wallet.availableBalance;
+    const balanceBefore = wallet.availableBalance;
 
-    const balanceAfter =
-      balanceBefore - amount;
+    const balanceAfter = balanceBefore - amount;
 
     // ----------------------------------------------------------
     // UPDATE WALLET
     // ----------------------------------------------------------
 
-    const updatedWallet =
-      await walletRepository.updateBalance(
-        wallet._id.toString(),
-        {
-          availableBalance:
-            balanceAfter,
+    const updatedWallet = await walletRepository.updateBalance(
+      wallet._id.toString(),
+      {
+        availableBalance: balanceAfter,
 
-          totalWithdrawn:
-            wallet.totalWithdrawn +
-            amount,
+        totalWithdrawn: wallet.totalWithdrawn + amount,
 
-          lastWithdrawalAt:
-            new Date(),
-        },
-      );
+        lastWithdrawalAt: new Date(),
+      },
+    );
 
     if (!updatedWallet) {
-      throw new ApiError(
-        500,
-        "Unable to update wallet balance.",
-      );
+      throw new ApiError(500, "Unable to update wallet balance.");
     }
 
     // ----------------------------------------------------------
     // CREATE TRANSACTION
     // ----------------------------------------------------------
 
-    const transaction =
-      await transactionRepository.create({
-        walletId:
-          updatedWallet._id,
+    const transaction = await transactionRepository.create({
+      walletId: updatedWallet._id,
 
-        ownerId:
-          updatedWallet.ownerId,
+      ownerId: updatedWallet.ownerId,
 
-        amount,
+      amount,
 
-        type:
-          WALLET_TRANSACTION_TYPE.WITHDRAWAL,
+      type: WALLET_TRANSACTION_TYPE.WITHDRAWAL,
 
-        status:
-          WALLET_TRANSACTION_STATUS.COMPLETED,
+      status: WALLET_TRANSACTION_STATUS.COMPLETED,
 
-        description,
+      description,
 
-        referenceId:
-          referenceId ?? "",
+      referenceId: referenceId ?? "",
 
-        balanceBefore,
+      balanceBefore,
 
-        balanceAfter,
-      });
+      balanceAfter,
+    });
 
     return {
       wallet: updatedWallet,
@@ -446,47 +343,28 @@ async reverseOwnerEarnings(
   // GET WALLET TRANSACTIONS
   // ============================================================
 
-  async getTransactions(
-    ownerId: string,
-  ) {
-    const wallet =
-      await walletRepository.findByOwnerId(
-        ownerId,
-      );
+  async getTransactions(ownerId: string) {
+    const wallet = await walletRepository.findByOwnerId(ownerId);
 
     if (!wallet) {
       return [];
     }
 
-    return transactionRepository.findByWalletId(
-      wallet._id.toString(),
-    );
+    return transactionRepository.findByWalletId(wallet._id.toString());
   }
 
   // ============================================================
   // GET SINGLE TRANSACTION
   // ============================================================
 
-  async getTransaction(
-    ownerId: string,
-    transactionId: string,
-  ) {
-    const transaction =
-      await transactionRepository.findById(
-        transactionId,
-      );
+  async getTransaction(ownerId: string, transactionId: string) {
+    const transaction = await transactionRepository.findById(transactionId);
 
     if (!transaction) {
-      throw new ApiError(
-        404,
-        "Transaction not found.",
-      );
+      throw new ApiError(404, "Transaction not found.");
     }
 
-    if (
-      transaction.ownerId?.toString() !==
-      ownerId
-    ) {
+    if (transaction.ownerId?.toString() !== ownerId) {
       throw new ApiError(
         403,
         "You are not authorized to view this transaction.",

@@ -40,22 +40,17 @@ class UserRepository {
         });
     }
     async findAll() {
-        return User.find()
-            .select("-password -refreshToken")
-            .sort({
+        return User.find().select("-password -refreshToken").sort({
             createdAt: -1,
         });
     }
     async findByIdForAdmin(id) {
-        return User.findById(id)
-            .select("-password -refreshToken");
+        return User.findById(id).select("-password -refreshToken");
     }
     async updateStatus(id, isActive) {
         return User.findByIdAndUpdate(id, {
             isActive,
-            ...(isActive
-                ? { deletedAt: null }
-                : { deletedAt: new Date() }),
+            ...(isActive ? { deletedAt: null } : { deletedAt: new Date() }),
         }, {
             new: true,
             runValidators: true,

@@ -2,6 +2,7 @@ import { IBooking } from "../models/Booking.js";
 import { ClientSession } from "mongoose";
 declare class BookingRepository {
     create(data: Partial<IBooking>, session?: ClientSession): Promise<any>;
+    findAll(): Promise<any[]>;
     findById(id: string): Promise<any>;
     findByBookingNumber(bookingNumber: string): Promise<any>;
     findByVerificationPin(pin: string): Promise<any>;

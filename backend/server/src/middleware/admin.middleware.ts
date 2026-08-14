@@ -8,20 +8,16 @@ const adminMiddleware = (
   next: NextFunction,
 ) => {
   if (!req.user) {
-    return next(
-      new ApiError(
-        401,
-        "Authentication required.",
-      ),
+    throw new ApiError(
+      401,
+      "Authentication required.",
     );
   }
 
   if (req.user.role !== "admin") {
-    return next(
-      new ApiError(
-        403,
-        "Admin access required.",
-      ),
+    throw new ApiError(
+      403,
+      "Admin access required.",
     );
   }
 

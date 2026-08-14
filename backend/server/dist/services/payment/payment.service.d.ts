@@ -15,10 +15,14 @@ declare class PaymentService {
     verifyPayment(orderId: string, paymentId: string, signature: string): Promise<{
         payment: any;
         booking: any;
+        wallet: any;
+        transaction: any;
     }>;
     refundPayment(paymentId: string, amount?: number): Promise<{
         payment: any;
         refund: import("razorpay/dist/types/refunds.js").Refunds.RazorpayRefund;
+        wallet: {} | null;
+        transaction: {} | null;
     }>;
 }
 declare const _default: PaymentService;

@@ -11,7 +11,11 @@ class BookingRepository {
 
     return Booking.create(data);
   }
-
+async findAll() {
+  return Booking.find().sort({
+    createdAt: -1,
+  });
+}
   async findById(id: string) {
     return Booking.findById(id);
   }
@@ -47,31 +51,27 @@ class BookingRepository {
       createdAt: -1,
     });
   }
-async findOverlappingBooking(
-  vehicleId: string,
-  startTime: Date,
-  endTime: Date,
-) {
-  return Booking.findOne({
-    vehicleId,
+  async findOverlappingBooking(
+    vehicleId: string,
+    startTime: Date,
+    endTime: Date,
+  ) {
+    return Booking.findOne({
+      vehicleId,
 
-    bookingStatus: {
-      $in: [
-        "pending",
-        "confirmed",
-        "active",
-      ],
-    },
+      bookingStatus: {
+        $in: ["pending", "confirmed", "active"],
+      },
 
-    startTime: {
-      $lt: endTime,
-    },
+      startTime: {
+        $lt: endTime,
+      },
 
-    endTime: {
-      $gt: startTime,
-    },
-  });
-}
+      endTime: {
+        $gt: startTime,
+      },
+    });
+  }
   // Parking bookings
 
   async findByParking(parkingId: string) {

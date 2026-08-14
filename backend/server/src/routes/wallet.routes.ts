@@ -1,9 +1,5 @@
 import { Router } from "express";
 
-import authMiddleware from "../middleware/auth.middleware.js";
-import requireRole from "../middleware/role.middleware.js";
-import { USER_ROLES } from "../constants/roles.js";
-
 import {
   getWallet,
   getWalletTransactions,
@@ -11,45 +7,47 @@ import {
   withdrawWallet,
 } from "../controllers/wallet.controller.js";
 
+import authMiddleware from "../middleware/auth.middleware.js";
+
 const router = Router();
 
 // ============================================================
-// OWNER WALLET
+// GET OWNER WALLET
 // ============================================================
 
 router.get(
   "/",
   authMiddleware,
-  requireRole(USER_ROLES.PARKING_OWNER),
   getWallet,
 );
 
 // ============================================================
-// TRANSACTIONS
+// GET WALLET TRANSACTIONS
 // ============================================================
 
 router.get(
   "/transactions",
   authMiddleware,
-  requireRole(USER_ROLES.PARKING_OWNER),
   getWalletTransactions,
 );
+
+// ============================================================
+// GET SINGLE TRANSACTION
+// ============================================================
 
 router.get(
   "/transactions/:transactionId",
   authMiddleware,
-  requireRole(USER_ROLES.PARKING_OWNER),
   getWalletTransaction,
 );
 
 // ============================================================
-// WITHDRAW
+// WITHDRAW WALLET BALANCE
 // ============================================================
 
 router.post(
   "/withdraw",
   authMiddleware,
-  requireRole(USER_ROLES.PARKING_OWNER),
   withdrawWallet,
 );
 

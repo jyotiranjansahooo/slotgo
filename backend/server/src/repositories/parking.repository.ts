@@ -9,21 +9,21 @@ class ParkingRepository {
     return Parking.findById(id);
   }
   async findApprovedById(id: string) {
-  return Parking.findOne({
-    _id: id,
-    status: "approved",
-    isActive: true,
-  });
-}
+    return Parking.findOne({
+      _id: id,
+      status: "approved",
+      isActive: true,
+    });
+  }
 
-async findByOwner(ownerId: string) {
-  return Parking.find({
-    ownerId,
-    isActive: true,
-  }).sort({
-    createdAt: -1,
-  });
-}
+  async findByOwner(ownerId: string) {
+    return Parking.find({
+      ownerId,
+      isActive: true,
+    }).sort({
+      createdAt: -1,
+    });
+  }
 
   async findAll() {
     return Parking.find().sort({
@@ -36,18 +36,18 @@ async findByOwner(ownerId: string) {
       new: true,
     });
   }
-async deactivate(id: string) {
-  return Parking.findByIdAndUpdate(
-    id,
-    {
-      isActive: false,
-    },
-    {
-      new: true,
-      runValidators: true,
-    },
-  );
-}
+  async deactivate(id: string) {
+    return Parking.findByIdAndUpdate(
+      id,
+      {
+        isActive: false,
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
+  }
   async delete(id: string) {
     return Parking.findByIdAndDelete(id);
   }
@@ -75,41 +75,36 @@ async deactivate(id: string) {
       },
     );
   }
-async findApprovedParkings() {
-  return Parking.find({
-    status: "approved",
-    isActive: true,
-  }).sort({
-    createdAt: -1,
-  });
-}
+  async findApprovedParkings() {
+    return Parking.find({
+      status: "approved",
+      isActive: true,
+    }).sort({
+      createdAt: -1,
+    });
+  }
 
-async searchParkings(filters: {
-  city?: string;
-  parkingType?: string;
-}) {
-  const query: Record<string, unknown> = {
-    status: "approved",
-    isActive: true,
-  };
-
-  if (filters.city) {
-    query.city = {
-      $regex: filters.city,
-      $options: "i",
+  async searchParkings(filters: { city?: string; parkingType?: string }) {
+    const query: Record<string, unknown> = {
+      status: "approved",
+      isActive: true,
     };
+
+    if (filters.city) {
+      query.city = {
+        $regex: filters.city,
+        $options: "i",
+      };
+    }
+
+    if (filters.parkingType) {
+      query.parkingType = filters.parkingType;
+    }
+
+    return Parking.find(query).sort({
+      createdAt: -1,
+    });
   }
-
-  if (filters.parkingType) {
-    query.parkingType = filters.parkingType;
-  }
-
-  return Parking.find(query).sort({
-    createdAt: -1,
-  });
-}
-
-
 }
 
 export default new ParkingRepository();
