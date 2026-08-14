@@ -1,70 +1,72 @@
 import Wallet, { IWallet } from "../models/Wallet.js";
 
 class WalletRepository {
+  // ============================================================
+  // CREATE WALLET
+  // ============================================================
+
   async create(data: Partial<IWallet>) {
     return Wallet.create(data);
   }
+
+  // ============================================================
+  // FIND BY ID
+  // ============================================================
 
   async findById(id: string) {
     return Wallet.findById(id);
   }
 
-  async findByOwner(ownerId: string) {
-    return Wallet.findOne({ ownerId });
-  }
+  // ============================================================
+  // FIND BY OWNER
+  // ============================================================
 
-  async update(id: string, data: Partial<IWallet>) {
-    return Wallet.findByIdAndUpdate(id, data, {
-      new: true,
+  async findByOwnerId(ownerId: string) {
+    return Wallet.findOne({
+      ownerId,
     });
   }
 
-  async delete(id: string) {
-    return Wallet.findByIdAndDelete(id);
-  }
+  // ============================================================
+  // UPDATE WALLET
+  // ============================================================
 
-  async incrementPendingBalance(ownerId: string, amount: number) {
-    return Wallet.findOneAndUpdate(
-      { ownerId },
-      {
-        $inc: {
-          pendingBalance: amount,
-          totalEarnings: amount,
-        },
-      },
+  async update(
+    id: string,
+    data: Partial<IWallet>,
+  ) {
+    return Wallet.findByIdAndUpdate(
+      id,
+      data,
       {
         new: true,
+        runValidators: true,
       },
     );
   }
 
-  async transferPendingToAvailable(ownerId: string, amount: number) {
-    return Wallet.findOneAndUpdate(
-      { ownerId },
-      {
-        $inc: {
-          pendingBalance: -amount,
-          availableBalance: amount,
-        },
-      },
-      {
-        new: true,
-      },
-    );
-  }
+  // ============================================================
+  // UPDATE BALANCE
+  // ============================================================
 
-  async withdraw(ownerId: string, amount: number) {
-    return Wallet.findOneAndUpdate(
-      { ownerId },
+  async updateBalance(
+    id: string,
+    data: {
+      availableBalance?: number;
+      pendingBalance?: number;
+      totalEarnings?: number;
+      totalWithdrawn?: number;
+      lastWithdrawalAt?: Date;
+    },
+  ) {
+    return Wallet.findByIdAndUpdate(
+      id,
       {
-        $inc: {
-          availableBalance: -amount,
-          totalWithdrawn: amount,
-        },
-        lastWithdrawalAt: new Date(),
+        $set: data,
       },
       {
         new: true,
+        runValidators: true,
       },
     );
   }

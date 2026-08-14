@@ -2,15 +2,13 @@ import { Router } from "express";
 
 import authMiddleware from "../middleware/auth.middleware.js";
 
-import validate from "../middleware/validate.middleware.js";
-
-import {
-  createReviewSchema,
-} from "../validations/review/create.validation.js";
-
 import {
   createReview,
+  getReviewById,
+  getDriverReviews,
   getParkingReviews,
+  updateReview,
+  deleteReview,
 } from "../controllers/review.controller.js";
 
 const router = Router();
@@ -18,13 +16,34 @@ const router = Router();
 router.post(
   "/",
   authMiddleware,
-  validate(createReviewSchema),
   createReview,
+);
+
+router.get(
+  "/:reviewId",
+  getReviewById,
+);
+
+router.get(
+  "/driver/:driverId",
+  getDriverReviews,
 );
 
 router.get(
   "/parking/:parkingId",
   getParkingReviews,
+);
+
+router.patch(
+  "/:reviewId",
+  authMiddleware,
+  updateReview,
+);
+
+router.delete(
+  "/:reviewId",
+  authMiddleware,
+  deleteReview,
 );
 
 export default router;

@@ -1,24 +1,28 @@
 import ApiError from "../../utils/ApiError.js";
 
 import reviewRepository from "../../repositories/review.repository.js";
-
 import bookingRepository from "../../repositories/booking.repository.js";
-
-import parkingRepository from "../../repositories/parking.repository.js";
 
 import {
   BOOKING_STATUS,
 } from "../../constants/booking.js";
 
-import {
-  CreateReviewInput,
-} from "../../validations/review/create.validation.js";
+import { CreateReviewInput } from "../../validations/review/create.validation.js";
+import { UpdateReviewInput } from "../../validations/review/update.validation.js";
 
 class ReviewService {
+  // ============================================================
+  // CREATE REVIEW
+  // ============================================================
+
   async createReview(
     driverId: string,
     data: CreateReviewInput,
   ) {
+    // ----------------------------------------------------------
+    // FIND BOOKING
+    // ----------------------------------------------------------
+
     const booking =
       await bookingRepository.findById(
         data.bookingId,
@@ -31,8 +35,10 @@ class ReviewService {
       );
     }
 
-    // Only the driver who made the booking
-    // can review it.
+    // ----------------------------------------------------------
+    // DRIVER AUTHORIZATION
+    // ----------------------------------------------------------
+
     if (
       booking.driverId.toString() !==
       driverId
@@ -43,18 +49,24 @@ class ReviewService {
       );
     }
 
-    // Review only after completion
+    // ----------------------------------------------------------
+    // BOOKING STATUS
+    // ----------------------------------------------------------
+
     if (
       booking.bookingStatus !==
       BOOKING_STATUS.COMPLETED
     ) {
       throw new ApiError(
         400,
-        "Only completed bookings can be reviewed.",
+        "You can only review a completed booking.",
       );
     }
 
-    // Prevent duplicate review
+    // ----------------------------------------------------------
+    // CHECK EXISTING REVIEW
+    // ----------------------------------------------------------
+
     const existingReview =
       await reviewRepository.findByBookingId(
         data.bookingId,
@@ -67,78 +79,200 @@ class ReviewService {
       );
     }
 
+    // ----------------------------------------------------------
+    // CREATE REVIEW
+    // ----------------------------------------------------------
+
     const review =
       await reviewRepository.create({
-        bookingId: booking._id,
+        bookingId:
+          booking._id,
 
-        driverId: booking.driverId,
+        driverId:
+          booking.driverId,
 
-        ownerId: booking.ownerId,
+        ownerId:
+          booking.ownerId,
 
-        parkingId: booking.parkingId,
+        parkingId:
+          booking.parkingId,
 
-        rating: data.rating,
+        rating:
+          data.rating,
 
-        comment: data.comment ?? "",
+        comment:
+          data.comment ?? "",
 
         isActive: true,
       });
 
-    // Update parking rating
-    const reviews =
-      await reviewRepository.findByParking(
-        booking.parkingId.toString(),
+    return review;
+  }
+
+  // ============================================================
+  // GET REVIEW BY ID
+  // ============================================================
+
+  async getReviewById(
+    reviewId: string,
+  ) {
+    const review =
+      await reviewRepository.findById(
+        reviewId,
       );
 
-    const totalReviews =
-      reviews.length;
-
-    const totalRating =
-      reviews.reduce(
-        (sum, item) =>
-          sum + item.rating,
-        0,
+    if (
+      !review ||
+      !review.isActive
+    ) {
+      throw new ApiError(
+        404,
+        "Review not found.",
       );
-
-    const averageRating =
-      totalReviews > 0
-        ? Number(
-            (
-              totalRating /
-              totalReviews
-            ).toFixed(2),
-          )
-        : 0;
-
-    await parkingRepository.update(
-      booking.parkingId.toString(),
-      {
-        averageRating,
-        totalReviews,
-      },
-    );
+    }
 
     return review;
   }
 
+  // ============================================================
+  // GET DRIVER REVIEWS
+  // ============================================================
+
+  async getDriverReviews(
+    driverId: string,
+  ) {
+    return reviewRepository.findByDriver(
+      driverId,
+    );
+  }
+
+  // ============================================================
+  // GET PARKING REVIEWS
+  // ============================================================
+
   async getParkingReviews(
     parkingId: string,
   ) {
-    const parking =
-      await parkingRepository.findById(
-        parkingId,
-      );
-
-    if (!parking) {
-      throw new ApiError(
-        404,
-        "Parking not found.",
-      );
-    }
-
     return reviewRepository.findByParking(
       parkingId,
     );
+  }
+
+  // ============================================================
+  // UPDATE REVIEW
+  // ============================================================
+
+  async updateReview(
+    driverId: string,
+    reviewId: string,
+    data: UpdateReviewInput,
+  ) {
+    const review =
+      await reviewRepository.findById(
+        reviewId,
+      );
+
+    if (
+      !review ||
+      !review.isActive
+    ) {
+      throw new ApiError(
+        404,
+        "Review not found.",
+      );
+    }
+
+    // ----------------------------------------------------------
+    // DRIVER AUTHORIZATION
+    // ----------------------------------------------------------
+
+    if (
+      review.driverId.toString() !==
+      driverId
+    ) {
+      throw new ApiError(
+        403,
+        "You are not authorized to update this review.",
+      );
+    }
+
+    // ----------------------------------------------------------
+    // UPDATE
+    // ----------------------------------------------------------
+
+    const updatedReview =
+      await reviewRepository.update(
+        reviewId,
+        data,
+      );
+
+    if (!updatedReview) {
+      throw new ApiError(
+        500,
+        "Unable to update review.",
+      );
+    }
+
+    return updatedReview;
+  }
+
+  // ============================================================
+  // DELETE REVIEW
+  // ============================================================
+
+  async deleteReview(
+    driverId: string,
+    reviewId: string,
+  ) {
+    const review =
+      await reviewRepository.findById(
+        reviewId,
+      );
+
+    if (
+      !review ||
+      !review.isActive
+    ) {
+      throw new ApiError(
+        404,
+        "Review not found.",
+      );
+    }
+
+    // ----------------------------------------------------------
+    // DRIVER AUTHORIZATION
+    // ----------------------------------------------------------
+
+    if (
+      review.driverId.toString() !==
+      driverId
+    ) {
+      throw new ApiError(
+        403,
+        "You are not authorized to delete this review.",
+      );
+    }
+
+    // ----------------------------------------------------------
+    // SOFT DELETE
+    // ----------------------------------------------------------
+
+    const deletedReview =
+      await reviewRepository.update(
+        reviewId,
+        {
+          isActive: false,
+        },
+      );
+
+    if (!deletedReview) {
+      throw new ApiError(
+        500,
+        "Unable to delete review.",
+      );
+    }
+
+    return deletedReview;
   }
 }
 

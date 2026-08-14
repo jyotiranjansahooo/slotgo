@@ -9,6 +9,8 @@ import parkingSlotRoutes from "./parkingSlot.routes.js";
 import bookingRoutes from "./booking.routes.js";
 import adminParkingRoutes from "./adminParking.routes.js";
 import parkingDiscoveryRoutes from "./parkingDiscovery.routes.js";
+import reviewRoutes from "./review.routes.js";
+import walletRoutes from "./wallet.routes.js";
 
 const router = Router();
 
@@ -19,6 +21,8 @@ router.use("/auth", authRoutes);
 router.use("/parkings", parkingDiscoveryRoutes);
 router.use("/parking-slots", parkingSlotRoutes);
 router.use("/parkings", parkingRoutes);
+router.use("/wallet", walletRoutes);
+router.use("/reviews", reviewRoutes);
 router.use("/admin/parkings", adminParkingRoutes);
 
 export default router;

@@ -1,23 +1,45 @@
-import Transaction, { ITransaction } from "../models/Transaction.js";
+import Transaction, {
+  ITransaction,
+} from "../models/Transaction.js";
 
 class TransactionRepository {
-  async create(data: Partial<ITransaction>) {
+  // ============================================================
+  // CREATE TRANSACTION
+  // ============================================================
+
+  async create(
+    data: Partial<ITransaction>,
+  ) {
     return Transaction.create(data);
   }
+
+  // ============================================================
+  // FIND BY ID
+  // ============================================================
 
   async findById(id: string) {
     return Transaction.findById(id);
   }
 
-  async findByBooking(bookingId: string) {
-    return Transaction.find({
-      bookingId,
-    }).sort({
-      createdAt: -1,
+  // ============================================================
+  // FIND BY REFERENCE
+  // ============================================================
+
+  async findByReferenceId(
+    referenceId: string,
+  ) {
+    return Transaction.findOne({
+      referenceId,
     });
   }
 
-  async findByWallet(walletId: string) {
+  // ============================================================
+  // FIND WALLET TRANSACTIONS
+  // ============================================================
+
+  async findByWalletId(
+    walletId: string,
+  ) {
     return Transaction.find({
       walletId,
     }).sort({
@@ -25,7 +47,13 @@ class TransactionRepository {
     });
   }
 
-  async findByOwner(ownerId: string) {
+  // ============================================================
+  // FIND OWNER TRANSACTIONS
+  // ============================================================
+
+  async findByOwnerId(
+    ownerId: string,
+  ) {
     return Transaction.find({
       ownerId,
     }).sort({
@@ -33,10 +61,36 @@ class TransactionRepository {
     });
   }
 
-  async findByReference(referenceId: string) {
-    return Transaction.findOne({
-      referenceId,
+  // ============================================================
+  // FIND DRIVER TRANSACTIONS
+  // ============================================================
+
+  async findByDriverId(
+    driverId: string,
+  ) {
+    return Transaction.find({
+      driverId,
+    }).sort({
+      createdAt: -1,
     });
+  }
+
+  // ============================================================
+  // UPDATE TRANSACTION
+  // ============================================================
+
+  async update(
+    id: string,
+    data: Partial<ITransaction>,
+  ) {
+    return Transaction.findByIdAndUpdate(
+      id,
+      data,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
   }
 }
 
