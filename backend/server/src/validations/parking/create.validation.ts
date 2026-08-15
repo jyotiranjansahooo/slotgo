@@ -36,29 +36,15 @@ export const createParkingSchema = z.object({
     .max(1000, "Description cannot exceed 1000 characters")
     .default(""),
 
-  parkingType: z.enum(
-    PARKING_TYPE_VALUES as [string, ...string[]],
-  ),
+  parkingType: z.enum(PARKING_TYPE_VALUES as [string, ...string[]]),
 
-  address: z
-    .string()
-    .trim()
-    .min(5, "Address is required"),
+  address: z.string().trim().min(5, "Address is required"),
 
-  landmark: z
-    .string()
-    .trim()
-    .optional(),
+  landmark: z.string().trim().optional(),
 
-  city: z
-    .string()
-    .trim()
-    .min(2, "City is required"),
+  city: z.string().trim().min(2, "City is required"),
 
-  state: z
-    .string()
-    .trim()
-    .min(2, "State is required"),
+  state: z.string().trim().min(2, "State is required"),
 
   pincode: z
     .string()
@@ -66,36 +52,18 @@ export const createParkingSchema = z.object({
     .regex(/^\d{6}$/, "Invalid pincode"),
 
   location: z.object({
-    latitude: z
-      .number()
-      .min(-90)
-      .max(90),
+    latitude: z.number().min(-90).max(90),
 
-    longitude: z
-      .number()
-      .min(-180)
-      .max(180),
+    longitude: z.number().min(-180).max(180),
   }),
 
   facilities: z
-    .array(
-      z.enum(
-        PARKING_FACILITY_VALUES as [string, ...string[]],
-      ),
-    )
+    .array(z.enum(PARKING_FACILITY_VALUES as [string, ...string[]]))
     .default([]),
 
-  rules: z
-    .array(
-      z.string().trim().min(1),
-    )
-    .default([]),
+  rules: z.array(z.string().trim().min(1)).default([]),
 
-  entryInstructions: z
-    .string()
-    .trim()
-    .max(1000)
-    .default(""),
+  entryInstructions: z.string().trim().max(1000).default(""),
 
   bookingModes: z.object({
     hourly: z.boolean().default(true),
@@ -120,5 +88,4 @@ export const createParkingSchema = z.object({
   }),
 });
 
-export type CreateParkingInput =
-  z.infer<typeof createParkingSchema>;
+export type CreateParkingInput = z.infer<typeof createParkingSchema>;

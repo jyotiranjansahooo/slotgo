@@ -28,10 +28,9 @@ export const getAvailableSlots = asyncHandler(
   async (req: Request, res: Response) => {
     const { parkingId } = req.params;
 
-    const slots =
-      await parkingSlotService.getAvailableSlots(
-        parkingId as string,
-      );
+    const slots = await parkingSlotService.getAvailableSlots(
+      parkingId as string,
+    );
 
     res
       .status(200)

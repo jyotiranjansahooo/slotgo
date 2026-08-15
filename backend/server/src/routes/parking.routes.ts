@@ -3,9 +3,10 @@ import { Router } from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 import requireRole from "../middleware/role.middleware.js";
-import { USER_ROLES } from "../constants/roles.js";
-import { createParkingSchema } from "../validations/parking/create.validation.js";
 
+import { USER_ROLES } from "../constants/roles.js";
+
+import { createParkingSchema } from "../validations/parking/create.validation.js";
 import { updateParkingSchema } from "../validations/parking/update.validation.js";
 
 import {
@@ -18,16 +19,60 @@ import {
 
 const router = Router();
 
-router.use(authMiddleware, requireRole(USER_ROLES.PARKING_OWNER));
+// ============================================================
+// PARKING OWNER AUTHORIZATION
+// ============================================================
 
-router.post("/", validate(createParkingSchema), createParking);
+router.use(
+  authMiddleware,
+  requireRole(USER_ROLES.PARKING_OWNER),
+);
 
-router.get("/", getMyParkings);
+// ============================================================
+// CREATE PARKING
+// ============================================================
 
-router.get("/:id", getParking);
+router.post(
+  "/",
+  validate(createParkingSchema),
+  createParking,
+);
 
-router.patch("/:id", validate(updateParkingSchema), updateParking);
+// ============================================================
+// GET OWNER'S PARKINGS
+// ============================================================
 
-router.delete("/:id", deleteParking);
+router.get(
+  "/",
+  getMyParkings,
+);
+
+// ============================================================
+// GET SINGLE PARKING
+// ============================================================
+
+router.get(
+  "/:id",
+  getParking,
+);
+
+// ============================================================
+// UPDATE PARKING
+// ============================================================
+
+router.patch(
+  "/:id",
+  validate(updateParkingSchema),
+  updateParking,
+);
+
+// ============================================================
+// DELETE PARKING
+// ============================================================
+
+router.delete(
+  "/:id",
+  deleteParking,
+);
 
 export default router;
