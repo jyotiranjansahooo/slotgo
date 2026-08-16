@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAuth } from "@/providers/AuthProvider";
 
-import { loginUser } from "@/services/auth.service";
 
 import { getApiErrorMessage } from "@/lib/api-error";
 
@@ -20,9 +19,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
- const {
-  login,
-} = useAuth();
+  const { login } = useAuth();
 
   const router = useRouter();
 
@@ -40,8 +37,7 @@ export default function LoginPage() {
     try {
       setServerError("");
 
-    const user =
-  await login(data);
+      const user = await login(data);
 
       if (user.role === "driver") {
         router.push("/driver");

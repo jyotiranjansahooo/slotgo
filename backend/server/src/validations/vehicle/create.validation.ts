@@ -38,5 +38,4 @@ export const createVehicleSchema = z.object({
     .max(20, "Color cannot exceed 20 characters"),
 });
 
-export type CreateVehicleInput =
-  z.infer<typeof createVehicleSchema>;
+export type CreateVehicleInput = z.infer<typeof createVehicleSchema>;
