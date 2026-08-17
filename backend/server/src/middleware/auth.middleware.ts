@@ -38,11 +38,11 @@ const authMiddleware = async (
 
     req.user = user;
     console.log("========== AUTH DEBUG ==========");
-console.log("JWT userId:", decoded.userId);
-console.log("Database user _id:", user._id.toString());
-console.log("Database user role:", user.role);
-console.log("Database user email:", user.email);
-console.log("================================");
+    console.log("JWT userId:", decoded.userId);
+    console.log("Database user _id:", user._id.toString());
+    console.log("Database user role:", user.role);
+    console.log("Database user email:", user.email);
+    console.log("================================");
 
     next();
   } catch (error) {

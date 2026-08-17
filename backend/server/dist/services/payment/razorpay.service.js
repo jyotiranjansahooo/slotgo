@@ -18,7 +18,7 @@ class RazorpayService {
             .createHmac("sha256", keySecret)
             .update(body)
             .digest("hex");
-        return (expectedSignature === signature);
+        return expectedSignature === signature;
     }
     async refundPayment(paymentId, amount) {
         return razorpay.payments.refund(paymentId, amount !== undefined

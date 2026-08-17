@@ -6,6 +6,7 @@ declare class BookingRepository {
     findById(id: string): Promise<any>;
     findByBookingNumber(bookingNumber: string): Promise<any>;
     findByVerificationPin(pin: string): Promise<any>;
+    findOneByOvertimeOrderId(orderId: string): Promise<any>;
     findByDriver(driverId: string): Promise<any[]>;
     findByOwner(ownerId: string): Promise<any[]>;
     findOverlappingBooking(vehicleId: string, startTime: Date, endTime: Date): Promise<any>;

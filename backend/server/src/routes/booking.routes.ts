@@ -3,85 +3,73 @@ import { Router } from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 
-import {
-  createBookingSchema,
-} from "../validations/booking/create.validation.js";
+import { createBookingSchema } from "../validations/booking/create.validation.js";
+import { checkInSchema } from "../validations/booking/checkIn.validation.js";
 
 import {
   createBooking,
   verifyPayment,
+  verifyOvertimePayment,
   getBooking,
   getDriverBookings,
   cancelBooking,
   checkIn,
   checkOut,
 } from "../controllers/booking.controller.js";
-import { checkInSchema } from "../validations/booking/checkIn.validation.js";
 
 const router = Router();
 
-/**
- * Create a new booking
- * Driver must be authenticated.
- */
-router.post(
-  "/",
-  authMiddleware,
-  validate(createBookingSchema),
-  createBooking,
-);
+// ============================================================
+// CREATE BOOKING
+// ============================================================
 
-/**
- * Verify Razorpay payment
- * User must be authenticated.
- */
-router.post(
-  "/payment/verify",
-  authMiddleware,
-  verifyPayment,
-);
+router.post("/", authMiddleware, validate(createBookingSchema), createBooking);
 
-router.get(
-  "/",
-  authMiddleware,
-  getDriverBookings,
-);
+// ============================================================
+// VERIFY NORMAL PAYMENT
+// ============================================================
 
-router.get(
-  "/:bookingId",
-  authMiddleware,
-  getBooking,
-);
+router.post("/payment/verify", authMiddleware, verifyPayment);
 
-/**
- * Cancel booking
- * Driver must be authenticated.
- */
-router.post(
-  "/:bookingId/cancel",
-  authMiddleware,
-  cancelBooking,
-);
+// ============================================================
+// VERIFY OVERTIME PAYMENT
+// ============================================================
 
-/**
- * Check-in
- * Owner authorization is handled by the service.
- */
+router.post("/payment/overtime/verify", authMiddleware, verifyOvertimePayment);
+
+// ============================================================
+// DRIVER BOOKINGS
+// ============================================================
+
+router.get("/", authMiddleware, getDriverBookings);
+
+// ============================================================
+// SINGLE BOOKING
+// ============================================================
+
+router.get("/:bookingId", authMiddleware, getBooking);
+
+// ============================================================
+// CANCEL BOOKING
+// ============================================================
+
+router.post("/:bookingId/cancel", authMiddleware, cancelBooking);
+
+// ============================================================
+// CHECK-IN
+// ============================================================
+
 router.post(
   "/:bookingId/check-in",
   authMiddleware,
-    validate(checkInSchema),
+  validate(checkInSchema),
   checkIn,
 );
 
-/**
- * Check-out
- * Owner authorization is handled by the service.
- */
-router.post(
-  "/:bookingId/check-out",
-  authMiddleware,
-  checkOut,
-);
+// ============================================================
+// CHECK-OUT
+// ============================================================
+
+router.post("/:bookingId/check-out", authMiddleware, checkOut);
 
 export default router;

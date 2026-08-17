@@ -16,6 +16,13 @@ class ParkingSlotService {
         }
         if (parking.status !== "approved") {
             throw new ApiError(400, "Parking must be approved before creating slots.");
+            console.log("========== SLOT OWNER DEBUG ==========");
+            console.log("Logged in ownerId:", ownerId);
+            console.log("Parking ID:", data.parkingId);
+            console.log("Parking ownerId:", parking.ownerId.toString());
+            console.log("Parking status:", parking.status);
+            console.log("Parking active:", parking.isActive);
+            console.log("======================================");
         }
         const existingSlot = await parkingSlotRepository.findByParkingAndSlotNumber(data.parkingId, data.slotNumber);
         if (existingSlot) {

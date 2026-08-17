@@ -84,3 +84,13 @@ export interface Parking {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ParkingDetails {
+  parking: Parking;
+  availability: Record<string, unknown>;
+}
+
+export interface ParkingDetailsResponse {
+  parking: Parking;
+  availability: Record<string, unknown>;
+}

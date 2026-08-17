@@ -4,8 +4,7 @@ export const BOOKING_MODES = {
   MONTHLY: "monthly",
 } as const;
 
-export type BookingMode =
-  (typeof BOOKING_MODES)[keyof typeof BOOKING_MODES];
+export type BookingMode = (typeof BOOKING_MODES)[keyof typeof BOOKING_MODES];
 
 export interface CreateBookingData {
   parkingId: string;

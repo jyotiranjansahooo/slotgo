@@ -16,16 +16,11 @@ export interface VerifyPaymentResponse {
 
 export const verifyPayment = async (
   data: VerifyPaymentData,
-): Promise<
-  ApiResponse<VerifyPaymentResponse>
-> => {
-  const response =
-    await api.post<
-      ApiResponse<VerifyPaymentResponse>
-    >(
-      "/bookings/payment/verify",
-      data,
-    );
+): Promise<ApiResponse<VerifyPaymentResponse>> => {
+  const response = await api.post<ApiResponse<VerifyPaymentResponse>>(
+    "/bookings/payment/verify",
+    data,
+  );
 
   return response.data;
 };

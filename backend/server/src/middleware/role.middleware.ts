@@ -5,16 +5,9 @@ import ApiError from "../utils/ApiError.js";
 import { UserRole } from "../constants/roles.js";
 
 const requireRole = (...allowedRoles: UserRole[]) => {
-  return (
-    req: Request,
-    _res: Response,
-    next: NextFunction,
-  ) => {
+  return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
-      throw new ApiError(
-        401,
-        "Authentication required.",
-      );
+      throw new ApiError(401, "Authentication required.");
     }
 
     if (!allowedRoles.includes(req.user.role)) {

@@ -1,5 +1,6 @@
 import mongoose, { Types } from "mongoose";
-import { BookingMode, BookingStatus, PaymentStatus, CancelledBy } from "../constants/booking.js";
+import { BookingMode, BookingStatus, PaymentStatus as BookingPaymentStatus, CancelledBy } from "../constants/booking.js";
+import { PaymentStatus as GatewayPaymentStatus } from "../constants/payment.js";
 import { VehicleType } from "../constants/vehicle.js";
 export interface IBooking {
     bookingNumber: string;
@@ -19,13 +20,21 @@ export interface IBooking {
     driverServiceFee: number;
     ownerReceives: number;
     driverPays: number;
+    overtimeMinutes: number;
+    overtimeParkingAmount: number;
+    overtimeFine: number;
+    overtimeTotal: number;
+    overtimePaymentOrderId?: string;
+    overtimePaymentId?: string;
+    overtimePaymentStatus: GatewayPaymentStatus;
+    overtimePaidAt?: Date;
     payment: {
         method: string;
         gateway: string;
         transactionId: string;
         paidAt?: Date;
     };
-    paymentStatus: PaymentStatus;
+    paymentStatus: BookingPaymentStatus;
     bookingStatus: BookingStatus;
     qrCode: string;
     verificationPin: string;

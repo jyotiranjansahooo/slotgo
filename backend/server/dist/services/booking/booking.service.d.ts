@@ -6,18 +6,11 @@ declare class BookingService {
     private calculateCancellationRefund;
     createBooking(driverId: string, data: CreateBookingInput): Promise<{
         booking: any;
-        payment: {
-            booking: any;
-            payment: any;
-            razorpayOrder: {
-                id: any;
-                amount: any;
-                currency: any;
-            };
-        } | {
-            booking: any;
-            payment: any;
-            razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
+        payment: any;
+        razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder | {
+            id: any;
+            amount: number;
+            currency: any;
         };
     }>;
     verifyPayment(orderId: string, paymentId: string, signature: string): Promise<{
@@ -25,6 +18,48 @@ declare class BookingService {
         booking: any;
         wallet: any;
         transaction: any;
+    }>;
+    createOvertimePayment(bookingId: string): Promise<{
+        booking: any;
+        razorpayOrder: {
+            id: any;
+            amount: number;
+            currency: string;
+        };
+    } | {
+        booking: any;
+        razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
+    }>;
+    verifyOvertimePayment(orderId: string, paymentId: string, signature: string): Promise<{
+        booking: any;
+        payment: {
+            orderId: string;
+            paymentId: any;
+            signature?: undefined;
+        };
+        overtime: {
+            overtimeMinutes: any;
+            overtimeParkingAmount: any;
+            overtimeFine: any;
+            overtimeTotal: any;
+        };
+        wallet?: undefined;
+        transaction?: undefined;
+    } | {
+        booking: any;
+        payment: {
+            orderId: string;
+            paymentId: string;
+            signature: string;
+        };
+        overtime: {
+            overtimeMinutes: any;
+            overtimeParkingAmount: any;
+            overtimeFine: any;
+            overtimeTotal: any;
+        };
+        wallet: {} | null;
+        transaction: {} | null;
     }>;
     getBooking(userId: string, bookingId: string): Promise<any>;
     getDriverBookings(driverId: string): Promise<any[]>;
@@ -46,7 +81,28 @@ declare class BookingService {
         transaction: {} | null;
     }>;
     checkIn(ownerId: string, bookingId: string, data: CheckInInput): Promise<any>;
-    checkOut(ownerId: string, bookingId: string): Promise<any>;
+    checkOut(ownerId: string, bookingId: string): Promise<{
+        requiresAdditionalPayment: boolean;
+        booking: any;
+        overtime: {
+            overtimeMinutes: number;
+            overtimeParkingAmount: number;
+            overtimeFine: number;
+            overtimeTotal: number;
+            overtimeHours?: undefined;
+        };
+    } | {
+        requiresAdditionalPayment: boolean;
+        booking: any;
+        overtime: {
+            overtimeMinutes: number;
+            overtimeHours: number;
+            overtimeParkingAmount: number;
+            overtimeFine: number;
+            overtimeTotal: number;
+        };
+    }>;
+    private getBookedHours;
     expireBooking(): Promise<{
         pendingExpired: number;
         confirmedExpired: number;

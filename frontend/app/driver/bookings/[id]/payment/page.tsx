@@ -1,16 +1,22 @@
 "use client";
 
-import {  useState } from "react";
+import { useState } from "react";
+
+import Script from "next/script";
 
 import { useParams, useRouter } from "next/navigation";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import { getBooking } from "@/services/booking.service";
 
+import { verifyPayment } from "@/services/payment.service";
+
 import { getApiErrorMessage } from "@/lib/api-error";
+
+import type { RazorpayResponse } from "@/types/razorpay";
 
 export default function PaymentPage() {
   return (
@@ -22,11 +28,18 @@ export default function PaymentPage() {
 
 function Payment() {
   const router = useRouter();
+
   const params = useParams();
 
   const bookingId = typeof params.id === "string" ? params.id : "";
 
   const [error, setError] = useState("");
+
+  /*
+   * --------------------------------------------------
+   * BOOKING QUERY
+   * --------------------------------------------------
+   */
 
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId],
@@ -36,6 +49,32 @@ function Payment() {
     enabled: bookingId.length > 0,
   });
 
+  /*
+   * --------------------------------------------------
+   * PAYMENT VERIFICATION
+   * --------------------------------------------------
+   */
+
+  const verifyMutation = useMutation({
+    mutationFn: verifyPayment,
+
+    onSuccess: () => {
+      sessionStorage.removeItem(`slotgo-payment-${bookingId}`);
+
+      router.push(`/driver/bookings/${bookingId}/success`);
+    },
+
+    onError: (mutationError: unknown) => {
+      setError(getApiErrorMessage(mutationError));
+    },
+  });
+
+  /*
+   * --------------------------------------------------
+   * LOADING
+   * --------------------------------------------------
+   */
+
   if (bookingQuery.isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
@@ -43,6 +82,12 @@ function Payment() {
       </main>
     );
   }
+
+  /*
+   * --------------------------------------------------
+   * ERROR
+   * --------------------------------------------------
+   */
 
   if (bookingQuery.isError) {
     return (
@@ -52,6 +97,12 @@ function Payment() {
       />
     );
   }
+
+  /*
+   * --------------------------------------------------
+   * BOOKING
+   * --------------------------------------------------
+   */
 
   const booking = bookingQuery.data?.data;
 
@@ -64,8 +115,101 @@ function Payment() {
     );
   }
 
+  /*
+   * --------------------------------------------------
+   * PAYMENT HANDLER
+   * --------------------------------------------------
+   */
+
+  const handlePayment = () => {
+    setError("");
+
+    if (typeof window === "undefined" || !window.Razorpay) {
+      setError("Payment gateway is still loading. Please try again.");
+
+      return;
+    }
+
+    const storedPayment = sessionStorage.getItem(`slotgo-payment-${bookingId}`);
+
+    if (!storedPayment) {
+      setError(
+        "Payment information was not found. Please create the booking again.",
+      );
+
+      return;
+    }
+
+    let paymentData: {
+      orderId: string;
+      amount: number;
+      currency: string;
+    };
+
+    try {
+      paymentData = JSON.parse(storedPayment) as {
+        orderId: string;
+        amount: number;
+        currency: string;
+      };
+    } catch {
+      setError("Invalid payment information.");
+
+      return;
+    }
+
+    if (!paymentData.orderId || !paymentData.amount || !paymentData.currency) {
+      setError("Incomplete payment information.");
+
+      return;
+    }
+
+    const razorpay = new window.Razorpay({
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+
+      amount: Math.round(
+  paymentData.amount * 100,
+),
+
+      currency: paymentData.currency,
+
+      name: "SlotGo",
+
+      description: `Parking booking ${booking.bookingNumber}`,
+
+      order_id: paymentData.orderId,
+
+      handler: (response: RazorpayResponse) => {
+        verifyMutation.mutate({
+          orderId: response.razorpay_order_id,
+
+          paymentId: response.razorpay_payment_id,
+
+          signature: response.razorpay_signature,
+        });
+      },
+
+      theme: {
+        color: "#2563eb",
+      },
+
+      modal: {
+        ondismiss: () => {
+          setError("Payment was cancelled.");
+        },
+      },
+    });
+
+    razorpay.open();
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white">
+      <Script
+        src="https://checkout.razorpay.com/v1/checkout.js"
+        strategy="afterInteractive"
+      />
+
       <div className="mx-auto max-w-lg">
         <div className="mb-8">
           <p className="text-sm text-slate-500">SlotGo Payment</p>
@@ -118,7 +262,7 @@ function Payment() {
                 <span className="font-medium">Total</span>
 
                 <span className="text-2xl font-bold">
-                  value={formatMoney(booking.driverPays, "INR")}
+                  {formatMoney(booking.driverPays, "INR")}
                 </span>
               </div>
             </div>
@@ -126,12 +270,11 @@ function Payment() {
 
           <button
             type="button"
-            onClick={() => {
-              setError("Razorpay checkout will be connected in the next step.");
-            }}
-            className="w-full rounded-xl bg-blue-600 px-5 py-4 font-semibold transition hover:bg-blue-500"
+            onClick={handlePayment}
+            disabled={verifyMutation.isPending}
+            className="w-full rounded-xl bg-blue-600 px-5 py-4 font-semibold transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Pay Now
+            {verifyMutation.isPending ? "Verifying Payment..." : "Pay Now"}
           </button>
 
           <button

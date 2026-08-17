@@ -3,7 +3,7 @@
 import {
   createContext,
   useContext,
-  useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 
@@ -26,9 +26,15 @@ interface AuthContextValue {
 const AuthContext =
   createContext<AuthContextValue | null>(null);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
+/*
+ * --------------------------------------------------
+ * AUTH STORE
+ * --------------------------------------------------
+ */
+
+let cachedUser: AuthUser | null | undefined;
+
+const listeners = new Set<() => void>();
 
 function getStoredUser(): AuthUser | null {
   if (typeof window === "undefined") {
@@ -45,40 +51,124 @@ function getStoredUser(): AuthUser | null {
   return user;
 }
 
+function getAuthSnapshot(): AuthUser | null {
+  if (cachedUser === undefined) {
+    cachedUser = getStoredUser();
+  }
+
+  return cachedUser;
+}
+
+function getServerAuthSnapshot(): AuthUser | null {
+  return null;
+}
+
+function subscribe(
+  listener: () => void,
+): () => void {
+  listeners.add(listener);
+
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function notifyAuthChange(
+  user: AuthUser | null,
+): void {
+  cachedUser = user;
+
+  listeners.forEach((listener) => {
+    listener();
+  });
+}
+
+/*
+ * --------------------------------------------------
+ * HYDRATION STORE
+ * --------------------------------------------------
+ */
+
+function subscribeHydration(): () => void {
+  return () => undefined;
+}
+
+function getHydrationSnapshot(): boolean {
+  return true;
+}
+
+function getServerHydrationSnapshot(): boolean {
+  return false;
+}
+
+/*
+ * --------------------------------------------------
+ * PROVIDER
+ * --------------------------------------------------
+ */
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
 export function AuthProvider({
   children,
 }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(
-    getStoredUser,
-  );
+  const user =
+    useSyncExternalStore(
+      subscribe,
+      getAuthSnapshot,
+      getServerAuthSnapshot,
+    );
+
+  const isHydrated =
+    useSyncExternalStore(
+      subscribeHydration,
+      getHydrationSnapshot,
+      getServerHydrationSnapshot,
+    );
 
   const login = async (
     data: LoginData,
   ): Promise<AuthUser> => {
-    const response = await loginUser(data);
+    const response =
+      await loginUser(data);
 
-    const loggedInUser = response.data.user;
-    const accessToken = response.data.accessToken;
+    const loggedInUser =
+      response.data.user;
 
-    authStorage.setToken(accessToken);
-    authStorage.setUser(loggedInUser);
+    const accessToken =
+      response.data.accessToken;
 
-    setUser(loggedInUser);
+    authStorage.setToken(
+      accessToken,
+    );
+
+    authStorage.setUser(
+      loggedInUser,
+    );
+
+    notifyAuthChange(
+      loggedInUser,
+    );
 
     return loggedInUser;
   };
 
-  const logout = () => {
+  const logout = (): void => {
     authStorage.clear();
-    setUser(null);
+
+    notifyAuthChange(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isLoading: false,
-        isAuthenticated: user !== null,
+        isLoading: !isHydrated,
+        isAuthenticated:
+          isHydrated &&
+          user !== null,
         login,
         logout,
       }}
@@ -89,7 +179,8 @@ export function AuthProvider({
 }
 
 export function useAuth(): AuthContextValue {
-  const context = useContext(AuthContext);
+  const context =
+    useContext(AuthContext);
 
   if (!context) {
     throw new Error(

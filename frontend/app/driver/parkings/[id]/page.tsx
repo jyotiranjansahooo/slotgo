@@ -1,17 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
 import Image from "next/image";
+import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import type { ReactNode } from "react";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-import { getParking } from "@/services/parking.service";
-
-import { getAvailableParkingSlots } from "@/services/parking-slot.service";
-
 import { getApiErrorMessage } from "@/lib/api-error";
+
+import { getParking } from "@/services/parking.service";
+import { getAvailableParkingSlots } from "@/services/parking-slot.service";
 
 export default function ParkingDetailsPage() {
   return (
@@ -43,6 +42,12 @@ function ParkingDetails() {
     enabled: parkingId.length > 0,
   });
 
+  /*
+   * --------------------------------------------------
+   * LOADING
+   * --------------------------------------------------
+   */
+
   if (parkingQuery.isLoading || slotsQuery.isLoading) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
@@ -50,6 +55,12 @@ function ParkingDetails() {
       </main>
     );
   }
+
+  /*
+   * --------------------------------------------------
+   * PARKING ERROR
+   * --------------------------------------------------
+   */
 
   if (parkingQuery.isError) {
     return (
@@ -60,6 +71,12 @@ function ParkingDetails() {
     );
   }
 
+  /*
+   * --------------------------------------------------
+   * SLOT ERROR
+   * --------------------------------------------------
+   */
+
   if (slotsQuery.isError) {
     return (
       <ErrorState
@@ -69,40 +86,85 @@ function ParkingDetails() {
     );
   }
 
-  const parking = parkingQuery.data?.data;
+  /*
+   * --------------------------------------------------
+   * PARKING DATA
+   * --------------------------------------------------
+   */
 
-  const slots = slotsQuery.data?.data ?? [];
-
+const parking =
+  parkingQuery.data?.data?.parking;
   if (!parking) {
     return (
       <ErrorState
-        message="Parking location not found."
+        message="Parking not found."
         onBack={() => router.push("/driver/parkings")}
       />
     );
   }
 
+  /*
+   * --------------------------------------------------
+   * SAFE DEFAULTS
+   * --------------------------------------------------
+   */
+
+  const images = parking.images ?? [];
+
+  const facilities = parking.facilities ?? [];
+
+  const rules = parking.rules ?? [];
+
+  const averageRating =
+    typeof parking.averageRating === "number" ? parking.averageRating : 0;
+
+  const totalReviews =
+    typeof parking.totalReviews === "number" ? parking.totalReviews : 0;
+
+  const slots = slotsQuery.data?.data ?? [];
+
+  const operatingHours = parking.operatingHours ?? {
+    open: "—",
+    close: "—",
+  };
+
+  const bookingModes = parking.bookingModes ?? {
+    hourly: false,
+    daily: false,
+    monthly: false,
+  };
+
+  const pricing = parking.pricing ?? {
+    currency: "INR",
+    twoWheeler: {},
+    fourWheeler: {},
+    vanMinibus: {},
+    heavyVehicle: {},
+  };
+
   return (
     <main className="min-h-screen bg-zinc-950 px-4 py-10 text-white">
       <div className="mx-auto max-w-6xl">
+        {/* Back */}
         <button
           type="button"
           onClick={() => router.push("/driver/parkings")}
-          className="mb-6 text-sm text-zinc-400 hover:text-white"
+          className="mb-6 text-sm text-zinc-400 transition hover:text-white"
         >
           ← Back to parking
         </button>
 
         {/* Header */}
         <section className="overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900">
-          {parking.images.length > 0 ? (
+          {images.length > 0 ? (
             <Image
-  src={parking.images[0].url}
-  alt={parking.parkingName}
-  width={1200}
-  height={600}
-  className="h-72 w-full object-cover"
-/>
+              src={images[0].url}
+              alt={parking.parkingName}
+              width={1200}
+              height={600}
+              priority
+              className="h-72 w-full object-cover"
+            />
           ) : (
             <div className="flex h-72 items-center justify-center bg-zinc-800 text-zinc-500">
               No parking image
@@ -116,7 +178,7 @@ function ParkingDetails() {
                   <h1 className="text-3xl font-bold">{parking.parkingName}</h1>
 
                   <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs capitalize text-zinc-300">
-                    {parking.parkingType}
+                    {formatLabel(parking.parkingType)}
                   </span>
                 </div>
 
@@ -125,15 +187,19 @@ function ParkingDetails() {
                 <p className="mt-1 text-sm text-zinc-500">
                   {parking.city}, {parking.state} {parking.pincode}
                 </p>
+
+                {parking.landmark && (
+                  <p className="mt-2 text-sm text-zinc-500">
+                    Landmark: {parking.landmark}
+                  </p>
+                )}
               </div>
 
               <div className="text-left md:text-right">
-                <p className="text-yellow-400">
-                  ★ {parking.averageRating.toFixed(1)}
-                </p>
+                <p className="text-yellow-400">★ {averageRating.toFixed(1)}</p>
 
                 <p className="mt-1 text-sm text-zinc-500">
-                  {parking.totalReviews} reviews
+                  {totalReviews} {totalReviews === 1 ? "review" : "reviews"}
                 </p>
               </div>
             </div>
@@ -148,10 +214,11 @@ function ParkingDetails() {
 
         {/* Information */}
         <div className="mt-6 grid gap-6 lg:grid-cols-3">
+          {/* Facilities */}
           <InfoSection title="Facilities">
             <div className="flex flex-wrap gap-2">
-              {parking.facilities.length > 0 ? (
-                parking.facilities.map((facility) => (
+              {facilities.length > 0 ? (
+                facilities.map((facility) => (
                   <span
                     key={facility}
                     className="rounded-lg bg-zinc-800 px-3 py-2 text-sm capitalize text-zinc-300"
@@ -165,27 +232,37 @@ function ParkingDetails() {
             </div>
           </InfoSection>
 
+          {/* Operating Hours */}
           <InfoSection title="Operating hours">
             <p className="text-zinc-300">
-              {parking.operatingHours.open}
+              {operatingHours.open}
               {" - "}
-              {parking.operatingHours.close}
+              {operatingHours.close}
             </p>
           </InfoSection>
 
+          {/* Booking Modes */}
           <InfoSection title="Booking modes">
             <div className="space-y-2">
-              {parking.bookingModes.hourly && (
+              {bookingModes.hourly && (
                 <p className="text-sm text-zinc-300">✓ Hourly</p>
               )}
 
-              {parking.bookingModes.daily && (
+              {bookingModes.daily && (
                 <p className="text-sm text-zinc-300">✓ Daily</p>
               )}
 
-              {parking.bookingModes.monthly && (
+              {bookingModes.monthly && (
                 <p className="text-sm text-zinc-300">✓ Monthly</p>
               )}
+
+              {!bookingModes.hourly &&
+                !bookingModes.daily &&
+                !bookingModes.monthly && (
+                  <p className="text-sm text-zinc-500">
+                    No booking modes available.
+                  </p>
+                )}
             </div>
           </InfoSection>
         </div>
@@ -195,7 +272,7 @@ function ParkingDetails() {
           <h2 className="text-xl font-semibold">Pricing</h2>
 
           <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-150 text-left text-sm">
+            <table className="w-full min-w-[600px] text-left text-sm">
               <thead>
                 <tr className="border-b border-zinc-800 text-zinc-500">
                   <th className="pb-3">Vehicle</th>
@@ -211,26 +288,26 @@ function ParkingDetails() {
               <tbody>
                 <PricingRow
                   name="Two Wheeler"
-                  pricing={parking.pricing.twoWheeler}
-                  currency={parking.pricing.currency}
+                  pricing={pricing.twoWheeler}
+                  currency={pricing.currency}
                 />
 
                 <PricingRow
                   name="Four Wheeler"
-                  pricing={parking.pricing.fourWheeler}
-                  currency={parking.pricing.currency}
+                  pricing={pricing.fourWheeler}
+                  currency={pricing.currency}
                 />
 
                 <PricingRow
                   name="Van / Minibus"
-                  pricing={parking.pricing.vanMinibus}
-                  currency={parking.pricing.currency}
+                  pricing={pricing.vanMinibus}
+                  currency={pricing.currency}
                 />
 
                 <PricingRow
                   name="Heavy Vehicle"
-                  pricing={parking.pricing.heavyVehicle}
-                  currency={parking.pricing.currency}
+                  pricing={pricing.heavyVehicle}
+                  currency={pricing.currency}
                 />
               </tbody>
             </table>
@@ -238,12 +315,12 @@ function ParkingDetails() {
         </section>
 
         {/* Rules */}
-        {parking.rules.length > 0 && (
+        {rules.length > 0 && (
           <section className="mt-6 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
             <h2 className="text-xl font-semibold">Parking rules</h2>
 
             <ul className="mt-4 space-y-3">
-              {parking.rules.map((rule) => (
+              {rules.map((rule) => (
                 <li key={rule} className="text-sm text-zinc-400">
                   • {rule}
                 </li>
@@ -259,8 +336,7 @@ function ParkingDetails() {
               <h2 className="text-xl font-semibold">Available slots</h2>
 
               <p className="mt-1 text-sm text-zinc-500">
-                {slots.length} slot
-                {slots.length === 1 ? "" : "s"} available
+                {slots.length} {slots.length === 1 ? "slot" : "slots"} available
               </p>
             </div>
           </div>
@@ -283,7 +359,7 @@ function ParkingDetails() {
                   </p>
 
                   <div className="mt-3 flex flex-wrap gap-1">
-                    {slot.supportedVehicleTypes.map((type) => (
+                    {(slot.supportedVehicleTypes ?? []).map((type) => (
                       <span
                         key={type}
                         className="rounded-md bg-zinc-800 px-2 py-1 text-xs capitalize text-zinc-400"
@@ -301,14 +377,32 @@ function ParkingDetails() {
             </div>
           )}
         </section>
+
+        {/* Book button */}
+        <section className="mt-6">
+          <button
+            type="button"
+            disabled={slots.length === 0}
+            onClick={() => router.push(`/driver/parkings/${parkingId}/book`)}
+            className="w-full rounded-xl bg-white px-6 py-4 font-semibold text-black transition hover:bg-zinc-200 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-500"
+          >
+            {slots.length === 0 ? "No Slots Available" : "Book Parking"}
+          </button>
+        </section>
       </div>
     </main>
   );
 }
 
+/*
+ * --------------------------------------------------
+ * INFO SECTION
+ * --------------------------------------------------
+ */
+
 interface InfoSectionProps {
   title: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 function InfoSection({ title, children }: InfoSectionProps) {
@@ -321,13 +415,21 @@ function InfoSection({ title, children }: InfoSectionProps) {
   );
 }
 
+/*
+ * --------------------------------------------------
+ * PRICING
+ * --------------------------------------------------
+ */
+
 interface PricingRowProps {
   name: string;
+
   pricing: {
     hourly?: number;
     daily?: number;
     monthly?: number;
   };
+
   currency: string;
 }
 
@@ -346,19 +448,39 @@ function PricingRow({ name, pricing, currency }: PricingRowProps) {
 }
 
 function formatPrice(price: number | undefined, currency: string): string {
-  if (price === undefined) {
+  if (typeof price !== "number") {
     return "—";
   }
 
-  return `${currency} ${price}`;
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(price);
 }
 
-function formatLabel(value: string): string {
+/*
+ * --------------------------------------------------
+ * LABEL FORMATTER
+ * --------------------------------------------------
+ */
+
+function formatLabel(value: string | undefined | null): string {
+  if (typeof value !== "string" || value.length === 0) {
+    return "—";
+  }
+
   return value
     .replace(/([A-Z])/g, " $1")
     .replace(/[_-]/g, " ")
     .trim();
 }
+
+/*
+ * --------------------------------------------------
+ * ERROR STATE
+ * --------------------------------------------------
+ */
 
 interface ErrorStateProps {
   message: string;

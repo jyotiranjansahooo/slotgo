@@ -20,6 +20,12 @@ const authMiddleware = async (req, _res, next) => {
             throw new ApiError(403, "Your account has been deactivated.");
         }
         req.user = user;
+        console.log("========== AUTH DEBUG ==========");
+        console.log("JWT userId:", decoded.userId);
+        console.log("Database user _id:", user._id.toString());
+        console.log("Database user role:", user.role);
+        console.log("Database user email:", user.email);
+        console.log("================================");
         next();
     }
     catch (error) {
