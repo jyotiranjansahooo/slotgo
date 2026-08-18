@@ -7,9 +7,7 @@ import { createReviewSchema } from "../validations/review/create.validation.js";
 import { updateReviewSchema } from "../validations/review/update.validation.js";
 import reviewService from "../services/review/review.service.js";
 
-// ============================================================
 // CREATE REVIEW
-// ============================================================
 
 export const createReview = asyncHandler(
   async (
@@ -48,9 +46,7 @@ export const createReview = asyncHandler(
   },
 );
 
-// ============================================================
 // GET REVIEW BY ID
-// ============================================================
 
 export const getReviewById = asyncHandler(
   async (req: Request, res: Response) => {
@@ -64,9 +60,7 @@ export const getReviewById = asyncHandler(
   },
 );
 
-// ============================================================
 // GET PARKING REVIEWS
-// ============================================================
 
 export const getParkingReviews = asyncHandler(
   async (req: Request, res: Response) => {
@@ -82,9 +76,7 @@ export const getParkingReviews = asyncHandler(
   },
 );
 
-// ============================================================
 // GET OWNER REVIEWS
-// ============================================================
 
 export const getOwnerReviews = asyncHandler(
   async (req: Request, res: Response) => {
@@ -100,9 +92,7 @@ export const getOwnerReviews = asyncHandler(
   },
 );
 
-// ============================================================
 // GET MY REVIEWS
-// ============================================================
 
 export const getMyReviews = asyncHandler(
   async (req: Request, res: Response) => {
@@ -122,13 +112,9 @@ export const getMyReviews = asyncHandler(
   },
 );
 
-// ============================================================
 // UPDATE REVIEW
-// ============================================================
 
-// ============================================================
 // UPDATE REVIEW
-// ============================================================
 
 export const updateReview =
   asyncHandler(
@@ -175,9 +161,7 @@ export const updateReview =
     },
   );
 
-// ============================================================
 // DELETE REVIEW
-// ============================================================
 
 export const deleteReview = asyncHandler(
   async (req: Request, res: Response) => {

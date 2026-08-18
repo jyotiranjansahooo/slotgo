@@ -9,6 +9,7 @@ import {
 
 import {
   loginUser,
+  googleLoginUser,
   type AuthUser,
   type LoginData,
 } from "@/services/auth.service";
@@ -19,17 +20,20 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+
   login: (data: LoginData) => Promise<AuthUser>;
+
+  googleLogin: (credential: string) => Promise<AuthUser>;
+
   logout: () => void;
 }
 
-const AuthContext =
-  createContext<AuthContextValue | null>(null);
+const AuthContext = createContext<AuthContextValue | null>(null);
 
 /*
- * --------------------------------------------------
+ * ============================================================
  * AUTH STORE
- * --------------------------------------------------
+ * ============================================================
  */
 
 let cachedUser: AuthUser | null | undefined;
@@ -63,9 +67,7 @@ function getServerAuthSnapshot(): AuthUser | null {
   return null;
 }
 
-function subscribe(
-  listener: () => void,
-): () => void {
+function subscribe(listener: () => void): () => void {
   listeners.add(listener);
 
   return () => {
@@ -73,9 +75,7 @@ function subscribe(
   };
 }
 
-function notifyAuthChange(
-  user: AuthUser | null,
-): void {
+function notifyAuthChange(user: AuthUser | null): void {
   cachedUser = user;
 
   listeners.forEach((listener) => {
@@ -84,9 +84,9 @@ function notifyAuthChange(
 }
 
 /*
- * --------------------------------------------------
+ * ============================================================
  * HYDRATION STORE
- * --------------------------------------------------
+ * ============================================================
  */
 
 function subscribeHydration(): () => void {
@@ -102,58 +102,73 @@ function getServerHydrationSnapshot(): boolean {
 }
 
 /*
- * --------------------------------------------------
+ * ============================================================
  * PROVIDER
- * --------------------------------------------------
+ * ============================================================
  */
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-export function AuthProvider({
-  children,
-}: AuthProviderProps) {
-  const user =
-    useSyncExternalStore(
-      subscribe,
-      getAuthSnapshot,
-      getServerAuthSnapshot,
-    );
+export function AuthProvider({ children }: AuthProviderProps) {
+  const user = useSyncExternalStore(
+    subscribe,
+    getAuthSnapshot,
+    getServerAuthSnapshot,
+  );
 
-  const isHydrated =
-    useSyncExternalStore(
-      subscribeHydration,
-      getHydrationSnapshot,
-      getServerHydrationSnapshot,
-    );
+  const isHydrated = useSyncExternalStore(
+    subscribeHydration,
+    getHydrationSnapshot,
+    getServerHydrationSnapshot,
+  );
 
-  const login = async (
-    data: LoginData,
-  ): Promise<AuthUser> => {
-    const response =
-      await loginUser(data);
+  /*
+   * ============================================================
+   * EMAIL / PASSWORD LOGIN
+   * ============================================================
+   */
 
-    const loggedInUser =
-      response.data.user;
+  const login = async (data: LoginData): Promise<AuthUser> => {
+    const response = await loginUser(data);
 
-    const accessToken =
-      response.data.accessToken;
+    const loggedInUser = response.data.user;
+    const accessToken = response.data.accessToken;
 
-    authStorage.setToken(
-      accessToken,
-    );
+    authStorage.setToken(accessToken);
+    authStorage.setUser(loggedInUser);
 
-    authStorage.setUser(
-      loggedInUser,
-    );
-
-    notifyAuthChange(
-      loggedInUser,
-    );
+    notifyAuthChange(loggedInUser);
 
     return loggedInUser;
   };
+
+  /*
+   * ============================================================
+   * GOOGLE LOGIN
+   * ============================================================
+   */
+
+  const googleLogin = async (credential: string): Promise<AuthUser> => {
+    const response = await googleLoginUser(credential);
+
+    const loggedInUser = response.data.user;
+    const accessToken = response.data.accessToken;
+
+    authStorage.setToken(accessToken);
+    authStorage.setUser(loggedInUser);
+
+    notifyAuthChange(loggedInUser);
+
+    return loggedInUser;
+  };
+
+  /*
+   * ============================================================
+   * LOGOUT
+   * ============================================================
+   */
 
   const logout = (): void => {
     authStorage.clear();
@@ -165,11 +180,15 @@ export function AuthProvider({
     <AuthContext.Provider
       value={{
         user,
+
         isLoading: !isHydrated,
-        isAuthenticated:
-          isHydrated &&
-          user !== null,
+
+        isAuthenticated: isHydrated && user !== null,
+
         login,
+
+        googleLogin,
+
         logout,
       }}
     >
@@ -178,14 +197,17 @@ export function AuthProvider({
   );
 }
 
+/*
+ * ============================================================
+ * USE AUTH
+ * ============================================================
+ */
+
 export function useAuth(): AuthContextValue {
-  const context =
-    useContext(AuthContext);
+  const context = useContext(AuthContext);
 
   if (!context) {
-    throw new Error(
-      "useAuth must be used inside AuthProvider",
-    );
+    throw new Error("useAuth must be used inside AuthProvider");
   }
 
   return context;

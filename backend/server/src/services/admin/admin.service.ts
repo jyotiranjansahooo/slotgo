@@ -6,10 +6,8 @@ import bookingRepository from "../../repositories/booking.repository.js";
 import paymentRepository from "../../repositories/payment.repository.js";
 
 class AdminService {
-  // ============================================================
-  // USERS
-  // ============================================================
-
+    // USERS
+  
   async getUsers() {
     return userRepository.findAll();
   }
@@ -40,10 +38,8 @@ class AdminService {
     return updatedUser;
   }
 
-  // ============================================================
-  // PARKINGS
-  // ============================================================
-
+    // PARKINGS
+  
   async getParkings() {
     return parkingRepository.findAll();
   }
@@ -92,10 +88,8 @@ class AdminService {
     return updatedParking;
   }
 
-  // ============================================================
-  // BOOKINGS
-  // ============================================================
-
+    // BOOKINGS
+  
   async getBookings() {
     return bookingRepository.findAll();
   }
@@ -114,10 +108,8 @@ class AdminService {
     return bookingRepository.findByParking(parkingId);
   }
 
-  // ============================================================
-  // PAYMENTS
-  // ============================================================
-
+    // PAYMENTS
+  
   async getPaymentById(paymentId: string) {
     const payment = await paymentRepository.findById(paymentId);
 
@@ -137,9 +129,7 @@ class AdminService {
 
     return payment;
   }
-  // ============================================================
-// DASHBOARD STATISTICS
-// ============================================================
+  // DASHBOARD STATISTICS
 
 async getDashboardStats() {
   const [

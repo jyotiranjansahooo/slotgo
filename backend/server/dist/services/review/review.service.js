@@ -3,9 +3,7 @@ import reviewRepository from "../../repositories/review.repository.js";
 import bookingRepository from "../../repositories/booking.repository.js";
 import { BOOKING_STATUS, PAYMENT_STATUS as BOOKING_PAYMENT_STATUS, } from "../../constants/booking.js";
 class ReviewService {
-    // ============================================================
     // CREATE REVIEW
-    // ============================================================
     async createReview(driverId, data) {
         // ----------------------------------------------------------
         // VALIDATE RATING
@@ -59,9 +57,7 @@ class ReviewService {
         });
         return review;
     }
-    // ============================================================
     // GET REVIEW BY ID
-    // ============================================================
     async getReviewById(reviewId) {
         const review = await reviewRepository.findById(reviewId);
         if (!review) {
@@ -69,27 +65,19 @@ class ReviewService {
         }
         return review;
     }
-    // ============================================================
     // GET PARKING REVIEWS
-    // ============================================================
     async getParkingReviews(parkingId) {
         return reviewRepository.findByParking(parkingId);
     }
-    // ============================================================
     // GET OWNER REVIEWS
-    // ============================================================
     async getOwnerReviews(ownerId) {
         return reviewRepository.findByOwner(ownerId);
     }
-    // ============================================================
     // GET DRIVER REVIEWS
-    // ============================================================
     async getDriverReviews(driverId) {
         return reviewRepository.findByDriver(driverId);
     }
-    // ============================================================
     // UPDATE REVIEW
-    // ============================================================
     async updateReview(driverId, reviewId, data) {
         const review = await reviewRepository.findById(reviewId);
         if (!review) {
@@ -130,9 +118,7 @@ class ReviewService {
         }
         return updatedReview;
     }
-    // ============================================================
     // DELETE REVIEW
-    // ============================================================
     async deleteReview(driverId, reviewId) {
         const review = await reviewRepository.findById(reviewId);
         if (!review) {

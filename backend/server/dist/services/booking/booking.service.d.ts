@@ -81,17 +81,7 @@ declare class BookingService {
         transaction: {} | null;
     }>;
     checkIn(ownerId: string, bookingId: string, data: CheckInInput): Promise<any>;
-    checkOut(ownerId: string, bookingId: string): Promise<{
-        requiresAdditionalPayment: boolean;
-        booking: any;
-        overtime: {
-            overtimeMinutes: number;
-            overtimeParkingAmount: number;
-            overtimeFine: number;
-            overtimeTotal: number;
-            overtimeHours?: undefined;
-        };
-    } | {
+    calculateOvertime(ownerId: string, bookingId: string): Promise<{
         requiresAdditionalPayment: boolean;
         booking: any;
         overtime: {
@@ -101,8 +91,22 @@ declare class BookingService {
             overtimeFine: number;
             overtimeTotal: number;
         };
+    } | {
+        requiresAdditionalPayment: boolean;
+        booking: any;
+        overtime: import("./pricing.service.js").OvertimePricingResult;
     }>;
-    private getBookedHours;
+    checkOut(ownerId: string, bookingId: string): Promise<{
+        requiresAdditionalPayment: boolean;
+        booking: any;
+        overtime: import("./pricing.service.js").OvertimePricingResult | {
+            overtimeMinutes: number;
+            overtimeHours: number;
+            overtimeParkingAmount: number;
+            overtimeFine: number;
+            overtimeTotal: number;
+        };
+    }>;
     expireBooking(): Promise<{
         pendingExpired: number;
         confirmedExpired: number;

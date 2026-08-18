@@ -14,23 +14,39 @@ export const createBooking = asyncHandler(async (req, res) => {
 // VERIFY NORMAL PAYMENT
 // ============================================================
 export const verifyPayment = asyncHandler(async (req, res) => {
-    const { orderId, paymentId, signature } = req.body;
+    const { orderId, paymentId, signature, } = req.body;
     const result = await bookingService.verifyPayment(orderId, paymentId, signature);
     res
         .status(200)
         .json(new ApiResponse(200, result, "Payment verified successfully."));
 });
 // ============================================================
+// CREATE OVERTIME PAYMENT
+// ============================================================
+export const createOvertimePayment = asyncHandler(async (req, res) => {
+    const bookingId = req.params.bookingId;
+    if (!bookingId) {
+        throw new Error("Booking ID is required.");
+    }
+    const result = await bookingService.createOvertimePayment(bookingId);
+    res
+        .status(200)
+        .json(new ApiResponse(200, result, "Overtime payment order created successfully."));
+});
+// ============================================================
 // VERIFY OVERTIME PAYMENT
 // ============================================================
 export const verifyOvertimePayment = asyncHandler(async (req, res) => {
-    const { orderId, paymentId, signature } = req.body;
-    if (!orderId || !paymentId || !signature) {
-        res.status(400).json(new ApiResponse(400, null, "orderId, paymentId and signature are required."));
-        return;
+    const { orderId, paymentId, signature, } = req.body;
+    if (!orderId ||
+        !paymentId ||
+        !signature) {
+        throw new Error("orderId, paymentId and signature are required.");
     }
     const result = await bookingService.verifyOvertimePayment(orderId, paymentId, signature);
-    res.status(200).json(new ApiResponse(200, result, "Overtime payment verified successfully."));
+    res
+        .status(200)
+        .json(new ApiResponse(200, result, "Overtime payment verified successfully."));
 });
 // ============================================================
 // GET DRIVER BOOKINGS
@@ -46,7 +62,9 @@ export const getDriverBookings = asyncHandler(async (req, res) => {
 // ============================================================
 export const getOwnerBookings = asyncHandler(async (req, res) => {
     const bookings = await bookingService.getOwnerBookings(req.user._id.toString());
-    res.status(200).json(new ApiResponse(200, bookings, "Owner bookings fetched successfully."));
+    res
+        .status(200)
+        .json(new ApiResponse(200, bookings, "Owner bookings fetched successfully."));
 });
 // ============================================================
 // GET SINGLE BOOKING
@@ -80,7 +98,9 @@ export const checkIn = asyncHandler(async (req, res) => {
 // ============================================================
 export const checkOut = asyncHandler(async (req, res) => {
     const result = await bookingService.checkOut(req.user._id.toString(), req.params.bookingId);
-    res.status(200).json(new ApiResponse(200, result, result.requiresAdditionalPayment
+    res
+        .status(200)
+        .json(new ApiResponse(200, result, result.requiresAdditionalPayment
         ? "Additional overtime payment is required before checkout."
         : "Driver checked out successfully."));
 });

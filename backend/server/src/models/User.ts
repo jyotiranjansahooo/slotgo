@@ -14,8 +14,9 @@ export interface IUser {
 
   phoneNumber: string;
 
-  password: string;
-
+  password?: string;
+  authProvider: "local" | "google";
+  googleId?: string;
   role: UserRole;
 
   avatar: {
@@ -89,7 +90,18 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       minlength: 8,
       select: false,
     },
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
 
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+      default: null,
+    },
     role: {
       type: String,
       enum: USER_ROLE_VALUES,
@@ -149,15 +161,31 @@ userSchema.index({
 });
 
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
+  if (!this.isModified("password")) {
+    return;
+  }
 
-  this.password = await bcrypt.hash(this.password, 12);
+  const password = this.password;
+
+  if (!password) {
+    return;
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+
+  this.password = hashedPassword;
 });
 
 userSchema.method(
   "comparePassword",
-  async function (candidatePassword: string) {
-    return bcrypt.compare(candidatePassword, this.password);
+  async function (candidatePassword: string): Promise<boolean> {
+    const password = this.password;
+
+    if (!password) {
+      return false;
+    }
+
+    return bcrypt.compare(candidatePassword, password);
   },
 );
 

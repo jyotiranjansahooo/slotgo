@@ -1,33 +1,15 @@
 "use client";
 
-import {
-  useSyncExternalStore,
-  type ReactNode,
-} from "react";
-
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 import useAuth from "@/hooks/useAuth";
 
-import type {
-  UserRole,
-} from "@/services/auth.service";
+import type { UserRole } from "@/services/auth.service";
 
 interface ProtectedRouteProps {
-  children: ReactNode;
+  children: React.ReactNode;
   allowedRoles?: UserRole[];
-}
-
-function subscribeHydration(): () => void {
-  return () => undefined;
-}
-
-function getHydrationSnapshot(): boolean {
-  return true;
-}
-
-function getServerHydrationSnapshot(): boolean {
-  return false;
 }
 
 export default function ProtectedRoute({
@@ -39,39 +21,117 @@ export default function ProtectedRoute({
   const {
     user,
     isAuthenticated,
+    isLoading,
   } = useAuth();
 
-  const isHydrated =
-    useSyncExternalStore(
-      subscribeHydration,
-      getHydrationSnapshot,
-      getServerHydrationSnapshot,
-    );
+  /*
+   * ============================================================
+   * AUTHENTICATION CHECK
+   * ============================================================
+   */
 
-  if (!isHydrated) {
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    /*
+     * User is not authenticated.
+     */
+
+    if (!isAuthenticated || !user) {
+      router.replace("/login");
+      return;
+    }
+
+    /*
+     * User is authenticated but doesn't have
+     * permission for this section.
+     */
+
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+      router.replace("/dashboard");
+    }
+  }, [
+    isLoading,
+    isAuthenticated,
+    user,
+    allowedRoles,
+    router,
+  ]);
+
+  /*
+   * ============================================================
+   * AUTHENTICATION LOADING
+   * ============================================================
+   */
+
+  if (isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
-        <p className="text-zinc-400">
-          Checking authentication...
-        </p>
+      <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-2 border-zinc-700 border-t-white"
+            aria-label="Loading"
+          />
+
+          <p className="text-sm text-zinc-400">
+            Checking authentication...
+          </p>
+        </div>
       </main>
     );
   }
 
+  /*
+   * ============================================================
+   * NOT AUTHENTICATED
+   * ============================================================
+   */
+
   if (!isAuthenticated || !user) {
-    router.replace("/login");
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">
+            Authentication required
+          </h1>
 
-    return null;
+          <p className="mt-2 text-sm text-zinc-400">
+            Redirecting to login...
+          </p>
+        </div>
+      </main>
+    );
   }
 
-  if (
-    allowedRoles &&
-    !allowedRoles.includes(user.role)
-  ) {
-    router.replace("/dashboard");
+  /*
+   * ============================================================
+   * WRONG ROLE
+   * ============================================================
+   */
 
-    return null;
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
+        <div className="text-center">
+          <h1 className="text-xl font-semibold">
+            Access denied
+          </h1>
+
+          <p className="mt-2 text-sm text-zinc-400">
+            You don`t have permission to access this page.
+          </p>
+        </div>
+      </main>
+    );
   }
+
+  /*
+   * ============================================================
+   * AUTHENTICATED
+   * ============================================================
+   */
 
   return <>{children}</>;
 }

@@ -53,12 +53,9 @@ function BookingForm() {
 
   const [error, setError] = useState("");
 
-  /*
-   * CURRENT TIME
-   *
-   * We keep time in state instead of calling Date.now()
-   * directly during render.
-   */
+  // ============================================================
+  // CURRENT TIME
+  // ============================================================
 
   useEffect(() => {
     const updateMinimumDateTime = () => {
@@ -80,9 +77,9 @@ function BookingForm() {
     };
   }, []);
 
-  /*
-   * PARKING
-   */
+  // ============================================================
+  // PARKING
+  // ============================================================
 
   const parkingQuery = useQuery({
     queryKey: ["parking", parkingId],
@@ -93,8 +90,17 @@ function BookingForm() {
   });
 
   /*
-   * VEHICLES
+   * IMPORTANT:
+   *
+   * parking must be declared BEFORE pricePreview because
+   * pricePreview uses parking.pricing.
    */
+
+  const parking = parkingQuery.data?.data?.parking;
+
+  // ============================================================
+  // VEHICLES
+  // ============================================================
 
   const vehiclesQuery = useQuery({
     queryKey: ["vehicles"],
@@ -102,46 +108,41 @@ function BookingForm() {
     queryFn: () => getMyVehicles(),
   });
 
-  /*
-   * AVAILABLE BOOKING MODES
-   */
+  // ============================================================
+  // AVAILABLE BOOKING MODES
+  // ============================================================
 
- const availableModes = useMemo(() => {
-  const bookingModes =
-    parkingQuery.data?.data?.parking?.bookingModes;
+  const availableModes = useMemo(() => {
+    const bookingModes = parking?.bookingModes;
 
-  if (!bookingModes) {
-    return [];
-  }
+    if (!bookingModes) {
+      return [];
+    }
 
-  const modes: BookingModeOption[] = [
-    {
-      value: "hourly",
-      label: "Hourly",
-      description: "Choose number of hours",
-    },
-    {
-      value: "daily",
-      label: "Daily",
-      description: "Choose number of days",
-    },
-    {
-      value: "monthly",
-      label: "Monthly",
-      description: "Choose number of months",
-    },
-  ];
+    const modes: BookingModeOption[] = [
+      {
+        value: "hourly",
+        label: "Hourly",
+        description: "Choose number of hours",
+      },
+      {
+        value: "daily",
+        label: "Daily",
+        description: "Choose number of days",
+      },
+      {
+        value: "monthly",
+        label: "Monthly",
+        description: "Choose number of months",
+      },
+    ];
 
-  return modes.filter(
-    (mode) => bookingModes[mode.value] === true,
-  );
-}, [
-  parkingQuery.data?.data?.parking?.bookingModes,
-]);
+    return modes.filter((mode) => bookingModes[mode.value] === true);
+  }, [parking?.bookingModes]);
 
-  /*
-   * EFFECTIVE MODE
-   */
+  // ============================================================
+  // EFFECTIVE BOOKING MODE
+  // ============================================================
 
   const effectiveBookingMode = availableModes.some(
     (mode) => mode.value === bookingMode,
@@ -149,17 +150,21 @@ function BookingForm() {
     ? bookingMode
     : availableModes[0]?.value;
 
-  /*
-   * VEHICLES
-   */
+  // ============================================================
+  // VEHICLES
+  // ============================================================
 
   const vehicles: Vehicle[] = vehiclesQuery.data?.data ?? [];
 
   const activeVehicles = vehicles.filter((vehicle) => vehicle.isActive);
 
-  /*
-   * DURATION LIMITS
-   */
+  const selectedVehicle = activeVehicles.find(
+    (vehicle) => vehicle._id === vehicleId,
+  );
+
+  // ============================================================
+  // DURATION LIMITS
+  // ============================================================
 
   const durationLimits = useMemo(() => {
     switch (effectiveBookingMode) {
@@ -193,22 +198,75 @@ function BookingForm() {
     }
   }, [effectiveBookingMode]);
 
-  /*
-   * RESET DURATION WHEN MODE CHANGES
-   *
-   * This happens through the click handler below,
-   * not synchronously inside an effect.
-   */
+  const selectedVehicleType = selectedVehicle?.vehicleType;
 
+  const pricing = parking?.pricing;
+
+  const pricePreview = (() => {
+    if (
+      !parking?.pricing ||
+      !selectedVehicle?.vehicleType ||
+      !effectiveBookingMode
+    ) {
+      return null;
+    }
+
+    let rate = 0;
+
+    switch (selectedVehicle.vehicleType) {
+      case "twoWheeler":
+        rate = parking.pricing.twoWheeler?.[effectiveBookingMode] ?? 0;
+        break;
+
+      case "fourWheeler":
+        rate = parking.pricing.fourWheeler?.[effectiveBookingMode] ?? 0;
+        break;
+
+      case "vanMinibus":
+        rate = parking.pricing.vanMinibus?.[effectiveBookingMode] ?? 0;
+        break;
+
+      case "heavyVehicle":
+        rate = parking.pricing.heavyVehicle?.[effectiveBookingMode] ?? 0;
+        break;
+    }
+
+    if (rate <= 0) {
+      return null;
+    }
+
+    const parkingAmount = rate * duration;
+
+    const discountAmount = 0;
+
+    const actualAmount = Math.max(0, parkingAmount - discountAmount);
+
+    let driverServiceFee = Math.round(actualAmount * 0.05);
+
+    driverServiceFee = Math.max(5, Math.min(driverServiceFee, 35));
+
+    const driverPays = Number((actualAmount + driverServiceFee).toFixed(2));
+
+    return {
+      rate,
+      parkingAmount,
+      discountAmount,
+      actualAmount,
+      driverServiceFee,
+      driverPays,
+    };
+  })();
   const handleBookingModeChange = (mode: BookingMode) => {
     setBookingMode(mode);
+
     setDuration(1);
+
     setError("");
   };
 
-  /*
-   * CALCULATE END TIME
-   */
+  // ============================================================
+  // CALCULATE END DATE
+  // ============================================================
 
   const calculateEndDate = (
     start: Date,
@@ -217,64 +275,78 @@ function BookingForm() {
   ): Date => {
     const end = new Date(start);
 
-    if (mode === "hourly") {
-      end.setHours(end.getHours() + value);
-    }
+    switch (mode) {
+      case "hourly":
+        end.setHours(end.getHours() + value);
+        break;
 
-    if (mode === "daily") {
-      end.setDate(end.getDate() + value);
-    }
+      case "daily":
+        end.setDate(end.getDate() + value);
+        break;
 
-    if (mode === "monthly") {
-      end.setMonth(end.getMonth() + value);
+      case "monthly":
+        end.setMonth(end.getMonth() + value);
+        break;
     }
 
     return end;
   };
 
-  /*
-   * PREVIEW DATES
-   */
+  // ============================================================
+  // BOOKING PREVIEW
+  // ============================================================
 
   const bookingPreview = useMemo(() => {
-    if (bookingTiming === "future" && !futureStartTime) {
-      return null;
-    }
+    let start: Date;
 
-    const start = bookingTiming === "now" ? null : new Date(futureStartTime);
-
-    if (
-      bookingTiming === "future" &&
-      (!start || Number.isNaN(start.getTime()))
-    ) {
-      return null;
-    }
-
-    /*
-     * For "Book Now", we intentionally don't create
-     * a Date during render. The actual start time is
-     * generated during submit.
-     */
+    // ----------------------------------------------------------
+    // BOOK NOW
+    // ----------------------------------------------------------
 
     if (bookingTiming === "now") {
+      if (!minimumDateTime) {
+        return null;
+      }
+
+      start = new Date(minimumDateTime);
+    }
+
+    // ----------------------------------------------------------
+    // FUTURE BOOKING
+    // ----------------------------------------------------------
+    else {
+      if (!futureStartTime) {
+        return null;
+      }
+
+      start = new Date(futureStartTime);
+
+      if (Number.isNaN(start.getTime())) {
+        return null;
+      }
+    }
+
+    if (!effectiveBookingMode) {
       return null;
     }
 
-    const end = calculateEndDate(
-      start as Date,
-      effectiveBookingMode as BookingMode,
-      duration,
-    );
+    const end = calculateEndDate(start, effectiveBookingMode, duration);
 
     return {
-      start: start as Date,
+      start,
       end,
     };
-  }, [bookingTiming, futureStartTime, effectiveBookingMode, duration]);
+  }, [
+    bookingTiming,
+    futureStartTime,
+    minimumDateTime,
+    effectiveBookingMode,
+    duration,
+  ]);
 
-  /*
-   * CREATE BOOKING
-   */
+  // ============================================================
+  // CREATE BOOKING
+  // ============================================================
 
   const bookingMutation = useMutation({
     mutationFn: createBooking,
@@ -284,11 +356,19 @@ function BookingForm() {
 
       const payment = response.data?.payment;
 
+      // --------------------------------------------------------
+      // BOOKING VALIDATION
+      // --------------------------------------------------------
+
       if (!booking?._id) {
         setError("Booking was created but no booking ID was returned.");
 
         return;
       }
+
+      // --------------------------------------------------------
+      // PAYMENT VALIDATION
+      // --------------------------------------------------------
 
       if (!payment?.orderId) {
         setError("Payment order was not created.");
@@ -296,14 +376,24 @@ function BookingForm() {
         return;
       }
 
+      // --------------------------------------------------------
+      // SAVE PAYMENT INFORMATION
+      // --------------------------------------------------------
+
       sessionStorage.setItem(
         `slotgo-payment-${booking._id}`,
         JSON.stringify({
           orderId: payment.orderId,
+
           amount: payment.amount,
+
           currency: payment.currency,
         }),
       );
+
+      // --------------------------------------------------------
+      // GO TO PAYMENT
+      // --------------------------------------------------------
 
       router.push(`/driver/bookings/${booking._id}/payment`);
     },
@@ -313,25 +403,47 @@ function BookingForm() {
     },
   });
 
-  /*
-   * VALIDATE BOOKING
-   */
+  // ============================================================
+  // VALIDATE BOOKING
+  // ============================================================
 
   const validateBooking = (): {
     start: Date;
     end: Date;
   } | null => {
+    // ----------------------------------------------------------
+    // PARKING
+    // ----------------------------------------------------------
+
+    if (!parkingId) {
+      setError("Parking location is missing.");
+
+      return null;
+    }
+
+    // ----------------------------------------------------------
+    // VEHICLE
+    // ----------------------------------------------------------
+
     if (!vehicleId) {
       setError("Please select a vehicle.");
 
       return null;
     }
 
+    // ----------------------------------------------------------
+    // BOOKING MODE
+    // ----------------------------------------------------------
+
     if (!effectiveBookingMode) {
       setError("No booking mode is available for this parking.");
 
       return null;
     }
+
+    // ----------------------------------------------------------
+    // DURATION
+    // ----------------------------------------------------------
 
     if (
       !Number.isInteger(duration) ||
@@ -345,19 +457,24 @@ function BookingForm() {
       return null;
     }
 
+    // ----------------------------------------------------------
+    // START TIME
+    // ----------------------------------------------------------
+
     let start: Date;
 
-    /*
-     * BOOK NOW
-     */
+    // ----------------------------------------------------------
+    // BOOK NOW
+    // ----------------------------------------------------------
 
     if (bookingTiming === "now") {
       start = new Date();
-    } else {
-      /*
-       * FUTURE
-       */
+    }
 
+    // ----------------------------------------------------------
+    // FUTURE
+    // ----------------------------------------------------------
+    else {
       if (!futureStartTime) {
         setError("Please select a future start date and time.");
 
@@ -373,11 +490,11 @@ function BookingForm() {
       }
     }
 
-    const currentTime = new Date();
+    // ----------------------------------------------------------
+    // FUTURE TIME VALIDATION
+    // ----------------------------------------------------------
 
-    /*
-     * Never allow a past start time.
-     */
+    const currentTime = new Date();
 
     if (
       bookingTiming === "future" &&
@@ -387,6 +504,10 @@ function BookingForm() {
 
       return null;
     }
+
+    // ----------------------------------------------------------
+    // END TIME
+    // ----------------------------------------------------------
 
     const end = calculateEndDate(start, effectiveBookingMode, duration);
 
@@ -402,9 +523,9 @@ function BookingForm() {
     };
   };
 
-  /*
-   * SUBMIT
-   */
+  // ============================================================
+  // SUBMIT
+  // ============================================================
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -417,18 +538,28 @@ function BookingForm() {
       return;
     }
 
+    if (!effectiveBookingMode) {
+      setError("Booking mode is required.");
+
+      return;
+    }
+
     bookingMutation.mutate({
       parkingId,
+
       vehicleId,
-      bookingMode: effectiveBookingMode as BookingMode,
+
+      bookingMode: effectiveBookingMode,
+
       startTime: result.start.toISOString(),
+
       endTime: result.end.toISOString(),
     });
   };
 
-  /*
-   * LOADING
-   */
+  // ============================================================
+  // LOADING
+  // ============================================================
 
   if (parkingQuery.isLoading || vehiclesQuery.isLoading) {
     return (
@@ -438,9 +569,9 @@ function BookingForm() {
     );
   }
 
-  /*
-   * PARKING ERROR
-   */
+  // ============================================================
+  // PARKING ERROR
+  // ============================================================
 
   if (parkingQuery.isError) {
     return (
@@ -451,9 +582,9 @@ function BookingForm() {
     );
   }
 
-  /*
-   * VEHICLE ERROR
-   */
+  // ============================================================
+  // VEHICLE ERROR
+  // ============================================================
 
   if (vehiclesQuery.isError) {
     return (
@@ -464,7 +595,9 @@ function BookingForm() {
     );
   }
 
-  const parking = parkingQuery.data?.data?.parking;
+  // ============================================================
+  // PARKING NOT FOUND
+  // ============================================================
 
   if (!parking) {
     return (
@@ -475,14 +608,16 @@ function BookingForm() {
     );
   }
 
-  /*
-   * PAGE
-   */
+  // ============================================================
+  // PAGE
+  // ============================================================
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
+        {/* ================================================== */}
         {/* HEADER */}
+        {/* ================================================== */}
 
         <div className="mb-8">
           <button
@@ -503,7 +638,9 @@ function BookingForm() {
           <p className="mt-1 text-sm text-slate-500">{parking.address}</p>
         </div>
 
+        {/* ================================================== */}
         {/* ERROR */}
+        {/* ================================================== */}
 
         {error && (
           <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
@@ -512,7 +649,9 @@ function BookingForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ================================================= */}
           {/* VEHICLE */}
+          {/* ================================================= */}
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Select Vehicle</h2>
@@ -544,7 +683,11 @@ function BookingForm() {
                     <button
                       type="button"
                       key={vehicle._id}
-                      onClick={() => setVehicleId(vehicle._id)}
+                      onClick={() => {
+                        setVehicleId(vehicle._id);
+
+                        setError("");
+                      }}
                       className={`w-full rounded-xl border p-4 text-left transition ${
                         selected
                           ? "border-blue-500 bg-blue-500/10"
@@ -573,17 +716,23 @@ function BookingForm() {
             )}
           </section>
 
+          {/* ================================================= */}
           {/* BOOKING TIMING */}
+          {/* ================================================= */}
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">When do you want to park?</h2>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {/* BOOK NOW */}
+
               <button
                 type="button"
                 onClick={() => {
                   setBookingTiming("now");
+
                   setFutureStartTime("");
+
                   setError("");
                 }}
                 className={`rounded-xl border p-5 text-left transition ${
@@ -599,10 +748,13 @@ function BookingForm() {
                 </p>
               </button>
 
+              {/* FUTURE */}
+
               <button
                 type="button"
                 onClick={() => {
                   setBookingTiming("future");
+
                   setError("");
                 }}
                 className={`rounded-xl border p-5 text-left transition ${
@@ -645,7 +797,9 @@ function BookingForm() {
             )}
           </section>
 
+          {/* ================================================= */}
           {/* BOOKING TYPE */}
+          {/* ================================================= */}
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Booking Type</h2>
@@ -682,7 +836,9 @@ function BookingForm() {
             )}
           </section>
 
+          {/* ================================================= */}
           {/* DURATION */}
+          {/* ================================================= */}
 
           {effectiveBookingMode && (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
@@ -731,7 +887,9 @@ function BookingForm() {
             </section>
           )}
 
+          {/* ================================================= */}
           {/* BOOKING PREVIEW */}
+          {/* ================================================= */}
 
           {bookingPreview && (
             <section className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 sm:p-6">
@@ -766,20 +924,82 @@ function BookingForm() {
             </section>
           )}
 
+          {/* ================================================= */}
+          {/* PRICE SUMMARY */}
+          {/* ================================================= */}
+
+          {pricePreview && (
+            <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 sm:p-6">
+              <h2 className="text-lg font-semibold">Price Summary</h2>
+
+              <div className="mt-5 space-y-3 text-sm">
+                {/* PARKING */}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Parking</span>
+
+                  <span className="text-white">
+                    ₹{pricePreview.parkingAmount.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* SERVICE FEE */}
+
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Service fee</span>
+
+                  <span className="text-white">
+                    ₹{pricePreview.driverServiceFee.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* DISCOUNT */}
+
+                {pricePreview.discountAmount > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400">Discount</span>
+
+                    <span className="text-green-400">
+                      -₹
+                      {pricePreview.discountAmount.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+
+                {/* TOTAL */}
+
+                <div className="border-t border-white/10 pt-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-white">Total</span>
+
+                    <span className="text-2xl font-bold text-emerald-400">
+                      ₹{pricePreview.driverPays.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ================================================= */}
           {/* SUBMIT */}
+          {/* ================================================= */}
 
           <button
             type="submit"
             disabled={
               bookingMutation.isPending ||
               activeVehicles.length === 0 ||
-              !effectiveBookingMode
+              !effectiveBookingMode ||
+              !pricePreview
             }
             className="w-full rounded-xl bg-blue-600 px-5 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {bookingMutation.isPending
               ? "Creating Booking..."
-              : "Continue to Payment"}
+              : pricePreview
+                ? `Continue to Payment • ₹${pricePreview.driverPays.toFixed(2)}`
+                : "Continue to Payment"}
           </button>
         </form>
       </div>
@@ -787,12 +1007,20 @@ function BookingForm() {
   );
 }
 
+// ============================================================
+// FORMAT DATE
+// ============================================================
+
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 }
+
+// ============================================================
+// ERROR STATE
+// ============================================================
 
 interface ErrorStateProps {
   message: string;

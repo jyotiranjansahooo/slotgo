@@ -4,9 +4,7 @@ import ApiError from "../utils/ApiError.js";
 import { createReviewSchema } from "../validations/review/create.validation.js";
 import { updateReviewSchema } from "../validations/review/update.validation.js";
 import reviewService from "../services/review/review.service.js";
-// ============================================================
 // CREATE REVIEW
-// ============================================================
 export const createReview = asyncHandler(async (req, res) => {
     const userId = req.user?._id.toString();
     if (!userId) {
@@ -18,9 +16,7 @@ export const createReview = asyncHandler(async (req, res) => {
         .status(201)
         .json(new ApiResponse(201, review, "Review created successfully."));
 });
-// ============================================================
 // GET REVIEW BY ID
-// ============================================================
 export const getReviewById = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const review = await reviewService.getReviewById(id);
@@ -28,9 +24,7 @@ export const getReviewById = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, review, "Review fetched successfully."));
 });
-// ============================================================
 // GET PARKING REVIEWS
-// ============================================================
 export const getParkingReviews = asyncHandler(async (req, res) => {
     const { parkingId } = req.params;
     const reviews = await reviewService.getParkingReviews(parkingId);
@@ -38,9 +32,7 @@ export const getParkingReviews = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, reviews, "Parking reviews fetched successfully."));
 });
-// ============================================================
 // GET OWNER REVIEWS
-// ============================================================
 export const getOwnerReviews = asyncHandler(async (req, res) => {
     const { ownerId } = req.params;
     const reviews = await reviewService.getOwnerReviews(ownerId);
@@ -48,9 +40,7 @@ export const getOwnerReviews = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, reviews, "Owner reviews fetched successfully."));
 });
-// ============================================================
 // GET MY REVIEWS
-// ============================================================
 export const getMyReviews = asyncHandler(async (req, res) => {
     const userId = req.user?._id.toString();
     if (!userId) {
@@ -61,12 +51,8 @@ export const getMyReviews = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, reviews, "Your reviews fetched successfully."));
 });
-// ============================================================
 // UPDATE REVIEW
-// ============================================================
-// ============================================================
 // UPDATE REVIEW
-// ============================================================
 export const updateReview = asyncHandler(async (req, res) => {
     const userId = req.user?._id.toString();
     if (!userId) {
@@ -81,9 +67,7 @@ export const updateReview = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, review, "Review updated successfully."));
 });
-// ============================================================
 // DELETE REVIEW
-// ============================================================
 export const deleteReview = asyncHandler(async (req, res) => {
     const userId = req.user?._id.toString();
     if (!userId) {

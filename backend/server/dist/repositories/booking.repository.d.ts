@@ -5,6 +5,7 @@ declare class BookingRepository {
     findAll(): Promise<any[]>;
     findById(id: string): Promise<any>;
     findByBookingNumber(bookingNumber: string): Promise<any>;
+    findByOvertimeOrderId(orderId: string): Promise<any>;
     findByVerificationPin(pin: string): Promise<any>;
     findOneByOvertimeOrderId(orderId: string): Promise<any>;
     findByDriver(driverId: string): Promise<any[]>;

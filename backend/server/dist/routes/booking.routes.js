@@ -3,7 +3,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 import { createBookingSchema } from "../validations/booking/create.validation.js";
 import { checkInSchema } from "../validations/booking/checkIn.validation.js";
-import { createBooking, verifyPayment, verifyOvertimePayment, getBooking, getDriverBookings, cancelBooking, checkIn, checkOut, } from "../controllers/booking.controller.js";
+import { createBooking, verifyPayment, createOvertimePayment, verifyOvertimePayment, getBooking, getDriverBookings, cancelBooking, checkIn, checkOut, } from "../controllers/booking.controller.js";
 const router = Router();
 // ============================================================
 // CREATE BOOKING
@@ -13,6 +13,10 @@ router.post("/", authMiddleware, validate(createBookingSchema), createBooking);
 // VERIFY NORMAL PAYMENT
 // ============================================================
 router.post("/payment/verify", authMiddleware, verifyPayment);
+// ============================================================
+// CREATE OVERTIME PAYMENT
+// ============================================================
+router.post("/:bookingId/payment/overtime", authMiddleware, createOvertimePayment);
 // ============================================================
 // VERIFY OVERTIME PAYMENT
 // ============================================================

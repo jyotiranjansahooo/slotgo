@@ -6,9 +6,7 @@ import ApiError from "../utils/ApiError.js";
 
 import adminService from "../services/admin/admin.service.js";
 
-// ============================================================
 // USERS
-// ============================================================
 
 export const getUsers = asyncHandler(
   async (_req: Request, res: Response) => {
@@ -71,9 +69,7 @@ export const updateUserStatus = asyncHandler(
   },
 );
 
-// ============================================================
 // PARKINGS
-// ============================================================
 
 export const getParkings = asyncHandler(
   async (_req: Request, res: Response) => {
@@ -130,9 +126,7 @@ export const rejectParking = asyncHandler(
   },
 );
 
-// ============================================================
 // BOOKINGS
-// ============================================================
 
 export const getBookings = asyncHandler(
   async (_req: Request, res: Response) => {
@@ -192,9 +186,7 @@ export const getParkingBookings =
       );
     },
   );
-// ============================================================
 // ADMIN DASHBOARD
-// ============================================================
 
 export const getDashboardStats =
   asyncHandler(
@@ -215,9 +207,7 @@ export const getDashboardStats =
     },
   );
   
-// ============================================================
 // PAYMENTS
-// ============================================================
 
 export const getPaymentById =
   asyncHandler(

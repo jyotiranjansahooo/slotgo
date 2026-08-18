@@ -2,7 +2,6 @@ import ApiError from "../../utils/ApiError.js";
 
 import bookingRepository from "../../repositories/booking.repository.js";
 import paymentRepository from "../../repositories/payment.repository.js";
-// import parkingBookingBlockRepository from "../../repositories/parking-booking-block.repository.js";
 import parkingRepository from "../../repositories/parking.repository.js";
 import vehicleRepository from "../../repositories/vehicle.repository.js";
 import userRepository from "../../repositories/user.repository.js";
@@ -29,14 +28,16 @@ import { CancelBookingInput } from "../../validations/booking/cancel.validation.
 import { CheckInInput } from "../../validations/booking/checkIn.validation.js";
 
 class BookingService {
+  // ============================================================
   // VALIDATE BOOKING DURATION
+  // ============================================================
+
   private validateBookingDuration(
     startTime: Date,
     endTime: Date,
     bookingMode: BookingMode,
   ) {
     const durationMs = endTime.getTime() - startTime.getTime();
-
     const durationHours = durationMs / (1000 * 60 * 60);
 
     if (bookingMode === "hourly") {
@@ -78,7 +79,9 @@ class BookingService {
     }
   }
 
+  // ============================================================
   // CALCULATE CANCELLATION REFUND
+  // ============================================================
 
   private calculateCancellationRefund(booking: {
     driverPays: number;
@@ -92,32 +95,13 @@ class BookingService {
 
     let refundPercentage = 0;
 
-    // ----------------------------------------------------------
-    // MORE THAN 24 HOURS
-    // ----------------------------------------------------------
-
     if (remainingHours > 24) {
       refundPercentage = 100;
-    }
-
-    // ----------------------------------------------------------
-    // BETWEEN 2 AND 24 HOURS
-    // ----------------------------------------------------------
-    else if (remainingHours > 2) {
+    } else if (remainingHours > 2) {
       refundPercentage = 75;
-    }
-
-    // ----------------------------------------------------------
-    // BETWEEN 1 AND 2 HOURS
-    // ----------------------------------------------------------
-    else if (remainingHours > 1) {
+    } else if (remainingHours > 1) {
       refundPercentage = 50;
-    }
-
-    // ----------------------------------------------------------
-    // 1 HOUR OR LESS
-    // ----------------------------------------------------------
-    else {
+    } else {
       refundPercentage = 0;
     }
 
@@ -136,13 +120,11 @@ class BookingService {
     };
   }
 
+  // ============================================================
   // CREATE BOOKING
+  // ============================================================
 
   async createBooking(driverId: string, data: CreateBookingInput) {
-    // ----------------------------------------------------------
-    // DRIVER VALIDATION
-    // ----------------------------------------------------------
-
     const driver = await userRepository.findById(driverId);
 
     if (!driver) {
@@ -153,9 +135,7 @@ class BookingService {
       throw new ApiError(400, "Driver account is inactive.");
     }
 
-    // ----------------------------------------------------------
-    // VEHICLE VALIDATION
-    // ----------------------------------------------------------
+    // VEHICLE
 
     const vehicle = await vehicleRepository.findById(data.vehicleId);
 
@@ -171,9 +151,7 @@ class BookingService {
       throw new ApiError(400, "Vehicle is inactive.");
     }
 
-    // ----------------------------------------------------------
-    // TIME VALIDATION
-    // ----------------------------------------------------------
+    // TIME
 
     if (data.startTime >= data.endTime) {
       throw new ApiError(400, "End time must be after start time.");
@@ -189,9 +167,7 @@ class BookingService {
       data.bookingMode as BookingMode,
     );
 
-    // ----------------------------------------------------------
-    // VEHICLE BOOKING OVERLAP
-    // ----------------------------------------------------------
+    // VEHICLE OVERLAP
 
     const overlappingBooking = await bookingRepository.findOverlappingBooking(
       vehicle._id.toString(),
@@ -206,9 +182,7 @@ class BookingService {
       );
     }
 
-    // ----------------------------------------------------------
-    // PARKING VALIDATION
-    // ----------------------------------------------------------
+    // PARKING
 
     const parking = await parkingRepository.findById(data.parkingId);
 
@@ -224,9 +198,7 @@ class BookingService {
       throw new ApiError(400, "Parking is inactive.");
     }
 
-    // ----------------------------------------------------------
-    // BOOKING MODE VALIDATION
-    // ----------------------------------------------------------
+    // BOOKING MODE
 
     const bookingEnabled = parking.bookingModes[data.bookingMode];
 
@@ -234,9 +206,7 @@ class BookingService {
       throw new ApiError(400, `${data.bookingMode} booking is unavailable.`);
     }
 
-    // ----------------------------------------------------------
-    // RESERVE PARKING SLOT
-    // ----------------------------------------------------------
+    // RESERVE SLOT
 
     const slot = await slotAllocatorService.reserveAvailableSlot(
       parking._id.toString(),
@@ -247,9 +217,7 @@ class BookingService {
       throw new ApiError(409, "No parking slot available.");
     }
 
-    // ----------------------------------------------------------
-    // CALCULATE PRICING
-    // ----------------------------------------------------------
+    // PRICING
 
     let pricing;
 
@@ -276,9 +244,7 @@ class BookingService {
       );
     }
 
-    // ----------------------------------------------------------
-    // GENERATE BOOKING DATA
-    // ----------------------------------------------------------
+    // BOOKING DATA
 
     const bookingNumber = bookingNumberService.generate();
 
@@ -286,9 +252,7 @@ class BookingService {
 
     const qrCode = await qrService.generate(bookingNumber);
 
-    // ----------------------------------------------------------
     // CREATE BOOKING
-    // ----------------------------------------------------------
 
     let booking;
 
@@ -332,19 +296,27 @@ class BookingService {
 
         bookingStatus: BOOKING_STATUS.PENDING,
 
+        overtimeMinutes: 0,
+
+        overtimeParkingAmount: 0,
+
+        overtimeFine: 0,
+
+        overtimeTotal: 0,
+
+        overtimePaymentStatus: BOOKING_PAYMENT_STATUS.PENDING,
+
         verificationPin,
 
         qrCode,
 
         driverSnapshot: {
           name: `${driver.name.first} ${driver.name.last}`,
-
           phoneNumber: driver.phoneNumber,
         },
 
         parkingSnapshot: {
           parkingName: parking.parkingName,
-
           address: parking.address,
         },
 
@@ -359,16 +331,12 @@ class BookingService {
         },
       });
     } catch (error) {
-      // Release reserved slot if booking creation fails.
-
       await slotAllocatorService.releaseSlot(slot._id.toString());
 
       throw error;
     }
 
-    // ----------------------------------------------------------
-    // CREATE PAYMENT
-    // ----------------------------------------------------------
+    // CREATE RAZORPAY PAYMENT
 
     try {
       const paymentResult = await paymentService.createPayment(
@@ -377,49 +345,72 @@ class BookingService {
 
       return {
         booking: paymentResult.booking,
+
         payment: paymentResult.payment,
+
         razorpayOrder: paymentResult.razorpayOrder,
       };
     } catch (error) {
-      // Release reserved slot.
       await slotAllocatorService.releaseSlot(slot._id.toString());
 
-      // Delete incomplete booking.
       await bookingRepository.delete(booking._id.toString());
 
       throw error;
     }
   }
 
-  // VERIFY PAYMENT
+  // ============================================================
+  // VERIFY NORMAL PAYMENT
+  // ============================================================
 
   async verifyPayment(orderId: string, paymentId: string, signature: string) {
     return paymentService.verifyPayment(orderId, paymentId, signature);
   }
-// ============================================================
-// CREATE OVERTIME PAYMENT
-// ============================================================
 
-async createOvertimePayment(bookingId: string) {
-  return paymentService.createOvertimePayment(bookingId);
-}
+  // ============================================================
+  // CREATE OVERTIME PAYMENT
+  // ============================================================
 
-// ============================================================
-// VERIFY OVERTIME PAYMENT
-// ============================================================
+  async createOvertimePayment(bookingId: string) {
+    const booking = await bookingRepository.findById(bookingId);
 
-async verifyOvertimePayment(
-  orderId: string,
-  paymentId: string,
-  signature: string,
-) {
-  return paymentService.verifyOvertimePayment(
-    orderId,
-    paymentId,
-    signature,
-  );
-}
+    if (!booking) {
+      throw new ApiError(404, "Booking not found.");
+    }
+
+    if (booking.bookingStatus !== BOOKING_STATUS.ACTIVE) {
+      throw new ApiError(
+        400,
+        "Only active bookings can have overtime payment.",
+      );
+    }
+
+    if (booking.overtimeTotal <= 0) {
+      throw new ApiError(400, "No overtime payment is required.");
+    }
+
+    if (booking.overtimePaymentStatus === PAYMENT_STATUS.SUCCESS) {
+      throw new ApiError(400, "Overtime payment has already been completed.");
+    }
+
+    return paymentService.createOvertimePayment(bookingId);
+  }
+
+  // ============================================================
+  // VERIFY OVERTIME PAYMENT
+  // ============================================================
+
+  async verifyOvertimePayment(
+    orderId: string,
+    paymentId: string,
+    signature: string,
+  ) {
+    return paymentService.verifyOvertimePayment(orderId, paymentId, signature);
+  }
+
+  // ============================================================
   // GET SINGLE BOOKING
+  // ============================================================
 
   async getBooking(userId: string, bookingId: string) {
     const booking = await bookingRepository.findById(bookingId);
@@ -439,46 +430,40 @@ async verifyOvertimePayment(
     return booking;
   }
 
+  // ============================================================
   // GET DRIVER BOOKINGS
+  // ============================================================
 
   async getDriverBookings(driverId: string) {
     return bookingRepository.findByDriver(driverId);
   }
 
+  // ============================================================
   // GET OWNER BOOKINGS
+  // ============================================================
 
   async getOwnerBookings(ownerId: string) {
     return bookingRepository.findByOwner(ownerId);
   }
 
+  // ============================================================
   // CANCEL BOOKING
+  // ============================================================
 
   async cancelBooking(
     driverId: string,
     bookingId: string,
     data: CancelBookingInput,
   ) {
-    // ----------------------------------------------------------
-    // FIND BOOKING
-    // ----------------------------------------------------------
-
     const booking = await bookingRepository.findById(bookingId);
 
     if (!booking) {
       throw new ApiError(404, "Booking not found.");
     }
 
-    // ----------------------------------------------------------
-    // DRIVER AUTHORIZATION
-    // ----------------------------------------------------------
-
     if (booking.driverId.toString() !== driverId) {
       throw new ApiError(403, "You are not authorized to cancel this booking.");
     }
-
-    // ----------------------------------------------------------
-    // STATUS VALIDATION
-    // ----------------------------------------------------------
 
     if (booking.bookingStatus === BOOKING_STATUS.CANCELLED) {
       throw new ApiError(400, "Booking is already cancelled.");
@@ -496,17 +481,9 @@ async verifyOvertimePayment(
       throw new ApiError(400, "Expired bookings cannot be cancelled.");
     }
 
-    // ----------------------------------------------------------
-    // CALCULATE REFUND
-    // ----------------------------------------------------------
-
     const refundCalculation = this.calculateCancellationRefund(booking);
 
     const { refundAmount, penaltyAmount, refundPercentage } = refundCalculation;
-
-    // ----------------------------------------------------------
-    // PAYMENT / REFUND
-    // ----------------------------------------------------------
 
     let refundedPayment = null;
 
@@ -520,10 +497,6 @@ async verifyOvertimePayment(
       }
 
       if (payment.status === PAYMENT_STATUS.SUCCESS) {
-        // ------------------------------------------------------
-        // REFUND ONLY IF REFUND IS DUE
-        // ------------------------------------------------------
-
         if (refundAmount > 0) {
           refundedPayment = await paymentService.refundPayment(
             payment._id.toString(),
@@ -533,15 +506,7 @@ async verifyOvertimePayment(
       }
     }
 
-    // ----------------------------------------------------------
-    // RELEASE PARKING SLOT
-    // ----------------------------------------------------------
-
     await slotAllocatorService.releaseSlot(booking.slotId.toString());
-
-    // ----------------------------------------------------------
-    // UPDATE BOOKING
-    // ----------------------------------------------------------
 
     const updatedBooking = await bookingRepository.update(
       booking._id.toString(),
@@ -566,18 +531,12 @@ async verifyOvertimePayment(
       throw new ApiError(500, "Unable to cancel booking.");
     }
 
-    // ----------------------------------------------------------
-    // RETURN RESULT
-    // ----------------------------------------------------------
-
     return {
       booking: updatedBooking,
 
       refund: {
         refundAmount,
-
         penaltyAmount,
-
         refundPercentage,
       },
 
@@ -589,7 +548,9 @@ async verifyOvertimePayment(
     };
   }
 
+  // ============================================================
   // CHECK IN
+  // ============================================================
 
   async checkIn(ownerId: string, bookingId: string, data: CheckInInput) {
     const booking = await bookingRepository.findById(bookingId);
@@ -598,20 +559,12 @@ async verifyOvertimePayment(
       throw new ApiError(404, "Booking not found.");
     }
 
-    // ----------------------------------------------------------
-    // OWNER AUTHORIZATION
-    // ----------------------------------------------------------
-
     if (booking.ownerId.toString() !== ownerId) {
       throw new ApiError(
         403,
         "You are not authorized to check in this booking.",
       );
     }
-
-    // ----------------------------------------------------------
-    // BOOKING STATUS
-    // ----------------------------------------------------------
 
     if (booking.bookingStatus !== BOOKING_STATUS.CONFIRMED) {
       throw new ApiError(
@@ -620,25 +573,13 @@ async verifyOvertimePayment(
       );
     }
 
-    // ----------------------------------------------------------
-    // PAYMENT STATUS
-    // ----------------------------------------------------------
-
     if (booking.paymentStatus !== BOOKING_PAYMENT_STATUS.PAID) {
       throw new ApiError(400, "Booking payment has not been completed.");
     }
 
-    // ----------------------------------------------------------
-    // VERIFY PIN
-    // ----------------------------------------------------------
-
     if (booking.verificationPin !== data.verificationPin) {
       throw new ApiError(400, "Invalid verification PIN.");
     }
-
-    // ----------------------------------------------------------
-    // CHECK BOOKING TIME
-    // ----------------------------------------------------------
 
     const now = new Date();
 
@@ -650,15 +591,7 @@ async verifyOvertimePayment(
       throw new ApiError(400, "Booking has already expired.");
     }
 
-    // ----------------------------------------------------------
-    // OCCUPY SLOT
-    // ----------------------------------------------------------
-
     await slotAllocatorService.occupySlot(booking.slotId.toString());
-
-    // ----------------------------------------------------------
-    // UPDATE BOOKING
-    // ----------------------------------------------------------
 
     const updatedBooking = await bookingRepository.update(
       booking._id.toString(),
@@ -670,8 +603,6 @@ async verifyOvertimePayment(
     );
 
     if (!updatedBooking) {
-      // Restore slot if booking update fails.
-
       await slotAllocatorService.releaseSlot(booking.slotId.toString());
 
       throw new ApiError(500, "Unable to complete check-in.");
@@ -680,31 +611,23 @@ async verifyOvertimePayment(
     return updatedBooking;
   }
 
-  // CHECK OUT
+  // ============================================================
+  // CALCULATE OVERTIME
+  // ============================================================
 
-  // CHECK OUT
-
-  async checkOut(ownerId: string, bookingId: string) {
+  async calculateOvertime(ownerId: string, bookingId: string) {
     const booking = await bookingRepository.findById(bookingId);
 
     if (!booking) {
       throw new ApiError(404, "Booking not found.");
     }
 
-    // ----------------------------------------------------------
-    // OWNER AUTHORIZATION
-    // ----------------------------------------------------------
-
     if (booking.ownerId.toString() !== ownerId) {
       throw new ApiError(
         403,
-        "You are not authorized to check out this booking.",
+        "You are not authorized to process this booking.",
       );
     }
-
-    // ----------------------------------------------------------
-    // STATUS VALIDATION
-    // ----------------------------------------------------------
 
     if (booking.bookingStatus !== BOOKING_STATUS.ACTIVE) {
       throw new ApiError(
@@ -715,32 +638,17 @@ async verifyOvertimePayment(
 
     const now = new Date();
 
-    // ----------------------------------------------------------
-    // NORMAL CHECKOUT
-    // ----------------------------------------------------------
+    // NO OVERTIME
 
     if (now.getTime() <= booking.endTime.getTime()) {
-      await slotAllocatorService.releaseSlot(booking.slotId.toString());
-
-      const updatedBooking = await bookingRepository.update(
-        booking._id.toString(),
-        {
-          bookingStatus: BOOKING_STATUS.COMPLETED,
-          checkedOutAt: now,
-        },
-      );
-
-      if (!updatedBooking) {
-        await slotAllocatorService.occupySlot(booking.slotId.toString());
-
-        throw new ApiError(500, "Unable to complete check-out.");
-      }
-
       return {
         requiresAdditionalPayment: false,
-        booking: updatedBooking,
+
+        booking,
+
         overtime: {
           overtimeMinutes: 0,
+          overtimeHours: 0,
           overtimeParkingAmount: 0,
           overtimeFine: 0,
           overtimeTotal: 0,
@@ -748,71 +656,42 @@ async verifyOvertimePayment(
       };
     }
 
-    // ----------------------------------------------------------
-    // OVERTIME CHECKOUT
-    // ----------------------------------------------------------
+    // GET PARKING
 
-    const overtimeMs = now.getTime() - booking.endTime.getTime();
-
-    const overtimeMinutes = Math.ceil(overtimeMs / (1000 * 60));
-
-    /*
-     * Charge by started hour.
-     *
-     * Example:
-     * 1 minute overtime  -> 1 hour
-     * 61 minutes          -> 2 hours
-     * 121 minutes         -> 3 hours
-     */
-
-    const overtimeHours = Math.ceil(overtimeMinutes / 60);
-
-    /*
-     * Use the original parking hourly amount.
-     *
-     * This should eventually come from pricingService
-     * if you want a different overtime tariff.
-     */
-
-    const hourlyParkingRate =
-      booking.parkingAmount / this.getBookedHours(booking);
-
-    const overtimeParkingAmount = Number(
-      (hourlyParkingRate * overtimeHours).toFixed(2),
+    const parking = await parkingRepository.findById(
+      booking.parkingId.toString(),
     );
 
-    /*
-     * Small fixed overtime fine.
-     *
-     * We can later move this to Parking settings so
-     * the owner can configure it.
-     */
+    if (!parking) {
+      throw new ApiError(404, "Parking not found.");
+    }
 
-    const overtimeFine = 10;
+    // CALCULATE OVERTIME
 
-    const overtimeTotal = Number(
-      (overtimeParkingAmount + overtimeFine).toFixed(2),
+    const overtime = pricingService.calculateOvertime(
+      parking,
+      booking.vehicleType,
+      booking.endTime,
+      now,
     );
 
-    if (overtimeTotal <= 0) {
+    if (overtime.overtimeTotal <= 0) {
       throw new ApiError(400, "Invalid overtime payment amount.");
     }
 
-    /*
-     * IMPORTANT:
-     * DO NOT release the slot here.
-     *
-     * The vehicle is still occupying the parking slot
-     * until the additional payment succeeds.
-     */
+    // SAVE OVERTIME
 
     const updatedBooking = await bookingRepository.update(
       booking._id.toString(),
       {
-        overtimeMinutes,
-        overtimeParkingAmount,
-        overtimeFine,
-        overtimeTotal,
+        overtimeMinutes: overtime.overtimeMinutes,
+
+        overtimeParkingAmount: overtime.overtimeParkingAmount,
+
+        overtimeFine: overtime.overtimeFine,
+
+        overtimeTotal: overtime.overtimeTotal,
+
         overtimePaymentStatus: BOOKING_PAYMENT_STATUS.PENDING,
       },
     );
@@ -826,23 +705,98 @@ async verifyOvertimePayment(
 
       booking: updatedBooking,
 
+      overtime,
+    };
+  }
+
+  // ============================================================
+  // CHECK OUT
+  // ============================================================
+
+  async checkOut(ownerId: string, bookingId: string) {
+    const booking = await bookingRepository.findById(bookingId);
+
+    if (!booking) {
+      throw new ApiError(404, "Booking not found.");
+    }
+
+    // OWNER AUTHORIZATION
+
+    if (booking.ownerId.toString() !== ownerId) {
+      throw new ApiError(
+        403,
+        "You are not authorized to check out this booking.",
+      );
+    }
+
+    // STATUS
+
+    if (booking.bookingStatus !== BOOKING_STATUS.ACTIVE) {
+      throw new ApiError(
+        400,
+        `Booking cannot be checked out because its status is "${booking.bookingStatus}".`,
+      );
+    }
+
+    const now = new Date();
+
+    // OVERTIME
+
+    if (now.getTime() > booking.endTime.getTime()) {
+      const overtimeResult = await this.calculateOvertime(ownerId, bookingId);
+
+      return {
+        requiresAdditionalPayment: true,
+
+        booking: overtimeResult.booking,
+
+        overtime: overtimeResult.overtime,
+      };
+    }
+
+    // NORMAL CHECKOUT
+
+    const released = await slotAllocatorService.releaseSlot(
+      booking.slotId.toString(),
+    );
+
+    if (!released) {
+      throw new ApiError(500, "Unable to release parking slot.");
+    }
+
+    const updatedBooking = await bookingRepository.update(
+      booking._id.toString(),
+      {
+        bookingStatus: BOOKING_STATUS.COMPLETED,
+
+        checkedOutAt: now,
+      },
+    );
+
+    if (!updatedBooking) {
+      await slotAllocatorService.occupySlot(booking.slotId.toString());
+
+      throw new ApiError(500, "Unable to complete check-out.");
+    }
+
+    return {
+      requiresAdditionalPayment: false,
+
+      booking: updatedBooking,
+
       overtime: {
-        overtimeMinutes,
-        overtimeHours,
-        overtimeParkingAmount,
-        overtimeFine,
-        overtimeTotal,
+        overtimeMinutes: 0,
+        overtimeHours: 0,
+        overtimeParkingAmount: 0,
+        overtimeFine: 0,
+        overtimeTotal: 0,
       },
     };
   }
 
-  private getBookedHours(booking: { startTime: Date; endTime: Date }) {
-    const durationMs = booking.endTime.getTime() - booking.startTime.getTime();
-
-    return durationMs / (1000 * 60 * 60);
-  }
-
+  // ============================================================
   // EXPIRE BOOKINGS
+  // ============================================================
 
   async expireBooking() {
     const now = new Date();
@@ -850,9 +804,7 @@ async verifyOvertimePayment(
     let pendingExpired = 0;
     let confirmedExpired = 0;
 
-    // ----------------------------------------------------------
     // EXPIRE UNPAID BOOKINGS
-    // ----------------------------------------------------------
 
     const pendingBookings =
       await bookingRepository.findExpiredPendingBookings(now);
@@ -867,9 +819,7 @@ async verifyOvertimePayment(
       pendingExpired++;
     }
 
-    // ----------------------------------------------------------
-    // EXPIRE CONFIRMED BOOKINGS
-    // ----------------------------------------------------------
+    // EXPIRE CONFIRMED / ACTIVE BOOKINGS
 
     const confirmedBookings =
       await bookingRepository.findExpiredConfirmedBookings(now);

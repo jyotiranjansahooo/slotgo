@@ -5,9 +5,7 @@ import ApiResponse from "../utils/ApiResponse.js";
 import { withdrawWalletSchema } from "../validations/wallet/withdraw.validation.js";
 import walletService from "../services/wallet/wallet.service.js";
 
-// ============================================================
 // GET OWNER WALLET
-// ============================================================
 
 export const getWallet = asyncHandler(async (req: Request, res: Response) => {
   const ownerId = req.user!._id.toString();
@@ -19,9 +17,7 @@ export const getWallet = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, wallet, "Wallet fetched successfully."));
 });
 
-// ============================================================
 // GET WALLET TRANSACTIONS
-// ============================================================
 
 export const getWalletTransactions = asyncHandler(
   async (req: Request, res: Response) => {
@@ -41,9 +37,7 @@ export const getWalletTransactions = asyncHandler(
   },
 );
 
-// ============================================================
 // GET SINGLE TRANSACTION
-// ============================================================
 
 export const getWalletTransaction = asyncHandler(
   async (req: Request, res: Response) => {
@@ -64,9 +58,7 @@ export const getWalletTransaction = asyncHandler(
   },
 );
 
-// ============================================================
 // WITHDRAW WALLET BALANCE
-// ============================================================
 
 export const withdrawWallet =
   asyncHandler(

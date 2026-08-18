@@ -1,8 +1,6 @@
 import Booking from "../models/Booking.js";
 class BookingRepository {
-    // ============================================================
     // CREATE
-    // ============================================================
     async create(data, session) {
         if (session) {
             const booking = await Booking.create([data], { session });
@@ -10,47 +8,40 @@ class BookingRepository {
         }
         return Booking.create(data);
     }
-    // ============================================================
     // FIND ALL
-    // ============================================================
     async findAll() {
         return Booking.find().sort({
             createdAt: -1,
         });
     }
-    // ============================================================
     // FIND BY ID
-    // ============================================================
     async findById(id) {
         return Booking.findById(id);
     }
-    // ============================================================
     // FIND BY BOOKING NUMBER
-    // ============================================================
     async findByBookingNumber(bookingNumber) {
         return Booking.findOne({
             bookingNumber,
         });
     }
-    // ============================================================
+    async findByOvertimeOrderId(orderId) {
+        return Booking.findOne({
+            overtimePaymentOrderId: orderId,
+        });
+    }
     // FIND BY VERIFICATION PIN
-    // ============================================================
     async findByVerificationPin(pin) {
         return Booking.findOne({
             verificationPin: pin,
         });
     }
-    // ============================================================
     // FIND BY OVERTIME RAZORPAY ORDER ID
-    // ============================================================
     async findOneByOvertimeOrderId(orderId) {
         return Booking.findOne({
             overtimePaymentOrderId: orderId,
         });
     }
-    // ============================================================
     // DRIVER BOOKINGS
-    // ============================================================
     async findByDriver(driverId) {
         return Booking.find({
             driverId,
@@ -58,9 +49,7 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // ============================================================
     // OWNER BOOKINGS
-    // ============================================================
     async findByOwner(ownerId) {
         return Booking.find({
             ownerId,
@@ -68,9 +57,7 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // ============================================================
     // FIND OVERLAPPING VEHICLE BOOKING
-    // ============================================================
     async findOverlappingBooking(vehicleId, startTime, endTime) {
         const now = new Date();
         return Booking.findOne({
@@ -88,10 +75,7 @@ class BookingRepository {
                 // ------------------------------------------------------
                 {
                     bookingStatus: {
-                        $in: [
-                            "confirmed",
-                            "active",
-                        ],
+                        $in: ["confirmed", "active"],
                     },
                 },
                 // ------------------------------------------------------
@@ -110,9 +94,7 @@ class BookingRepository {
             ],
         });
     }
-    // ============================================================
     // PARKING BOOKINGS
-    // ============================================================
     async findByParking(parkingId) {
         return Booking.find({
             parkingId,
@@ -120,9 +102,7 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // ============================================================
     // EXPIRED PENDING BOOKINGS
-    // ============================================================
     async findExpiredPendingBookings(now) {
         return Booking.find({
             bookingStatus: "pending",
@@ -132,33 +112,24 @@ class BookingRepository {
             },
         });
     }
-    // ============================================================
     // EXPIRED CONFIRMED / ACTIVE BOOKINGS
-    // ============================================================
     async findExpiredConfirmedBookings(now) {
         return Booking.find({
             bookingStatus: {
-                $in: [
-                    "confirmed",
-                    "active",
-                ],
+                $in: ["confirmed", "active"],
             },
             endTime: {
                 $lte: now,
             },
         });
     }
-    // ============================================================
     // UPDATE
-    // ============================================================
     async update(id, data) {
         return Booking.findByIdAndUpdate(id, data, {
             new: true,
         });
     }
-    // ============================================================
     // DELETE
-    // ============================================================
     async delete(id) {
         return Booking.findByIdAndDelete(id);
     }

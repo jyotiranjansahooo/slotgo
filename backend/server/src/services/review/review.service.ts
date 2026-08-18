@@ -9,10 +9,8 @@ import {
 } from "../../constants/booking.js";
 
 class ReviewService {
-  // ============================================================
-  // CREATE REVIEW
-  // ============================================================
-
+    // CREATE REVIEW
+  
   async createReview(
     driverId: string,
     data: {
@@ -98,10 +96,8 @@ class ReviewService {
     return review;
   }
 
-  // ============================================================
-  // GET REVIEW BY ID
-  // ============================================================
-
+    // GET REVIEW BY ID
+  
   async getReviewById(reviewId: string) {
     const review = await reviewRepository.findById(reviewId);
 
@@ -111,34 +107,26 @@ class ReviewService {
     return review;
   }
 
-  // ============================================================
-  // GET PARKING REVIEWS
-  // ============================================================
-
+    // GET PARKING REVIEWS
+  
   async getParkingReviews(parkingId: string) {
     return reviewRepository.findByParking(parkingId);
   }
 
-  // ============================================================
-  // GET OWNER REVIEWS
-  // ============================================================
-
+    // GET OWNER REVIEWS
+  
   async getOwnerReviews(ownerId: string) {
     return reviewRepository.findByOwner(ownerId);
   }
 
-  // ============================================================
-  // GET DRIVER REVIEWS
-  // ============================================================
-
+    // GET DRIVER REVIEWS
+  
   async getDriverReviews(driverId: string) {
     return reviewRepository.findByDriver(driverId);
   }
 
-  // ============================================================
-  // UPDATE REVIEW
-  // ============================================================
-
+    // UPDATE REVIEW
+  
   async updateReview(
     driverId: string,
     reviewId: string,
@@ -205,10 +193,8 @@ class ReviewService {
     return updatedReview;
   }
 
-  // ============================================================
-  // DELETE REVIEW
-  // ============================================================
-
+    // DELETE REVIEW
+  
   async deleteReview(driverId: string, reviewId: string) {
     const review = await reviewRepository.findById(reviewId);
 

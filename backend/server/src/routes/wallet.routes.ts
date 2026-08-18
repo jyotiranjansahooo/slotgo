@@ -11,9 +11,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// ============================================================
 // GET OWNER WALLET
-// ============================================================
 
 router.get(
   "/",
@@ -21,9 +19,7 @@ router.get(
   getWallet,
 );
 
-// ============================================================
 // GET WALLET TRANSACTIONS
-// ============================================================
 
 router.get(
   "/transactions",
@@ -31,9 +27,7 @@ router.get(
   getWalletTransactions,
 );
 
-// ============================================================
 // GET SINGLE TRANSACTION
-// ============================================================
 
 router.get(
   "/transactions/:transactionId",
@@ -41,9 +35,7 @@ router.get(
   getWalletTransaction,
 );
 
-// ============================================================
 // WITHDRAW WALLET BALANCE
-// ============================================================
 
 router.post(
   "/withdraw",

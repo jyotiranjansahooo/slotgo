@@ -1,36 +1,28 @@
 import Wallet, { IWallet } from "../models/Wallet.js";
 
 class WalletRepository {
-  // ============================================================
-  // CREATE WALLET
-  // ============================================================
-
+    // CREATE WALLET
+  
   async create(data: Partial<IWallet>) {
     return Wallet.create(data);
   }
 
-  // ============================================================
-  // FIND BY ID
-  // ============================================================
-
+    // FIND BY ID
+  
   async findById(id: string) {
     return Wallet.findById(id);
   }
 
-  // ============================================================
-  // FIND BY OWNER
-  // ============================================================
-
+    // FIND BY OWNER
+  
   async findByOwnerId(ownerId: string) {
     return Wallet.findOne({
       ownerId,
     });
   }
 
-  // ============================================================
-  // UPDATE WALLET
-  // ============================================================
-
+    // UPDATE WALLET
+  
   async update(
     id: string,
     data: Partial<IWallet>,
@@ -45,10 +37,8 @@ class WalletRepository {
     );
   }
 
-  // ============================================================
-  // UPDATE BALANCE
-  // ============================================================
-
+    // UPDATE BALANCE
+  
   async updateBalance(
     id: string,
     data: {

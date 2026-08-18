@@ -2,9 +2,7 @@ import { Router } from "express";
 import { createReview, getReviewById, getParkingReviews, getOwnerReviews, getMyReviews, updateReview, deleteReview, } from "../controllers/review.controller.js";
 import authMiddleware from "../middleware/auth.middleware.js";
 const router = Router();
-// ============================================================
 // PROTECTED REVIEW ROUTES
-// ============================================================
 // Create review
 router.post("/", authMiddleware, createReview);
 // Get my reviews

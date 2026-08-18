@@ -19,9 +19,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 import adminMiddleware from "../middleware/admin.middleware.js";
 const router = Router();
 
-// ============================================================
 // ADMIN ROUTES
-// ============================================================
 
 // All routes require authentication.
 // Admin-role protection should be applied by your auth middleware
@@ -32,9 +30,7 @@ router.use(
   adminMiddleware,
 );
 
-// ============================================================
 // USERS
-// ============================================================
 
 router.get(
   "/users",
@@ -51,9 +47,7 @@ router.patch(
   updateUserStatus,
 );
 
-// ============================================================
 // PARKINGS
-// ============================================================
 
 router.get(
   "/parkings",
@@ -70,9 +64,7 @@ router.patch(
   rejectParking,
 );
 
-// ============================================================
 // BOOKINGS
-// ============================================================
 
 router.get(
   "/bookings",
@@ -89,9 +81,7 @@ router.get(
   getParkingBookings,
 );
 
-// ============================================================
 // PAYMENTS
-// ============================================================
 
 router.get(
   "/payments/:id",

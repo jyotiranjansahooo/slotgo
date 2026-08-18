@@ -4,9 +4,7 @@ import walletRepository from "../../repositories/wallet.repository.js";
 import transactionRepository from "../../repositories/transaction.repository.js";
 import { WALLET_TRANSACTION_STATUS, WALLET_TRANSACTION_TYPE, } from "../../constants/wallet.js";
 class WalletService {
-    // ============================================================
     // GET OR CREATE OWNER WALLET
-    // ============================================================
     async getOrCreateWallet(ownerId) {
         let wallet = await walletRepository.findByOwnerId(ownerId);
         if (wallet) {
@@ -22,15 +20,11 @@ class WalletService {
         });
         return wallet;
     }
-    // ============================================================
     // GET OWNER WALLET
-    // ============================================================
     async getWallet(ownerId) {
         return this.getOrCreateWallet(ownerId);
     }
-    // ============================================================
     // CREDIT OWNER EARNINGS
-    // ============================================================
     async creditOwnerEarnings(ownerId, amount, bookingId, referenceId, description = "Parking booking earnings") {
         if (amount <= 0) {
             throw new ApiError(400, "Credit amount must be greater than zero.");
@@ -86,9 +80,7 @@ class WalletService {
             transaction,
         };
     }
-    // ============================================================
     // REVERSE OWNER EARNINGS
-    // ============================================================
     async reverseOwnerEarnings(ownerId, amount, bookingId, referenceId, description = "Booking refund") {
         if (amount <= 0) {
             throw new ApiError(400, "Refund reversal amount must be greater than zero.");
@@ -206,9 +198,7 @@ class WalletService {
             transaction,
         };
     }
-    // ============================================================
     // GET WALLET TRANSACTIONS
-    // ============================================================
     async getTransactions(ownerId) {
         const wallet = await walletRepository.findByOwnerId(ownerId);
         if (!wallet) {
@@ -216,9 +206,7 @@ class WalletService {
         }
         return transactionRepository.findByWalletId(wallet._id.toString());
     }
-    // ============================================================
     // GET SINGLE TRANSACTION
-    // ============================================================
     async getTransaction(ownerId, transactionId) {
         const transaction = await transactionRepository.findById(transactionId);
         if (!transaction) {

@@ -14,9 +14,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-// ============================================================
 // PROTECTED REVIEW ROUTES
-// ============================================================
 
 // Create review
 router.post(

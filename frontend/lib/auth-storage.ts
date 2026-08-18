@@ -25,17 +25,14 @@ export const authStorage = {
       return null;
     }
 
-    const storedUser =
-      localStorage.getItem(USER_KEY);
+    const storedUser = localStorage.getItem(USER_KEY);
 
     if (!storedUser) {
       return null;
     }
 
     try {
-      return JSON.parse(
-        storedUser,
-      ) as AuthUser;
+      return JSON.parse(storedUser) as AuthUser;
     } catch {
       localStorage.removeItem(USER_KEY);
       return null;
@@ -43,10 +40,7 @@ export const authStorage = {
   },
 
   setUser(user: AuthUser): void {
-    localStorage.setItem(
-      USER_KEY,
-      JSON.stringify(user),
-    );
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
   },
 
   removeUser(): void {

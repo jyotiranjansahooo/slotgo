@@ -4,9 +4,7 @@ import parkingRepository from "../../repositories/parking.repository.js";
 import bookingRepository from "../../repositories/booking.repository.js";
 import paymentRepository from "../../repositories/payment.repository.js";
 class AdminService {
-    // ============================================================
     // USERS
-    // ============================================================
     async getUsers() {
         return userRepository.findAll();
     }
@@ -28,9 +26,7 @@ class AdminService {
         }
         return updatedUser;
     }
-    // ============================================================
     // PARKINGS
-    // ============================================================
     async getParkings() {
         return parkingRepository.findAll();
     }
@@ -65,9 +61,7 @@ class AdminService {
         }
         return updatedParking;
     }
-    // ============================================================
     // BOOKINGS
-    // ============================================================
     async getBookings() {
         return bookingRepository.findAll();
     }
@@ -81,9 +75,7 @@ class AdminService {
     async getParkingBookings(parkingId) {
         return bookingRepository.findByParking(parkingId);
     }
-    // ============================================================
     // PAYMENTS
-    // ============================================================
     async getPaymentById(paymentId) {
         const payment = await paymentRepository.findById(paymentId);
         if (!payment) {
@@ -98,9 +90,7 @@ class AdminService {
         }
         return payment;
     }
-    // ============================================================
     // DASHBOARD STATISTICS
-    // ============================================================
     async getDashboardStats() {
         const [users, parkings, bookings, payments,] = await Promise.all([
             userRepository.findAll(),
