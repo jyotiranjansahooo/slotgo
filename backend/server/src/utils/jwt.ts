@@ -19,9 +19,13 @@ export const generateAccessToken = (user: IUser): string => {
     role: user.role,
   };
 
-  return jwt.sign(payload, env.JWT_ACCESS_SECRET as Secret, {
-    expiresIn: AUTH.ACCESS_TOKEN.EXPIRES_IN,
-  } as SignOptions);
+  return jwt.sign(
+    payload,
+    env.JWT_ACCESS_SECRET as Secret,
+    {
+      expiresIn: AUTH.ACCESS_TOKEN.EXPIRES_IN,
+    } as SignOptions,
+  );
 };
 
 export const generateRefreshToken = (user: IUser): string => {
@@ -30,9 +34,13 @@ export const generateRefreshToken = (user: IUser): string => {
     role: user.role,
   };
 
-  return jwt.sign(payload, env.JWT_REFRESH_SECRET as Secret, {
-    expiresIn: AUTH.REFRESH_TOKEN.EXPIRES_IN,
-  } as SignOptions);
+  return jwt.sign(
+    payload,
+    env.JWT_REFRESH_SECRET as Secret,
+    {
+      expiresIn: AUTH.REFRESH_TOKEN.EXPIRES_IN,
+    } as SignOptions,
+  );
 };
 
 export const verifyAccessToken = (

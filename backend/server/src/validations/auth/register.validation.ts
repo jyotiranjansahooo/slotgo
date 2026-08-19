@@ -7,19 +7,28 @@ export const registerSchema = z
     firstName: z
       .string()
       .trim()
-      .min(2, "First name must be at least 2 characters")
-      .max(30, "First name cannot exceed 30 characters"),
+      .min(3, "First name must be at least 3 characters.")
+      .max(15, "First name is too long.")
+      .regex(
+        /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/,
+        "First name can contain letters only.",
+      ),
 
     lastName: z
       .string()
       .trim()
-      .min(2, "Last name must be at least 2 characters")
-      .max(30, "Last name cannot exceed 30 characters"),
+      .min(3, "Last name must be at least 3 characters.")
+      .max(30, "Last name is too long.")
+      .regex(
+        /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/,
+        "Last name can contain letters only.",
+      ),
 
     email: z.string().trim().email("Invalid email address").toLowerCase(),
 
-    phoneNumber: z.string().regex(/^[6-9]\d{9}$/, "Invalid phone number"),
-
+    phoneNumber: z
+      .string()
+      .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit phone number."),
     password: z
       .string()
       .min(

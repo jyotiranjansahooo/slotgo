@@ -1,7 +1,7 @@
 import api from "@/lib/api";
 
 import type { ApiResponse } from "@/types/api";
-
+export type UserRole = "driver" | "parkingOwner" | "admin";
 export interface AuthUser {
   id: string;
   firstName: string;

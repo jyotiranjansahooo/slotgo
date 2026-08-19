@@ -1,22 +1,15 @@
 "use client";
 
-import {
-  useEffect,
-} from "react";
+import { useEffect } from "react";
 
 import { useRouter } from "next/navigation";
 
-import {
-  useAuth,
-} from "@/providers/AuthProvider";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  const {
-    user,
-    isLoading,
-  } = useAuth();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     if (isLoading || !user) {
@@ -28,10 +21,7 @@ export default function DashboardPage() {
       return;
     }
 
-    if (
-      user.role ===
-      "parkingOwner"
-    ) {
+    if (user.role === "parkingOwner") {
       router.replace("/owner");
       return;
     }
@@ -39,17 +29,11 @@ export default function DashboardPage() {
     if (user.role === "admin") {
       router.replace("/admin");
     }
-  }, [
-    user,
-    isLoading,
-    router,
-  ]);
+  }, [user, isLoading, router]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-white">
-      <p className="text-zinc-400">
-        Loading dashboard...
-      </p>
+      <p className="text-zinc-400">Loading dashboard...</p>
     </main>
   );
 }

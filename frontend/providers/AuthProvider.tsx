@@ -138,9 +138,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return loggedInUser;
   };
 
-  const verifyEmailOtp = async (
-    data: VerifyOtpData,
-  ): Promise<AuthUser> => {
+  const verifyEmailOtp = async (data: VerifyOtpData): Promise<AuthUser> => {
     const response = await verifyOtp(data);
 
     const verifiedUser = response.data.user;
