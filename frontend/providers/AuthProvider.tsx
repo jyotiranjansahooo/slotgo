@@ -10,31 +10,29 @@ import {
 import {
   loginUser,
   googleLoginUser,
+  verifyOtp,
   type AuthUser,
   type LoginData,
 } from "@/services/auth.service";
 
 import { authStorage } from "@/lib/auth-storage";
 
+interface VerifyOtpData {
+  email: string;
+  otp: string;
+}
+
 interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-
   login: (data: LoginData) => Promise<AuthUser>;
-
   googleLogin: (credential: string) => Promise<AuthUser>;
-
+  verifyEmailOtp: (data: VerifyOtpData) => Promise<AuthUser>;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-/*
- * ============================================================
- * AUTH STORE
- * ============================================================
- */
 
 let cachedUser: AuthUser | null | undefined;
 
@@ -83,12 +81,6 @@ function notifyAuthChange(user: AuthUser | null): void {
   });
 }
 
-/*
- * ============================================================
- * HYDRATION STORE
- * ============================================================
- */
-
 function subscribeHydration(): () => void {
   return () => undefined;
 }
@@ -100,12 +92,6 @@ function getHydrationSnapshot(): boolean {
 function getServerHydrationSnapshot(): boolean {
   return false;
 }
-
-/*
- * ============================================================
- * PROVIDER
- * ============================================================
- */
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -124,12 +110,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     getServerHydrationSnapshot,
   );
 
-  /*
-   * ============================================================
-   * EMAIL / PASSWORD LOGIN
-   * ============================================================
-   */
-
   const login = async (data: LoginData): Promise<AuthUser> => {
     const response = await loginUser(data);
 
@@ -143,12 +123,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     return loggedInUser;
   };
-
-  /*
-   * ============================================================
-   * GOOGLE LOGIN
-   * ============================================================
-   */
 
   const googleLogin = async (credential: string): Promise<AuthUser> => {
     const response = await googleLoginUser(credential);
@@ -164,11 +138,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return loggedInUser;
   };
 
-  /*
-   * ============================================================
-   * LOGOUT
-   * ============================================================
-   */
+  const verifyEmailOtp = async (
+    data: VerifyOtpData,
+  ): Promise<AuthUser> => {
+    const response = await verifyOtp(data);
+
+    const verifiedUser = response.data.user;
+    const accessToken = response.data.accessToken;
+
+    if (!verifiedUser || !accessToken) {
+      throw new Error("Invalid OTP verification response.");
+    }
+
+    authStorage.setToken(accessToken);
+    authStorage.setUser(verifiedUser);
+
+    notifyAuthChange(verifiedUser);
+
+    return verifiedUser;
+  };
 
   const logout = (): void => {
     authStorage.clear();
@@ -180,15 +168,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         user,
-
         isLoading: !isHydrated,
-
         isAuthenticated: isHydrated && user !== null,
-
         login,
-
         googleLogin,
-
+        verifyEmailOtp,
         logout,
       }}
     >
@@ -196,12 +180,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     </AuthContext.Provider>
   );
 }
-
-/*
- * ============================================================
- * USE AUTH
- * ============================================================
- */
 
 export function useAuth(): AuthContextValue {
   const context = useContext(AuthContext);

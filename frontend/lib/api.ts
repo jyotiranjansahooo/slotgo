@@ -12,14 +12,6 @@ const api = axios.create({
   withCredentials: true,
 });
 
-/*
- * ============================================================
- * REQUEST INTERCEPTOR
- * ============================================================
- *
- * Attach access token to every authenticated request.
- */
-
 api.interceptors.request.use(
   (config) => {
     const token = authStorage.getToken();
@@ -34,20 +26,36 @@ api.interceptors.request.use(
     return Promise.reject(error);
   },
 );
+api.interceptors.response.use(
+  (response) => response,
 
-/*
- * ============================================================
- * RESPONSE INTERCEPTOR
- * ============================================================
- *
- * If backend says JWT is expired / invalid:
- *
- * 1. Clear stored authentication
- * 2. Redirect user to login
- *
- * This prevents the application from continuing to operate
- * with an invalid access token.
- */
+  (error) => {
+    if (error.response?.status === 401) {
+      const message = error.response?.data?.message;
+
+      if (
+        message === "jwt expired" ||
+        message === "Token expired" ||
+        message === "Unauthorized"
+      ) {
+        authStorage.clear();
+
+        if (typeof window !== "undefined") {
+          const currentPath =
+            window.location.pathname;
+
+          if (currentPath !== "/login") {
+            window.location.href = `/login?redirect=${encodeURIComponent(
+              currentPath,
+            )}`;
+          }
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 api.interceptors.response.use(
   (response) => {
@@ -59,12 +67,10 @@ api.interceptors.response.use(
       authStorage.clear();
 
       if (typeof window !== "undefined") {
-        const currentPath =
-          window.location.pathname + window.location.search;
+        const currentPath = window.location.pathname + window.location.search;
 
         const isAlreadyOnAuthPage =
-          currentPath === "/login" ||
-          currentPath === "/register";
+          currentPath === "/login" || currentPath === "/register";
 
         if (!isAlreadyOnAuthPage) {
           window.location.replace(

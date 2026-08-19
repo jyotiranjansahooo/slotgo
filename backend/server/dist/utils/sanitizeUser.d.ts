@@ -4,6 +4,6 @@ export declare const sanitizeUser: (user: IUser) => {
     firstName: string;
     lastName: string;
     email: string;
-    phoneNumber: string;
+    phoneNumber: string | undefined;
     role: import("../constants/roles.js").UserRole;
 };

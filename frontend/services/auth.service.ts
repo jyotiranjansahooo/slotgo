@@ -1,18 +1,14 @@
 import api from "@/lib/api";
 
-export type UserRole = "driver" | "parkingOwner" | "admin";
-
-export interface GoogleLoginData {
-  credential: string;
-}
+import type { ApiResponse } from "@/types/api";
 
 export interface AuthUser {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
-  role: UserRole;
+  phoneNumber?: string;
+  role: "driver" | "parkingOwner" | "admin";
 }
 
 export interface LoginData {
@@ -20,45 +16,73 @@ export interface LoginData {
   password: string;
 }
 
+export interface VerifyOtpData {
+  email: string;
+  otp: string;
+}
+
+export interface AuthResponseData {
+  user: AuthUser;
+  accessToken: string;
+}
+
 export interface RegisterData {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
+  phoneNumber?: string;
   password: string;
-  confirmPassword: string;
   role: "driver" | "parkingOwner";
 }
 
-export interface AuthResponse {
-  success: boolean;
-  statusCode: number;
+export interface RegisterResponse {
+  requiresVerification: boolean;
+  email: string;
   message: string;
-  data: {
-    user: AuthUser;
-    accessToken: string;
-  };
 }
+
+export const loginUser = async (
+  data: LoginData,
+): Promise<ApiResponse<AuthResponseData>> => {
+  const response = await api.post<ApiResponse<AuthResponseData>>(
+    "/auth/login",
+    data,
+  );
+
+  return response.data;
+};
+
 export const googleLoginUser = async (
   credential: string,
-): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>("/auth/google", {
-    credential,
-  });
+): Promise<ApiResponse<AuthResponseData>> => {
+  const response = await api.post<ApiResponse<AuthResponseData>>(
+    "/auth/google",
+    {
+      credential,
+    },
+  );
+
+  return response.data;
+};
+
+export const verifyOtp = async (
+  data: VerifyOtpData,
+): Promise<ApiResponse<AuthResponseData>> => {
+  const response = await api.post<ApiResponse<AuthResponseData>>(
+    "/auth/verify-otp",
+    data,
+  );
 
   return response.data;
 };
 
 export const registerUser = async (
   data: RegisterData,
-): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>("/auth/register", data);
-
-  return response.data;
-};
-
-export const loginUser = async (data: LoginData): Promise<AuthResponse> => {
-  const response = await api.post<AuthResponse>("/auth/login", data);
+): Promise<ApiResponse<RegisterResponse>> => {
+  const response = await api.post<ApiResponse<RegisterResponse>>(
+    "/auth/register",
+    data,
+  );
 
   return response.data;
 };

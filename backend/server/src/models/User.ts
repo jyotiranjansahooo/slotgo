@@ -1,10 +1,14 @@
 import mongoose, { Schema, HydratedDocument, Model, Types } from "mongoose";
+
 import bcrypt from "bcrypt";
 
 import { USER_ROLES, USER_ROLE_VALUES, UserRole } from "../constants/roles.js";
 
+export type AuthProvider = "local" | "google";
+
 export interface IUser {
   _id: Types.ObjectId;
+
   name: {
     first: string;
     last: string;
@@ -12,11 +16,14 @@ export interface IUser {
 
   email: string;
 
-  phoneNumber: string;
+  phoneNumber?: string;
 
   password?: string;
-  authProvider: "local" | "google";
+
+  authProvider: AuthProvider;
+
   googleId?: string;
+
   role: UserRole;
 
   avatar: {
@@ -30,9 +37,15 @@ export interface IUser {
 
   verifiedAt?: Date;
 
+  verificationOtpHash?: string;
+
+  verificationOtpExpiresAt?: Date;
+
+  verificationOtpAttempts: number;
+
   isActive: boolean;
 
-  deletedAt?: Date;
+  deletedAt?: Date | null;
 
   lastLogin?: Date;
 
@@ -54,7 +67,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
         type: String,
         required: true,
         trim: true,
-        minlength: 3,
+        minlength: 2,
         maxlength: 30,
       },
 
@@ -62,7 +75,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
         type: String,
         required: true,
         trim: true,
-        minlength: 3,
+        minlength: 2,
         maxlength: 30,
       },
     },
@@ -78,34 +91,35 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
 
     phoneNumber: {
       type: String,
-      required: true,
       unique: true,
+      sparse: true,
       trim: true,
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
 
     password: {
       type: String,
-      required: true,
       minlength: 8,
       select: false,
     },
+
     authProvider: {
       type: String,
       enum: ["local", "google"],
       default: "local",
+      required: true,
     },
 
     googleId: {
       type: String,
-      unique: true,
-      sparse: true,
-      default: null,
+      default: undefined,
     },
+
     role: {
       type: String,
       enum: USER_ROLE_VALUES,
       default: USER_ROLES.DRIVER,
+      required: true,
     },
 
     avatar: {
@@ -131,7 +145,28 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: false,
     },
 
-    verifiedAt: Date,
+    verifiedAt: {
+      type: Date,
+      default: undefined,
+    },
+
+    verificationOtpHash: {
+      type: String,
+      default: "",
+      select: false,
+    },
+
+    verificationOtpExpiresAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
+
+    verificationOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
 
     isActive: {
       type: Boolean,
@@ -143,7 +178,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: null,
     },
 
-    lastLogin: Date,
+    lastLogin: {
+      type: Date,
+      default: undefined,
+    },
 
     loginCount: {
       type: Number,
@@ -156,41 +194,49 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
   },
 );
 
-userSchema.index({
-  role: 1,
-});
+userSchema.index({ role: 1 });
 
-userSchema.pre("save", async function () {
+userSchema.index(
+  { googleId: 1 },
+  {
+    unique: true,
+    sparse: true,
+  },
+);
+
+userSchema.index(
+  { phoneNumber: 1 },
+  {
+    unique: true,
+    sparse: true,
+  },
+);
+
+userSchema.pre("save", async function (): Promise<void> {
   if (!this.isModified("password")) {
     return;
   }
 
-  const password = this.password;
-
-  if (!password) {
+  if (!this.password) {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(password, 12);
-
-  this.password = hashedPassword;
+  this.password = await bcrypt.hash(this.password, 12);
 });
 
 userSchema.method(
   "comparePassword",
   async function (candidatePassword: string): Promise<boolean> {
-    const password = this.password;
-
-    if (!password) {
+    if (!this.password) {
       return false;
     }
 
-    return bcrypt.compare(candidatePassword, password);
+    return bcrypt.compare(candidatePassword, this.password);
   },
 );
 
 const User =
-  (mongoose.models.User as UserModel) ||
+  (mongoose.models.User as UserModel | undefined) ??
   mongoose.model<IUser, UserModel>("User", userSchema);
 
 export default User;

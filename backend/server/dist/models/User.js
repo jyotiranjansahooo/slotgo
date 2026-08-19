@@ -1,105 +1,142 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import { USER_ROLES, USER_ROLE_VALUES } from "../constants/roles.js";
-const userSchema = new Schema(
-  {
+const userSchema = new Schema({
     name: {
-      first: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 3,
-        maxlength: 30,
-      },
-      last: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 3,
-        maxlength: 30,
-      },
+        first: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 2,
+            maxlength: 30,
+        },
+        last: {
+            type: String,
+            required: true,
+            trim: true,
+            minlength: 2,
+            maxlength: 30,
+        },
     },
     email: {
-      type: String,
-      required: true,
-      unique: true,
-      lowercase: true,
-      trim: true,
-      match: [/^\S+@\S+\.\S+$/, "Invalid email"],
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
     phoneNumber: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      match: [/^[6-9]\d{9}$/, "Invalid phone number"],
+        type: String,
+        unique: true,
+        sparse: true,
+        trim: true,
+        match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
     password: {
-      type: String,
-      required: true,
-      minlength: 8,
-      select: false,
+        type: String,
+        minlength: 8,
+        select: false,
+    },
+    authProvider: {
+        type: String,
+        enum: ["local", "google"],
+        default: "local",
+        required: true,
+    },
+    googleId: {
+        type: String,
+        default: undefined,
     },
     role: {
-      type: String,
-      enum: USER_ROLE_VALUES,
-      default: USER_ROLES.DRIVER,
+        type: String,
+        enum: USER_ROLE_VALUES,
+        default: USER_ROLES.DRIVER,
+        required: true,
     },
     avatar: {
-      url: {
-        type: String,
-        default: "",
-      },
-      publicId: {
-        type: String,
-        default: "",
-      },
+        url: {
+            type: String,
+            default: "",
+        },
+        publicId: {
+            type: String,
+            default: "",
+        },
     },
     refreshToken: {
-      type: String,
-      default: "",
-      select: false,
+        type: String,
+        default: "",
+        select: false,
     },
     isVerified: {
-      type: Boolean,
-      default: false,
+        type: Boolean,
+        default: false,
     },
-    verifiedAt: Date,
+    verifiedAt: {
+        type: Date,
+        default: undefined,
+    },
+    verificationOtpHash: {
+        type: String,
+        default: "",
+        select: false,
+    },
+    verificationOtpExpiresAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
+    verificationOtpAttempts: {
+        type: Number,
+        default: 0,
+        select: false,
+    },
     isActive: {
-      type: Boolean,
-      default: true,
+        type: Boolean,
+        default: true,
     },
     deletedAt: {
-      type: Date,
-      default: null,
+        type: Date,
+        default: null,
     },
-    lastLogin: Date,
+    lastLogin: {
+        type: Date,
+        default: undefined,
+    },
     loginCount: {
-      type: Number,
-      default: 0,
+        type: Number,
+        default: 0,
     },
-  },
-  {
+}, {
     timestamps: true,
     versionKey: false,
-  },
-);
-userSchema.index({
-  role: 1,
+});
+userSchema.index({ role: 1 });
+userSchema.index({ googleId: 1 }, {
+    unique: true,
+    sparse: true,
+});
+userSchema.index({ phoneNumber: 1 }, {
+    unique: true,
+    sparse: true,
 });
 userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
-  this.password = await bcrypt.hash(this.password, 12);
-});
-userSchema.method(
-  "comparePassword",
-  async function (candidatePassword) {
-    if (!this.password) {
-      return false;
+    if (!this.isModified("password")) {
+        return;
     }
-
+    if (!this.password) {
+        return;
+    }
+    this.password = await bcrypt.hash(this.password, 12);
+});
+userSchema.method("comparePassword", async function (candidatePassword) {
+    if (!this.password) {
+        return false;
+    }
     return bcrypt.compare(candidatePassword, this.password);
-  },
-);
-const User = mongoose.models.User || mongoose.model("User", userSchema);
+});
+const User = mongoose.models.User ??
+    mongoose.model("User", userSchema);
 export default User;
+//# sourceMappingURL=User.js.map

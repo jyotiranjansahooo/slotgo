@@ -1,12 +1,14 @@
-import { RegisterInput } from "../../validations/auth/register.validation.js";
-export declare const registerService: (data: RegisterInput) => Promise<{
-    user: import("mongoose").Document<unknown, {}, import("../../models/User.js").IUser, {}, import("mongoose").DefaultSchemaOptions> & Omit<import("../../models/User.js").IUser & Required<{
-        _id: import("mongoose").Types.ObjectId;
-    }> & {
-        __v: number;
-    }, "comparePassword" | "id"> & import("mongoose").HydratedDocumentOverrides<import("../../models/User.js").IUserMethods & {
-        id: string;
-    }>;
-    accessToken: string;
-    refreshToken: string;
+export interface RegisterData {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber: string;
+    password: string;
+    confirmPassword: string;
+    role: "driver" | "parkingOwner";
+}
+export declare const registerService: (data: RegisterData) => Promise<{
+    requiresVerification: boolean;
+    email: string;
+    message: string;
 }>;

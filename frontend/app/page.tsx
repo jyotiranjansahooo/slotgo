@@ -1,51 +1,28 @@
-"use client";
+import Navbar from "@/components/landing/Navbar";
+import Hero from "@/components/landing/Hero";
+import NearbyParking from "@/components/home/NearbyParking";
+import ParkingMap from "@/components/home/ParkingMap";
+import Stats from "@/components/home/Stats";
+import Features from "@/components/home/Features";
+import HowItWorks from "@/components/home/HowItWorks";
 
-import { useState } from "react";
+import Footer from "@/components/home/Footer";
 
-import api from "@/lib/api";
-
-export default function Home() {
-  const [message, setMessage] = useState(
-    "Frontend is ready.",
-  );
-
-  const testBackend = async () => {
-    try {
-      const response = await api.get("/parkings");
-
-      console.log(response.data);
-
-      setMessage(
-        "Backend connection successful.",
-      );
-    } catch (error) {
-      console.error(error);
-
-      setMessage(
-        "Backend request failed. Check the browser console.",
-      );
-    }
-  };
-
+export default function HomePage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-black text-white">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">
-          Parking Management System
-        </h1>
+    <main className="min-h-screen bg-[#080b18]">
+      <Navbar />
 
-        <p className="mb-8 text-zinc-400">
-          {message}
-        </p>
+      <Hero />
 
-        <button
-          type="button"
-          onClick={testBackend}
-          className="rounded-lg bg-white px-6 py-3 font-medium text-black transition hover:bg-zinc-200"
-        >
-          Test Backend
-        </button>
-      </div>
+      <NearbyParking />
+
+      <ParkingMap />
+
+      <Stats />
+      <Features />
+      <HowItWorks />
+      <Footer />
     </main>
   );
 }

@@ -312,7 +312,14 @@ class BookingService {
 
         driverSnapshot: {
           name: `${driver.name.first} ${driver.name.last}`,
-          phoneNumber: driver.phoneNumber,
+          phoneNumber:
+            driver.phoneNumber ??
+            (() => {
+              throw new ApiError(
+                400,
+                "Phone number is required before creating a booking.",
+              );
+            })(),
         },
 
         parkingSnapshot: {
