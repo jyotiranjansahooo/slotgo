@@ -10,12 +10,15 @@ import { resendOtpController } from "../controllers/auth/resend-otp.controller.j
 import { registerController } from "../controllers/auth/register.controller.js";
 import { loginController } from "../controllers/auth/login.controller.js";
 import { verifyOtpController } from "../controllers/auth/verify-otp.controller.js";
+import { googleLoginController } from "../controllers/auth/google.controller.js";
 
 const router = Router();
 
 router.post("/register", validate(registerSchema), registerController);
 
 router.post("/login", validate(loginSchema), loginController);
+router.post("/google", googleLoginController);
+
 
 router.post("/verify-otp", validate(verifyOtpSchema), verifyOtpController);
 

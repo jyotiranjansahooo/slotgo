@@ -2,11 +2,27 @@ import { Request, Response } from "express";
 
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiResponse from "../../utils/ApiResponse.js";
-import { loginService } from "../../services/auth/login.service.js";
 
-export const loginController = asyncHandler(
+import { googleLoginService } from "../../services/auth/google.service.js";
+
+export const googleLoginController = asyncHandler(
   async (req: Request, res: Response) => {
-    const result = await loginService(req.body);
+    const { credential, role } = req.body;
+
+    if (!credential) {
+      return res.status(400).json(
+        new ApiResponse(
+          400,
+          [],
+          "Google credential is required.",
+        ),
+      );
+    }
+
+    const result = await googleLoginService({
+      credential,
+      role,
+    });
 
     res.cookie("refreshToken", result.refreshToken, {
       httpOnly: true,
@@ -15,7 +31,7 @@ export const loginController = asyncHandler(
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.status(200).json(
+    return res.status(200).json(
       new ApiResponse(
         200,
         {
@@ -29,7 +45,7 @@ export const loginController = asyncHandler(
           },
           accessToken: result.accessToken,
         },
-        "Login successful",
+        "Google login successful",
       ),
     );
   },

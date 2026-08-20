@@ -13,6 +13,7 @@ import {
   verifyOtp,
   type AuthUser,
   type LoginData,
+  type UserRole,
 } from "@/services/auth.service";
 
 import { authStorage } from "@/lib/auth-storage";
@@ -26,9 +27,16 @@ interface AuthContextValue {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+
   login: (data: LoginData) => Promise<AuthUser>;
-  googleLogin: (credential: string) => Promise<AuthUser>;
+
+  googleLogin: (
+    credential: string,
+    role?: UserRole,
+  ) => Promise<AuthUser>;
+
   verifyEmailOtp: (data: VerifyOtpData) => Promise<AuthUser>;
+
   logout: () => void;
 }
 
@@ -124,19 +132,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return loggedInUser;
   };
 
-  const googleLogin = async (credential: string): Promise<AuthUser> => {
-    const response = await googleLoginUser(credential);
+const googleLogin = async (
+  credential: string,
+  role: UserRole = "driver",
+): Promise<AuthUser> => {
+  const response = await googleLoginUser(credential, role);
 
-    const loggedInUser = response.data.user;
-    const accessToken = response.data.accessToken;
+  const loggedInUser = response.data.user;
+  const accessToken = response.data.accessToken;
 
-    authStorage.setToken(accessToken);
-    authStorage.setUser(loggedInUser);
+  if (!loggedInUser || !accessToken) {
+    throw new Error("Invalid Google login response.");
+  }
 
-    notifyAuthChange(loggedInUser);
+  authStorage.setToken(accessToken);
+  authStorage.setUser(loggedInUser);
 
-    return loggedInUser;
-  };
+  notifyAuthChange(loggedInUser);
+
+  return loggedInUser;
+};
 
   const verifyEmailOtp = async (data: VerifyOtpData): Promise<AuthUser> => {
     const response = await verifyOtp(data);

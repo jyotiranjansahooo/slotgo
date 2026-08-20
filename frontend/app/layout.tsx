@@ -7,8 +7,7 @@ import QueryProvider from "@/providers/QueryProvider";
 
 export const metadata: Metadata = {
   title: "SlotGo",
-  description:
-    "Parking management and booking platform",
+  description: "Parking management and booking platform",
 };
 
 export default function RootLayout({
@@ -20,9 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-          <QueryProvider>
-            {children}
-          </QueryProvider>
+          <QueryProvider>{children}</QueryProvider>
         </AuthProvider>
       </body>
     </html>

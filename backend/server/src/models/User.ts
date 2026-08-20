@@ -91,7 +91,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
 
     phoneNumber: {
       type: String,
-      unique: true,
       sparse: true,
       trim: true,
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],

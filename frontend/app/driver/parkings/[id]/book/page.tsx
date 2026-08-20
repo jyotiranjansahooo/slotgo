@@ -649,10 +649,8 @@ function BookingForm() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ================================================= */}
-          {/* VEHICLE */}
-          {/* ================================================= */}
-
+            {/* VEHICLE */}
+  
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Select Vehicle</h2>
 
@@ -716,10 +714,8 @@ function BookingForm() {
             )}
           </section>
 
-          {/* ================================================= */}
-          {/* BOOKING TIMING */}
-          {/* ================================================= */}
-
+            {/* BOOKING TIMING */}
+  
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">When do you want to park?</h2>
 
@@ -797,10 +793,8 @@ function BookingForm() {
             )}
           </section>
 
-          {/* ================================================= */}
-          {/* BOOKING TYPE */}
-          {/* ================================================= */}
-
+            {/* BOOKING TYPE */}
+  
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Booking Type</h2>
 
@@ -836,10 +830,8 @@ function BookingForm() {
             )}
           </section>
 
-          {/* ================================================= */}
-          {/* DURATION */}
-          {/* ================================================= */}
-
+            {/* DURATION */}
+  
           {effectiveBookingMode && (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Duration</h2>
@@ -887,10 +879,8 @@ function BookingForm() {
             </section>
           )}
 
-          {/* ================================================= */}
-          {/* BOOKING PREVIEW */}
-          {/* ================================================= */}
-
+            {/* BOOKING PREVIEW */}
+  
           {bookingPreview && (
             <section className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Booking Summary</h2>
@@ -924,10 +914,8 @@ function BookingForm() {
             </section>
           )}
 
-          {/* ================================================= */}
-          {/* PRICE SUMMARY */}
-          {/* ================================================= */}
-
+            {/* PRICE SUMMARY */}
+  
           {pricePreview && (
             <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Price Summary</h2>
@@ -981,10 +969,8 @@ function BookingForm() {
             </section>
           )}
 
-          {/* ================================================= */}
-          {/* SUBMIT */}
-          {/* ================================================= */}
-
+            {/* SUBMIT */}
+  
           <button
             type="submit"
             disabled={

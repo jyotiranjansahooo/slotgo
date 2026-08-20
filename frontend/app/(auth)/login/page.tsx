@@ -16,6 +16,7 @@ import {
   UserPlus,
 } from "lucide-react";
 
+import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
 import { useAuth } from "@/providers/AuthProvider";
 import { getApiErrorMessage } from "@/lib/api-error";
 
@@ -115,9 +116,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* ================================================= */}
           {/* HEADING */}
-          {/* ================================================= */}
 
           <div className="mb-6">
             <h1 className="text-3xl font-bold tracking-tight text-zinc-900">
@@ -129,13 +128,10 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* ================================================= */}
           {/* FORM */}
-          {/* ================================================= */}
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             {/* EMAIL */}
-
             <div>
               <label
                 htmlFor="email"
@@ -171,9 +167,7 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
-
             {/* PASSWORD */}
-
             <div>
               <label
                 htmlFor="password"
@@ -219,17 +213,13 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
-
             {/* SERVER ERROR */}
-
             {serverError && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-xs font-medium leading-5 text-red-600">
                 {serverError}
               </div>
             )}
-
             {/* SUBMIT */}
-
             <button
               type="submit"
               disabled={isSubmitting}
@@ -251,11 +241,17 @@ export default function LoginPage() {
                 </>
               )}
             </button>
-          </form>
+            <div className="my-5 flex items-center gap-3">
+              <div className="h-px flex-1 bg-zinc-200" />
 
-          {/* ================================================= */}
-          {/* REGISTER DIVIDER */}
-          {/* ================================================= */}
+              <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+                OR
+              </span>
+
+              <div className="h-px flex-1 bg-zinc-200" />
+            </div>
+            <GoogleLoginButton/>
+          </form>
 
           <div className="my-5 flex items-center gap-3">
             <div className="h-px flex-1 bg-zinc-200" />
@@ -267,10 +263,6 @@ export default function LoginPage() {
             <div className="h-px flex-1 bg-zinc-200" />
           </div>
 
-          {/* ================================================= */}
-          {/* REGISTER BUTTON */}
-          {/* ================================================= */}
-
           <button
             type="button"
             onClick={() => router.push("/register")}
@@ -281,18 +273,12 @@ export default function LoginPage() {
             Create a new account
           </button>
 
-          {/* ================================================= */}
-          {/* FOOTER */}
-          {/* ================================================= */}
-
           <p className="mt-5 text-center text-[11px] leading-5 text-zinc-400">
             By continuing, you agree to SlotGo&apos;s terms and privacy policy.
           </p>
         </div>
 
-        {/* ================================================= */}
         {/* BOTTOM TAGLINE */}
-        {/* ================================================= */}
 
         <p className="mt-4 text-center text-xs font-medium text-zinc-600">
           Find your space. Park with confidence.

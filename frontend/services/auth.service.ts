@@ -1,14 +1,15 @@
 import api from "@/lib/api";
-
 import type { ApiResponse } from "@/types/api";
+
 export type UserRole = "driver" | "parkingOwner" | "admin";
+
 export interface AuthUser {
   id: string;
   firstName: string;
   lastName: string;
   email: string;
   phoneNumber?: string;
-  role: "driver" | "parkingOwner" | "admin";
+  role: UserRole;
 }
 
 export interface LoginData {
@@ -54,17 +55,18 @@ export const loginUser = async (
 
 export const googleLoginUser = async (
   credential: string,
+  role?: UserRole,
 ): Promise<ApiResponse<AuthResponseData>> => {
   const response = await api.post<ApiResponse<AuthResponseData>>(
     "/auth/google",
     {
       credential,
+      role,
     },
   );
 
   return response.data;
 };
-
 export const verifyOtp = async (
   data: VerifyOtpData,
 ): Promise<ApiResponse<AuthResponseData>> => {
@@ -75,6 +77,7 @@ export const verifyOtp = async (
 
   return response.data;
 };
+
 
 export const registerUser = async (
   data: RegisterData,

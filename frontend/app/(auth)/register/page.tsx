@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import GoogleLoginButton from "@/components/auth/GoogleLoginButton";
+
 import {
   UserPlus,
   Loader2,
@@ -23,15 +25,25 @@ const registerSchema = z
   .object({
     firstName: z
       .string()
+      .trim()
       .min(3, "First name must be at least 3 characters.")
-      .max(30, "First name is too long."),
+      .max(30, "First name is too long.")
+      .regex(
+        /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/,
+        "First name can contain letters only.",
+      ),
 
     lastName: z
       .string()
+      .trim()
       .min(3, "Last name must be at least 3 characters.")
-      .max(30, "Last name is too long."),
+      .max(30, "Last name is too long.")
+      .regex(
+        /^[A-Za-z]+(?:[ '-][A-Za-z]+)*$/,
+        "Last name can contain letters only.",
+      ),
 
-    email: z.string().email("Enter a valid email address."),
+    email: z.string().trim().email("Enter a valid email address."),
 
     phoneNumber: z
       .string()
@@ -78,6 +90,7 @@ export default function RegisterPage() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -85,7 +98,7 @@ export default function RegisterPage() {
       role: "driver",
     },
   });
-
+  const selectedRole = watch("role");
   const onSubmit = async (data: RegisterFormData): Promise<void> => {
     try {
       setServerError("");
@@ -148,14 +161,19 @@ export default function RegisterPage() {
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f3e8] px-4 py-6 text-[#181818] sm:px-6">
+      {/* ===================================================== */}
+      {/* BACKGROUND */}
+      {/* ===================================================== */}
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Yellow glow */}
+
         <div className="absolute -left-32 -top-32 h-80 w-80 rounded-full bg-[#facc15]/30 blur-3xl" />
 
         <div className="absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-[#facc15]/25 blur-3xl" />
 
         {/* Decorative bubbles */}
+
         <div className="absolute left-[8%] top-[18%] h-16 w-16 rounded-full border border-[#facc15]/40 bg-[#facc15]/10" />
 
         <div className="absolute right-[12%] top-[12%] h-10 w-10 rounded-full bg-[#facc15]/20" />
@@ -165,6 +183,7 @@ export default function RegisterPage() {
         <div className="absolute bottom-[10%] right-[20%] h-20 w-20 rounded-full border border-black/5" />
 
         {/* Grid */}
+
         <div
           className="absolute inset-0 opacity-[0.035]"
           style={{
@@ -175,10 +194,12 @@ export default function RegisterPage() {
         />
       </div>
 
+      {/* ===================================================== */}
+      {/* MAIN CONTENT */}
+      {/* ===================================================== */}
+
       <div className="relative z-10 w-full max-w-5xl">
-        {/* ================================================= */}
         {/* HEADER */}
-        {/* ================================================= */}
 
         <div className="mb-4 flex items-center justify-between">
           <button
@@ -193,6 +214,8 @@ export default function RegisterPage() {
             <span className="text-lg font-black tracking-tight">SlotGo</span>
           </button>
 
+          {/* LOGIN */}
+
           <button
             type="button"
             onClick={() => router.push("/login")}
@@ -205,15 +228,7 @@ export default function RegisterPage() {
           </button>
         </div>
 
-        {/* ================================================= */}
-        {/* REGISTER CARD */}
-        {/* ================================================= */}
-
         <div className="grid overflow-hidden rounded-[1.75rem] border border-black/10 bg-white shadow-[0_25px_80px_rgba(0,0,0,0.12)] lg:grid-cols-[0.75fr_1.25fr]">
-          {/* ================================================= */}
-          {/* LEFT SIDE */}
-          {/* ================================================= */}
-
           <div className="relative hidden overflow-hidden bg-[#facc15] p-8 lg:flex lg:flex-col lg:justify-between">
             {/* Decorative circles */}
 
@@ -222,6 +237,8 @@ export default function RegisterPage() {
             <div className="absolute -bottom-24 -left-20 h-64 w-64 rounded-full bg-black/5" />
 
             <div className="absolute right-10 top-1/2 h-20 w-20 rounded-full bg-white/10" />
+
+            {/* Content */}
 
             <div className="relative z-10">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-black text-[#facc15]">
@@ -244,6 +261,8 @@ export default function RegisterPage() {
               </p>
             </div>
 
+            {/* FEATURES */}
+
             <div className="relative z-10 space-y-3">
               <Feature icon={<MapPin size={16} />} text="Find nearby parking" />
 
@@ -256,12 +275,10 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* ================================================= */}
-          {/* FORM */}
-          {/* ================================================= */}
+          {/* FORM SIDE */}
 
           <div className="p-6 sm:p-8">
-            {/* Mobile title */}
+            {/* MOBILE TITLE */}
 
             <div className="mb-5 lg:hidden">
               <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#facc15]">
@@ -272,12 +289,12 @@ export default function RegisterPage() {
                 Create account
               </h1>
 
-              <p className="mt-1 text-xs leading-5 text-black/50">
-                Join SlotGo and start finding better parking.
+              <p className="mt-1 text-xs text-black/45">
+                Your parking journey starts here.
               </p>
             </div>
 
-            {/* Desktop title */}
+            {/* DESKTOP TITLE */}
 
             <div className="mb-5 hidden lg:block">
               <div className="flex items-center gap-3">
@@ -297,13 +314,10 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* ================================================= */}
             {/* FORM */}
-            {/* ================================================= */}
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
               {/* NAME */}
-
               <div className="grid grid-cols-2 gap-3">
                 <InputField
                   label="First name"
@@ -333,9 +347,7 @@ export default function RegisterPage() {
                   }}
                 />
               </div>
-
               {/* EMAIL + PHONE */}
-
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <InputField
                   label="Email"
@@ -364,9 +376,7 @@ export default function RegisterPage() {
                   }}
                 />
               </div>
-
               {/* PASSWORD */}
-
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <InputField
                   label="Password"
@@ -388,18 +398,14 @@ export default function RegisterPage() {
                   autoComplete="new-password"
                 />
               </div>
-
               {/* PASSWORD INFO */}
-
               {!errors.password && (
                 <div className="rounded-xl bg-[#f7f3e8] px-3 py-2 text-[11px] leading-4 text-black/50">
                   Password: 8+ characters · uppercase · lowercase · number ·
                   special character
                 </div>
               )}
-
-              {/* ROLE */}
-
+              {/* ACCOUNT TYPE */}
               <div>
                 <label
                   htmlFor="role"
@@ -424,17 +430,13 @@ export default function RegisterPage() {
                   </p>
                 )}
               </div>
-
               {/* SERVER ERROR */}
-
               {serverError && (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-medium text-red-600">
                   {serverError}
                 </div>
               )}
-
-              {/* SUBMIT */}
-
+              {/* CREATE ACCOUNT */}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -456,11 +458,18 @@ export default function RegisterPage() {
                   </>
                 )}
               </button>
-            </form>
+              {/* GOOGLE DIVIDER */}
+              <div className="my-4 flex items-center gap-3">
+                <div className="h-px flex-1 bg-black/10" />
 
-            {/* ================================================= */}
-            {/* FOOTER */}
-            {/* ================================================= */}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-black/35">
+                  OR
+                </span>
+
+                <div className="h-px flex-1 bg-black/10" />
+              </div>
+              <GoogleLoginButton />
+            </form>
 
             <p className="mt-4 text-center text-[11px] leading-5 text-black/40">
               By creating an account, you agree to use SlotGo responsibly and
@@ -468,20 +477,10 @@ export default function RegisterPage() {
             </p>
           </div>
         </div>
-
-        {/* SMALL FOOTER */}
-
-        <p className="mt-4 text-center text-[11px] text-black/35">
-          © {new Date().getFullYear()} SlotGo · Smart parking, simplified.
-        </p>
       </div>
     </main>
   );
 }
-
-/* ============================================================= */
-/* INPUT FIELD */
-/* ============================================================= */
 
 interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
