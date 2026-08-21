@@ -2,7 +2,10 @@ import ApiError from "../../utils/ApiError.js";
 import vehicleRepository from "../../repositories/vehicle.repository.js";
 export const createVehicleService = async (data) => {
     const { ownerId, vehicleType, registrationNumber, brand, vehicleModel, color, } = data;
-    const existingVehicle = await vehicleRepository.findByRegistrationNumber(registrationNumber);
+    // Normalize registration number
+    const normalizedRegistrationNumber = registrationNumber.trim().toUpperCase();
+    // Check whether vehicle already exists
+    const existingVehicle = await vehicleRepository.findByRegistrationNumber(normalizedRegistrationNumber);
     if (existingVehicle) {
         throw new ApiError(409, "Vehicle with this registration number already exists");
     }
@@ -11,12 +14,10 @@ export const createVehicleService = async (data) => {
     const vehicle = await vehicleRepository.create({
         ownerId,
         vehicleType,
-        registrationNumber,
-        // API/service uses manufacturer,
-        // database model uses brand.
-        brand,
-        vehicleModel,
-        color,
+        registrationNumber: normalizedRegistrationNumber,
+        brand: brand.trim(),
+        vehicleModel: vehicleModel.trim(),
+        color: color.trim(),
         isDefault,
     });
     return vehicle;

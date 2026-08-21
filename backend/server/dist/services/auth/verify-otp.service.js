@@ -1,66 +1,58 @@
 import ApiError from "../../utils/ApiError.js";
 import User from "../../models/User.js";
-import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 import { verifyOtp, getMaxOtpAttempts } from "../../utils/otp.js";
-export const verifyOtpService = async (data) => {
-    const email = data.email.trim().toLowerCase();
-    const otp = data.otp.trim();
+import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
+export const verifyOtpService = async ({ email, otp }) => {
+    const normalizedEmail = email.trim().toLowerCase();
     const user = await User.findOne({
-        email,
+        email: normalizedEmail,
     }).select("+verificationOtpHash +verificationOtpExpiresAt +verificationOtpAttempts +refreshToken");
     if (!user) {
         throw new ApiError(404, "Account not found");
     }
     if (user.isVerified) {
-        throw new ApiError(400, "This account is already verified");
+        throw new ApiError(400, "Email is already verified");
     }
     if (!user.verificationOtpHash) {
-        throw new ApiError(400, "Verification code not found. Please request a new code.");
+        throw new ApiError(400, "No verification code found. Please request a new code.");
     }
-    if (!user.verificationOtpExpiresAt ||
-        user.verificationOtpExpiresAt.getTime() < Date.now()) {
+    if (!user.verificationOtpExpiresAt) {
+        throw new ApiError(400, "Verification code has expired. Please request a new code.");
+    }
+    if (user.verificationOtpExpiresAt.getTime() <= Date.now()) {
         user.verificationOtpHash = "";
         user.verificationOtpExpiresAt = undefined;
         user.verificationOtpAttempts = 0;
         await user.save();
         throw new ApiError(400, "Verification code has expired. Please request a new code.");
     }
-    if (user.verificationOtpAttempts >= getMaxOtpAttempts()) {
-        user.verificationOtpHash = "";
-        user.verificationOtpExpiresAt = undefined;
-        user.verificationOtpAttempts = 0;
-        await user.save();
-        throw new ApiError(429, "Too many verification attempts. Please request a new code.");
+    const maxAttempts = getMaxOtpAttempts();
+    if (user.verificationOtpAttempts >= maxAttempts) {
+        throw new ApiError(429, "Too many incorrect attempts. Please request a new verification code.");
     }
-    if (!/^\d{6}$/.test(otp)) {
+    const isValidOtp = verifyOtp(otp, user.verificationOtpHash);
+    if (!isValidOtp) {
         user.verificationOtpAttempts += 1;
-        await user.save();
-        throw new ApiError(400, "Verification code must contain 6 digits");
-    }
-    const isValid = verifyOtp(otp, user.verificationOtpHash);
-    if (!isValid) {
-        user.verificationOtpAttempts += 1;
-        await user.save();
-        const attemptsRemaining = Math.max(0, getMaxOtpAttempts() - user.verificationOtpAttempts);
-        if (attemptsRemaining === 0) {
+        if (user.verificationOtpAttempts >= maxAttempts) {
             user.verificationOtpHash = "";
             user.verificationOtpExpiresAt = undefined;
-            user.verificationOtpAttempts = 0;
             await user.save();
-            throw new ApiError(429, "Too many verification attempts. Please request a new code.");
+            throw new ApiError(429, "Too many incorrect attempts. Please request a new verification code.");
         }
-        throw new ApiError(400, `Invalid verification code. ${attemptsRemaining} attempt${attemptsRemaining === 1 ? "" : "s"} remaining.`);
+        await user.save();
+        const remainingAttempts = maxAttempts - user.verificationOtpAttempts;
+        throw new ApiError(400, `Invalid verification code. ${remainingAttempts} attempt${remainingAttempts === 1 ? "" : "s"} remaining.`);
     }
     user.isVerified = true;
     user.verifiedAt = new Date();
     user.verificationOtpHash = "";
     user.verificationOtpExpiresAt = undefined;
     user.verificationOtpAttempts = 0;
+    user.lastLogin = new Date();
+    user.loginCount += 1;
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     user.refreshToken = refreshToken;
-    user.lastLogin = new Date();
-    user.loginCount += 1;
     await user.save();
     return {
         user: {
@@ -70,6 +62,8 @@ export const verifyOtpService = async (data) => {
             email: user.email,
             phoneNumber: user.phoneNumber,
             role: user.role,
+            avatar: user.avatar,
+            isVerified: user.isVerified,
         },
         accessToken,
         refreshToken,

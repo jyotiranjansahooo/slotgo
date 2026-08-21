@@ -9,6 +9,7 @@ import adminParkingRoutes from "./routes/admin/parking.routes.js";
 import adminUserRoutes from "./routes/admin/user.routes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
 import parkingBookingBlockRoutes from "./routes/parking-booking-block.routes.js";
+import vehicleRoutes from "./routes/vehicle.routes.js";
 
 import { env } from "./config/env.js";
 import routes from "./routes/index.js";
@@ -45,6 +46,7 @@ app.use(morgan("dev"));
 app.use("/api/v1", routes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/admin/parkings", adminParkingRoutes);
+app.use("/api/v1/vehicles", vehicleRoutes);
 app.use("/api/v1/admin/users", adminUserRoutes);
 app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
 app.use("/api/v1/parking-booking-blocks", parkingBookingBlockRoutes);

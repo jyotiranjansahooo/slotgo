@@ -13,7 +13,7 @@ declare class VehicleRepository {
     findById(id: string): Promise<any>;
     findByOwnerId(ownerId: string): Promise<any[]>;
     findByRegistrationNumber(registrationNumber: string): Promise<any>;
-    update(id: string, data: Partial<CreateVehicleData>): Promise<any>;
+    update(id: string, data: Partial<Omit<CreateVehicleData, "ownerId">>): Promise<any>;
     delete(id: string): Promise<any>;
     clearDefault(ownerId: string): Promise<import("mongoose").UpdateWriteOpResult>;
     setDefault(id: string): Promise<any>;

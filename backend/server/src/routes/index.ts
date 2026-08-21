@@ -27,4 +27,5 @@ router.use("/reviews", reviewRoutes);
 router.use("/admin/parkings", adminParkingRoutes);
 router.use("/admin", adminRoutes);
 
+
 export default router;

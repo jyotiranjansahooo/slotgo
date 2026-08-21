@@ -7,7 +7,7 @@ export interface CreateVehicleData {
 
   registrationNumber: string;
 
- brand: string;
+  brand: string;
 
   vehicleModel: string;
 
@@ -17,13 +17,25 @@ export interface CreateVehicleData {
 }
 
 class VehicleRepository {
+  // ==========================================================
+  // CREATE
+  // ==========================================================
+
   async create(vehicleData: CreateVehicleData) {
     return Vehicle.create(vehicleData);
   }
 
+  // ==========================================================
+  // FIND BY ID
+  // ==========================================================
+
   async findById(id: string) {
     return Vehicle.findById(id);
   }
+
+  // ==========================================================
+  // FIND ALL VEHICLES OF OWNER
+  // ==========================================================
 
   async findByOwnerId(ownerId: string) {
     return Vehicle.find({
@@ -35,24 +47,44 @@ class VehicleRepository {
     });
   }
 
+  // ==========================================================
+  // FIND BY REGISTRATION NUMBER
+  // ==========================================================
+
   async findByRegistrationNumber(registrationNumber: string) {
     return Vehicle.findOne({
       registrationNumber: registrationNumber.toUpperCase(),
     });
   }
 
-  async update(id: string, data: Partial<CreateVehicleData>) {
-    return Vehicle.findByIdAndUpdate(id, data, {
-      new: true,
-      runValidators: true,
-    });
+  // ==========================================================
+  // UPDATE
+  // ==========================================================
+
+  async update(
+    id: string,
+    data: Partial<Omit<CreateVehicleData, "ownerId">>,
+  ) {
+    return Vehicle.findByIdAndUpdate(
+      id,
+      data,
+      {
+        new: true,
+        runValidators: true,
+      },
+    );
   }
+
+  // ==========================================================
+  // SOFT DELETE
+  // ==========================================================
 
   async delete(id: string) {
     return Vehicle.findByIdAndUpdate(
       id,
       {
         isActive: false,
+        isDefault: false,
       },
       {
         new: true,
@@ -60,14 +92,25 @@ class VehicleRepository {
     );
   }
 
+  // ==========================================================
+  // CLEAR DEFAULT
+  // ==========================================================
+
   async clearDefault(ownerId: string) {
     return Vehicle.updateMany(
-      { ownerId },
+      {
+        ownerId,
+        isActive: true,
+      },
       {
         isDefault: false,
       },
     );
   }
+
+  // ==========================================================
+  // SET DEFAULT
+  // ==========================================================
 
   async setDefault(id: string) {
     return Vehicle.findByIdAndUpdate(
@@ -77,6 +120,7 @@ class VehicleRepository {
       },
       {
         new: true,
+        runValidators: true,
       },
     );
   }

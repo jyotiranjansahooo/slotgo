@@ -1,4 +1,4 @@
-import { CreateVehicleInput } from "../../validations/vehicle/create.validation.js";
+import type { CreateVehicleInput } from "../../validations/vehicle/create.validation.js";
 interface CreateVehicleServiceInput extends CreateVehicleInput {
     ownerId: string;
 }

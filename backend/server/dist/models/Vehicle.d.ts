@@ -9,6 +9,8 @@ export interface IVehicle extends Document {
     color: string;
     isDefault: boolean;
     isActive: boolean;
+    createdAt: Date;
+    updatedAt: Date;
 }
 declare const Vehicle: mongoose.Model<any, {}, {}, {}, any, any, any>;
 export default Vehicle;

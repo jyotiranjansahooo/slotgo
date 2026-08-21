@@ -28,7 +28,6 @@ const userSchema = new Schema({
     },
     phoneNumber: {
         type: String,
-        unique: true,
         sparse: true,
         trim: true,
         match: [/^[6-9]\d{9}$/, "Invalid phone number"],

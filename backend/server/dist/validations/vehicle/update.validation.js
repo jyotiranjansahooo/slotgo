@@ -9,9 +9,24 @@ export const updateVehicleSchema = z.object({
         VEHICLE_TYPES.HEAVY_VEHICLE,
     ])
         .optional(),
-    brand: z.string().trim().min(2).max(50).optional(),
-    vehicleModel: z.string().trim().min(1).max(50).optional(),
-    color: z.string().trim().min(2).max(30).optional(),
+    brand: z
+        .string()
+        .trim()
+        .min(2, "Brand is required")
+        .max(40, "Brand cannot exceed 40 characters")
+        .optional(),
+    vehicleModel: z
+        .string()
+        .trim()
+        .min(1, "Vehicle model is required")
+        .max(40, "Vehicle model cannot exceed 40 characters")
+        .optional(),
+    color: z
+        .string()
+        .trim()
+        .min(2, "Color is required")
+        .max(20, "Color cannot exceed 20 characters")
+        .optional(),
     isDefault: z.boolean().optional(),
 });
 //# sourceMappingURL=update.validation.js.map
