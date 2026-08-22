@@ -1,6 +1,5 @@
 import { z } from "zod";
 export declare const createParkingSlotSchema: z.ZodObject<{
-    parkingId: z.ZodString;
     slotNumber: z.ZodString;
     floor: z.ZodDefault<z.ZodString>;
     supportedVehicleTypes: z.ZodArray<z.ZodEnum<{
@@ -10,5 +9,6 @@ export declare const createParkingSlotSchema: z.ZodObject<{
         vanMinibus: "vanMinibus";
     }>>;
     displayOrder: z.ZodDefault<z.ZodNumber>;
+    notes: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export type CreateParkingSlotInput = z.infer<typeof createParkingSlotSchema>;

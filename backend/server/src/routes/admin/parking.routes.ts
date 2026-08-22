@@ -13,24 +13,12 @@ import {
 
 const router = Router();
 
-router.use(
-  authMiddleware,
-  requireRole(USER_ROLES.ADMIN),
-);
+router.use(authMiddleware, requireRole(USER_ROLES.ADMIN));
 
-router.get(
-  "/",
-  getAllParkings,
-);
+router.get("/", getAllParkings);
 
-router.patch(
-  "/:id/approve",
-  approveParking,
-);
+router.patch("/:id/approve", approveParking);
 
-router.patch(
-  "/:id/reject",
-  rejectParking,
-);
+router.patch("/:id/reject", rejectParking);
 
 export default router;

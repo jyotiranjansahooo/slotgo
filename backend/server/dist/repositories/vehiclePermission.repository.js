@@ -1,46 +1,76 @@
-import VehiclePermission from "../models/VehiclePermission.js";
+import VehiclePermission, { 
+// IVehiclePermission,
+VEHICLE_PERMISSION_STATUS, } from "../models/VehiclePermission.js";
 class VehiclePermissionRepository {
-    async findByVehicleAndUser(vehicleId, userId) {
-        return VehiclePermission.findOne({
-            vehicleId,
-            userId,
-        });
-    }
-    async findApprovedByUser(userId) {
-        return VehiclePermission.find({
-            userId,
-            status: "approved",
-        }).populate("vehicleId");
-    }
-    async findByVehicle(vehicleId) {
-        return VehiclePermission.find({
-            vehicleId,
-        }).populate("userId");
-    }
     async create(data) {
         return VehiclePermission.create({
-            ...data,
-            status: data.status ?? "pending",
-        });
-    }
-    async approve(vehicleId, userId) {
-        return VehiclePermission.findOneAndUpdate({
-            vehicleId,
-            userId,
-        }, {
-            status: "approved",
+            vehicleId: data.vehicleId,
+            ownerId: data.ownerId,
+            driverId: data.driverId,
+            status: VEHICLE_PERMISSION_STATUS.APPROVED,
             grantedAt: new Date(),
             revokedAt: null,
+        });
+    }
+    // ==========================================================
+    // FIND PERMISSION
+    // ==========================================================
+    async findByVehicleAndDriver(vehicleId, driverId) {
+        return VehiclePermission.findOne({
+            vehicleId,
+            driverId,
+        });
+    }
+    // ==========================================================
+    // FIND ACTIVE PERMISSION
+    // ==========================================================
+    async findActivePermission(vehicleId, driverId) {
+        return VehiclePermission.findOne({
+            vehicleId,
+            driverId,
+            status: VEHICLE_PERMISSION_STATUS.APPROVED,
+        });
+    }
+    // ==========================================================
+    // GET ALL DRIVERS FOR A VEHICLE
+    // ==========================================================
+    async findByVehicleId(vehicleId) {
+        return VehiclePermission.find({
+            vehicleId,
+        })
+            .populate("driverId", "name email phoneNumber avatar")
+            .sort({
+            createdAt: -1,
+        });
+    }
+    // ==========================================================
+    // GET ALL VEHICLE PERMISSIONS OF A DRIVER
+    // ==========================================================
+    async findByDriverId(driverId) {
+        return VehiclePermission.find({
+            driverId,
+            status: VEHICLE_PERMISSION_STATUS.APPROVED,
+        })
+            .populate("vehicleId", "registrationNumber vehicleType brand vehicleModel color ownerId")
+            .sort({
+            createdAt: -1,
+        });
+    }
+    async revoke(id) {
+        return VehiclePermission.findByIdAndUpdate(id, {
+            status: VEHICLE_PERMISSION_STATUS.REVOKED,
+            revokedAt: new Date(),
         }, {
             new: true,
         });
     }
-    async revoke(vehicleId, userId) {
+    async revokeByVehicleAndDriver(vehicleId, driverId) {
         return VehiclePermission.findOneAndUpdate({
             vehicleId,
-            userId,
+            driverId,
+            status: VEHICLE_PERMISSION_STATUS.APPROVED,
         }, {
-            status: "revoked",
+            status: VEHICLE_PERMISSION_STATUS.REVOKED,
             revokedAt: new Date(),
         }, {
             new: true,

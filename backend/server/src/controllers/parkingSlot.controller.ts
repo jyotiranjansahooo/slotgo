@@ -5,32 +5,42 @@ import ApiResponse from "../utils/ApiResponse.js";
 
 import parkingSlotService from "../services/parkingSlot/parkingSlot.service.js";
 
-type GetParkingSlotsParams = {
-  parkingId: string;
-};
+// ==========================================================
+// CREATE PARKING SLOT
+// ==========================================================
 
-type DeleteSlotParams = {
-  slotId: string;
-};
+export const createSlot = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parkingId = req.params.parkingId as string;
 
-export const createSlot = asyncHandler(async (req: Request, res: Response) => {
-  const slot = await parkingSlotService.createSlot(
-    req.user!._id.toString(),
-    req.body,
-  );
+    const slot = await parkingSlotService.createSlot(
+      req.user!._id.toString(),
+      parkingId,
+      req.body,
+    );
 
-  res
-    .status(201)
-    .json(new ApiResponse(201, slot, "Parking slot created successfully."));
-});
+    res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          slot,
+          "Parking slot created successfully.",
+        ),
+      );
+  },
+);
+
+// ==========================================================
+// GET AVAILABLE SLOTS
+// ==========================================================
 
 export const getAvailableSlots = asyncHandler(
   async (req: Request, res: Response) => {
-    const { parkingId } = req.params;
+    const parkingId = req.params.parkingId as string;
 
-    const slots = await parkingSlotService.getAvailableSlots(
-      parkingId as string,
-    );
+    const slots =
+      await parkingSlotService.getAvailableSlots(parkingId);
 
     res
       .status(200)
@@ -44,24 +54,50 @@ export const getAvailableSlots = asyncHandler(
   },
 );
 
-export const getParkingSlots = asyncHandler<GetParkingSlotsParams>(
-  async (req, res) => {
-    const { parkingId } = req.params;
+// ==========================================================
+// GET ALL PARKING SLOTS
+// ==========================================================
 
-    const slots = await parkingSlotService.getParkingSlots(parkingId);
+export const getParkingSlots = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parkingId = req.params.parkingId as string;
+
+    const slots =
+      await parkingSlotService.getParkingSlots(parkingId);
 
     res
       .status(200)
-      .json(new ApiResponse(200, slots, "Parking slots fetched successfully."));
+      .json(
+        new ApiResponse(
+          200,
+          slots,
+          "Parking slots fetched successfully.",
+        ),
+      );
   },
 );
 
-export const deleteSlot = asyncHandler<DeleteSlotParams>(async (req, res) => {
-  const { slotId } = req.params;
+// ==========================================================
+// DELETE PARKING SLOT
+// ==========================================================
 
-  await parkingSlotService.deleteSlot(req.user!._id.toString(), slotId);
+export const deleteSlot = asyncHandler(
+  async (req: Request, res: Response) => {
+    const slotId = req.params.slotId as string;
 
-  res
-    .status(200)
-    .json(new ApiResponse(200, null, "Parking slot deleted successfully."));
-});
+    await parkingSlotService.deleteSlot(
+      req.user!._id.toString(),
+      slotId,
+    );
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          null,
+          "Parking slot deleted successfully.",
+        ),
+      );
+  },
+);

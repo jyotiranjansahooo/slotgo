@@ -1,18 +1,25 @@
 import mongoose, { Document, Schema } from "mongoose";
 
+export const VEHICLE_PERMISSION_STATUS = {
+  APPROVED: "approved",
+  REVOKED: "revoked",
+} as const;
+
+export type VehiclePermissionStatus =
+  (typeof VEHICLE_PERMISSION_STATUS)[keyof typeof VEHICLE_PERMISSION_STATUS];
+
 export interface IVehiclePermission extends Document {
   vehicleId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
 
-  status: "pending" | "approved" | "revoked";
+  ownerId: mongoose.Types.ObjectId;
 
-  grantedBy: mongoose.Types.ObjectId;
+  driverId: mongoose.Types.ObjectId;
 
-  grantedAt?: Date;
-  revokedAt?: Date;
+  status: VehiclePermissionStatus;
 
-  createdAt: Date;
-  updatedAt: Date;
+  grantedAt: Date;
+
+  revokedAt?: Date | null;
 }
 
 const vehiclePermissionSchema = new Schema<IVehiclePermission>(
@@ -21,38 +28,39 @@ const vehiclePermissionSchema = new Schema<IVehiclePermission>(
       type: Schema.Types.ObjectId,
       ref: "Vehicle",
       required: true,
-      immutable: true,
       index: true,
     },
 
-    userId: {
+    ownerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      immutable: true,
+      index: true,
+    },
+
+    driverId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
       index: true,
     },
 
     status: {
       type: String,
-      enum: ["pending", "approved", "revoked"],
-      default: "pending",
+      enum: Object.values(VEHICLE_PERMISSION_STATUS),
+      default: VEHICLE_PERMISSION_STATUS.APPROVED,
       required: true,
-    },
-
-    grantedBy: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      immutable: true,
     },
 
     grantedAt: {
       type: Date,
+      default: Date.now,
+      required: true,
     },
 
     revokedAt: {
       type: Date,
+      default: null,
     },
   },
   {
@@ -61,15 +69,22 @@ const vehiclePermissionSchema = new Schema<IVehiclePermission>(
   },
 );
 
+// Prevent duplicate permission records
 vehiclePermissionSchema.index(
   {
     vehicleId: 1,
-    userId: 1,
+    driverId: 1,
   },
   {
     unique: true,
   },
 );
+
+// Useful for checking a driver's permissions
+vehiclePermissionSchema.index({
+  driverId: 1,
+  status: 1,
+});
 
 const VehiclePermission =
   mongoose.models.VehiclePermission ||

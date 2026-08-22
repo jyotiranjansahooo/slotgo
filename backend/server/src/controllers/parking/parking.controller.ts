@@ -12,13 +12,9 @@ export const createParking = asyncHandler(
       req.body,
     );
 
-    res.status(201).json(
-      new ApiResponse(
-        201,
-        parking,
-        "Parking created successfully.",
-      ),
-    );
+    res
+      .status(201)
+      .json(new ApiResponse(201, parking, "Parking created successfully."));
   },
 );
 
@@ -28,47 +24,30 @@ export const getMyParkings = asyncHandler(
       req.user!._id.toString(),
     );
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        parkings,
-        "Parkings fetched successfully.",
-      ),
-    );
+    res
+      .status(200)
+      .json(new ApiResponse(200, parkings, "Parkings fetched successfully."));
   },
 );
 
-export const getParking = asyncHandler(
-  async (req: Request, res: Response) => {
-    const parking = await parkingService.getParkingById(
-      req.params.id as string,
-    );
+export const getParking = asyncHandler(async (req: Request, res: Response) => {
+  const parking = await parkingService.getParkingById(req.params.id as string);
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        parking,
-        "Parking fetched successfully.",
-      ),
-    );
-  },
-);
+  res
+    .status(200)
+    .json(new ApiResponse(200, parking, "Parking fetched successfully."));
+});
 export const updateParking = asyncHandler(
   async (req: Request, res: Response) => {
-    const parking =
-      await parkingService.updateParking(
-        req.user!._id.toString(),
-        req.params.id as string,
-        req.body,
-      );
-
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        parking,
-        "Parking updated successfully.",
-      ),
+    const parking = await parkingService.updateParking(
+      req.user!._id.toString(),
+      req.params.id as string,
+      req.body,
     );
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, parking, "Parking updated successfully."));
   },
 );
 
@@ -79,12 +58,43 @@ export const deleteParking = asyncHandler(
       req.params.id as string,
     );
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        null,
-        "Parking deactivated successfully.",
-      ),
+    res
+      .status(200)
+      .json(new ApiResponse(200, null, "Parking deactivated successfully."));
+  },
+);
+export const approveParking = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parking = await parkingService.approveParking(
+      req.params.id as string,
     );
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          parking,
+          "Parking approved successfully.",
+        ),
+      );
+  },
+);
+
+export const rejectParking = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parking = await parkingService.rejectParking(
+      req.params.id as string,
+    );
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          parking,
+          "Parking rejected successfully.",
+        ),
+      );
   },
 );

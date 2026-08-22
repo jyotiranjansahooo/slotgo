@@ -121,24 +121,22 @@ class ParkingSlotRepository {
     );
   }
 
-async confirmReservation(
-  slotId: string,
-) {
-  return ParkingSlot.findOneAndUpdate(
-    {
-      _id: slotId,
-      status: SLOT_STATUS.RESERVED,
-    },
-    {
-      $set: {
-        reservedUntil: null,
+  async confirmReservation(slotId: string) {
+    return ParkingSlot.findOneAndUpdate(
+      {
+        _id: slotId,
+        status: SLOT_STATUS.RESERVED,
       },
-    },
-    {
-      new: true,
-    },
-  );
-}
+      {
+        $set: {
+          reservedUntil: null,
+        },
+      },
+      {
+        new: true,
+      },
+    );
+  }
   async release(slotId: string) {
     return ParkingSlot.findByIdAndUpdate(
       slotId,
