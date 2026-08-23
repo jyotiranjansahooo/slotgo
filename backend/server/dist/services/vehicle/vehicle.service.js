@@ -1,9 +1,7 @@
 import ApiError from "../../utils/ApiError.js";
 import vehicleRepository from "../../repositories/vehicle.repository.js";
 class VehicleService {
-    // ==========================================================
     // CREATE VEHICLE
-    // ==========================================================
     async create(ownerId, data) {
         const registrationNumber = data.registrationNumber.trim().toUpperCase();
         const exists = await vehicleRepository.findByRegistrationNumber(registrationNumber);
@@ -22,15 +20,11 @@ class VehicleService {
         });
         return vehicle;
     }
-    // ==========================================================
     // GET ALL MY VEHICLES
-    // ==========================================================
     async getAll(ownerId) {
         return vehicleRepository.findByOwnerId(ownerId);
     }
-    // ==========================================================
     // GET SINGLE VEHICLE
-    // ==========================================================
     async getById(ownerId, vehicleId) {
         const vehicle = await vehicleRepository.findById(vehicleId);
         if (!vehicle) {
@@ -41,9 +35,7 @@ class VehicleService {
         }
         return vehicle;
     }
-    // ==========================================================
     // UPDATE VEHICLE
-    // ==========================================================
     async update(ownerId, vehicleId, data) {
         const vehicle = await this.getById(ownerId, vehicleId);
         const updatedVehicle = await vehicleRepository.update(vehicle.id, data);
@@ -52,9 +44,7 @@ class VehicleService {
         }
         return updatedVehicle;
     }
-    // ==========================================================
     // DELETE VEHICLE
-    // ==========================================================
     async delete(ownerId, vehicleId) {
         const vehicle = await this.getById(ownerId, vehicleId);
         const deletedVehicle = await vehicleRepository.delete(vehicle.id);
@@ -63,9 +53,7 @@ class VehicleService {
         }
         return deletedVehicle;
     }
-    // ==========================================================
     // SET DEFAULT VEHICLE
-    // ==========================================================
     async setDefault(ownerId, vehicleId) {
         const vehicle = await this.getById(ownerId, vehicleId);
         await vehicleRepository.clearDefault(ownerId);

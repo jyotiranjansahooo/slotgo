@@ -5,10 +5,8 @@ import { CreateVehicleInput } from "../../validations/vehicle/create.validation.
 import { UpdateVehicleInput } from "../../validations/vehicle/update.validation.js";
 
 class VehicleService {
-  // ==========================================================
-  // CREATE VEHICLE
-  // ==========================================================
-
+    // CREATE VEHICLE
+  
   async create(ownerId: string, data: CreateVehicleInput) {
     const registrationNumber = data.registrationNumber.trim().toUpperCase();
 
@@ -37,18 +35,14 @@ class VehicleService {
     return vehicle;
   }
 
-  // ==========================================================
-  // GET ALL MY VEHICLES
-  // ==========================================================
-
+    // GET ALL MY VEHICLES
+  
   async getAll(ownerId: string) {
     return vehicleRepository.findByOwnerId(ownerId);
   }
 
-  // ==========================================================
-  // GET SINGLE VEHICLE
-  // ==========================================================
-
+    // GET SINGLE VEHICLE
+  
   async getById(ownerId: string, vehicleId: string) {
     const vehicle = await vehicleRepository.findById(vehicleId);
 
@@ -63,10 +57,8 @@ class VehicleService {
     return vehicle;
   }
 
-  // ==========================================================
-  // UPDATE VEHICLE
-  // ==========================================================
-
+    // UPDATE VEHICLE
+  
   async update(ownerId: string, vehicleId: string, data: UpdateVehicleInput) {
     const vehicle = await this.getById(ownerId, vehicleId);
 
@@ -79,10 +71,8 @@ class VehicleService {
     return updatedVehicle;
   }
 
-  // ==========================================================
-  // DELETE VEHICLE
-  // ==========================================================
-
+    // DELETE VEHICLE
+  
   async delete(ownerId: string, vehicleId: string) {
     const vehicle = await this.getById(ownerId, vehicleId);
 
@@ -95,10 +85,8 @@ class VehicleService {
     return deletedVehicle;
   }
 
-  // ==========================================================
-  // SET DEFAULT VEHICLE
-  // ==========================================================
-
+    // SET DEFAULT VEHICLE
+  
   async setDefault(ownerId: string, vehicleId: string) {
     const vehicle = await this.getById(ownerId, vehicleId);
 

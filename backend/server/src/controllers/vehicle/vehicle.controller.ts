@@ -5,9 +5,7 @@ import ApiResponse from "../../utils/ApiResponse.js";
 
 import vehicleService from "../../services/vehicle/vehicle.service.js";
 
-// ==========================================================
 // CREATE VEHICLE
-// ==========================================================
 
 export const createVehicle = asyncHandler(
   async (req: Request, res: Response) => {
@@ -28,9 +26,7 @@ export const createVehicle = asyncHandler(
   },
 );
 
-// ==========================================================
 // GET MY VEHICLES
-// ==========================================================
 
 export const getMyVehicles = asyncHandler(
   async (req: Request, res: Response) => {
@@ -50,9 +46,7 @@ export const getMyVehicles = asyncHandler(
   },
 );
 
-// ==========================================================
 // GET SINGLE VEHICLE
-// ==========================================================
 
 export const getVehicle = asyncHandler(
   async (req: Request, res: Response) => {
@@ -77,9 +71,7 @@ export const getVehicle = asyncHandler(
   },
 );
 
-// ==========================================================
 // UPDATE VEHICLE
-// ==========================================================
 
 export const updateVehicle = asyncHandler(
   async (req: Request, res: Response) => {
@@ -105,9 +97,7 @@ export const updateVehicle = asyncHandler(
   },
 );
 
-// ==========================================================
 // DELETE VEHICLE
-// ==========================================================
 
 export const deleteVehicle = asyncHandler(
   async (req: Request, res: Response) => {
@@ -132,9 +122,7 @@ export const deleteVehicle = asyncHandler(
   },
 );
 
-// ==========================================================
 // SET DEFAULT VEHICLE
-// ==========================================================
 
 export const setDefaultVehicle = asyncHandler(
   async (req: Request, res: Response) => {

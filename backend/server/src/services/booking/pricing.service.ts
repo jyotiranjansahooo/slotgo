@@ -92,72 +92,54 @@ class PricingService {
 
     let parkingAmount = 0;
 
-    // ==========================================================
-    // HOURLY
-    // ==========================================================
-
+        // HOURLY
+    
     if (bookingMode === "hourly") {
       const hours = Math.ceil(durationHours);
 
       parkingAmount = rate * hours;
     }
 
-    // ==========================================================
-    // DAILY
-    // ==========================================================
-
+        // DAILY
+    
     if (bookingMode === "daily") {
       const days = Math.ceil(durationHours / 24);
 
       parkingAmount = rate * days;
     }
 
-    // ==========================================================
-    // MONTHLY
-    // ==========================================================
-
+        // MONTHLY
+    
     if (bookingMode === "monthly") {
       const months = Math.ceil(durationHours / (24 * 30));
 
       parkingAmount = rate * months;
     }
 
-    // ==========================================================
-    // DISCOUNT
-    // ==========================================================
-
+        // DISCOUNT
+    
     const discountAmount = 0;
 
-    // ==========================================================
-    // ACTUAL PARKING AMOUNT
-    // ==========================================================
-
+        // ACTUAL PARKING AMOUNT
+    
     const actualAmount = parkingAmount - discountAmount;
 
-    // ==========================================================
-    // OWNER COMMISSION
-    // ==========================================================
-
+        // OWNER COMMISSION
+    
     const ownerCommission = Number((actualAmount * 0.05).toFixed(2));
 
-    // ==========================================================
-    // DRIVER SERVICE FEE
-    // ==========================================================
-
+        // DRIVER SERVICE FEE
+    
     let driverServiceFee = Math.round(actualAmount * 0.05);
 
     driverServiceFee = Math.max(5, Math.min(driverServiceFee, 35));
 
-    // ==========================================================
-    // OWNER RECEIVES
-    // ==========================================================
-
+        // OWNER RECEIVES
+    
     const ownerReceives = Number((actualAmount - ownerCommission).toFixed(2));
 
-    // ==========================================================
-    // DRIVER PAYS
-    // ==========================================================
-
+        // DRIVER PAYS
+    
     const driverPays = Number((actualAmount + driverServiceFee).toFixed(2));
 
     return {
@@ -191,16 +173,13 @@ class PricingService {
       };
     }
 
-    // ==========================================================
-    // OVERTIME MINUTES
-    // ==========================================================
-
+        // OVERTIME MINUTES
+    
     const overtimeMs = checkoutTime.getTime() - bookedEndTime.getTime();
 
     const overtimeMinutes = Math.ceil(overtimeMs / (1000 * 60));
 
-    // ==========================================================
-    // OVERTIME HOURS
+        // OVERTIME HOURS
     //
     // Any extra minute counts as another hour.
     //
@@ -208,53 +187,40 @@ class PricingService {
     // 10 minutes  -> 1 hour
     // 60 minutes  -> 1 hour
     // 61 minutes  -> 2 hours
-    // ==========================================================
-
+    
     const overtimeHours = Math.ceil(overtimeMinutes / 60);
 
-    // ==========================================================
-    // HOURLY PARKING RATE
-    // ==========================================================
-
+        // HOURLY PARKING RATE
+    
     const hourlyRate = this.getHourlyRate(parking, vehicleType);
 
-    // ==========================================================
-    // EXTRA PARKING CHARGE
-    // ==========================================================
-
+        // EXTRA PARKING CHARGE
+    
     const overtimeParkingAmount = Number(
       (hourlyRate * overtimeHours).toFixed(2),
     );
 
-    // ==========================================================
-    // OVERTIME FINE
+        // OVERTIME FINE
     //
     // Small fixed fine per overtime incident.
-    // ==========================================================
-
+    
     const overtimeFine = 10;
 
-    // ==========================================================
-    // TOTAL DRIVER PAYMENT
-    // ==========================================================
-
+        // TOTAL DRIVER PAYMENT
+    
     const overtimeTotal = Number(
       (overtimeParkingAmount + overtimeFine).toFixed(2),
     );
 
-    // ==========================================================
-    // OWNER COMMISSION
+        // OWNER COMMISSION
     //
     // Commission applies only to additional parking revenue,
     // not to the platform fine.
-    // ==========================================================
-
+    
     const ownerCommission = Number((overtimeParkingAmount * 0.05).toFixed(2));
 
-    // ==========================================================
-    // OWNER RECEIVES
-    // ==========================================================
-
+        // OWNER RECEIVES
+    
     const ownerReceives = Number(
       (overtimeParkingAmount - ownerCommission).toFixed(2),
     );

@@ -22,10 +22,8 @@ class VehiclePermissionRepository {
     });
   }
 
-  // ==========================================================
-  // FIND PERMISSION
-  // ==========================================================
-
+    // FIND PERMISSION
+  
   async findByVehicleAndDriver(vehicleId: string, driverId: string) {
     return VehiclePermission.findOne({
       vehicleId,
@@ -33,10 +31,8 @@ class VehiclePermissionRepository {
     });
   }
 
-  // ==========================================================
-  // FIND ACTIVE PERMISSION
-  // ==========================================================
-
+    // FIND ACTIVE PERMISSION
+  
   async findActivePermission(vehicleId: string, driverId: string) {
     return VehiclePermission.findOne({
       vehicleId,
@@ -45,10 +41,8 @@ class VehiclePermissionRepository {
     });
   }
 
-  // ==========================================================
-  // GET ALL DRIVERS FOR A VEHICLE
-  // ==========================================================
-
+    // GET ALL DRIVERS FOR A VEHICLE
+  
   async findByVehicleId(vehicleId: string) {
     return VehiclePermission.find({
       vehicleId,
@@ -59,10 +53,8 @@ class VehiclePermissionRepository {
       });
   }
 
-  // ==========================================================
-  // GET ALL VEHICLE PERMISSIONS OF A DRIVER
-  // ==========================================================
-
+    // GET ALL VEHICLE PERMISSIONS OF A DRIVER
+  
   async findByDriverId(driverId: string) {
     return VehiclePermission.find({
       driverId,

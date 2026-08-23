@@ -16,44 +16,43 @@ export interface IParkingBookingBlock extends Document {
   updatedAt: Date;
 }
 
-const parkingBookingBlockSchema =
-  new Schema<IParkingBookingBlock>(
-    {
-      parkingId: {
-        type: Schema.Types.ObjectId,
-        ref: "Parking",
-        required: true,
-        index: true,
-      },
-
-      createdBy: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
-        immutable: true,
-      },
-
-      startTime: {
-        type: Date,
-        required: true,
-      },
-
-      endTime: {
-        type: Date,
-        required: true,
-      },
-
-      reason: {
-        type: String,
-        trim: true,
-        maxlength: 200,
-      },
+const parkingBookingBlockSchema = new Schema<IParkingBookingBlock>(
+  {
+    parkingId: {
+      type: Schema.Types.ObjectId,
+      ref: "Parking",
+      required: true,
+      index: true,
     },
-    {
-      timestamps: true,
-      versionKey: false,
+
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      immutable: true,
     },
-  );
+
+    startTime: {
+      type: Date,
+      required: true,
+    },
+
+    endTime: {
+      type: Date,
+      required: true,
+    },
+
+    reason: {
+      type: String,
+      trim: true,
+      maxlength: 200,
+    },
+  },
+  {
+    timestamps: true,
+    versionKey: false,
+  },
+);
 
 parkingBookingBlockSchema.index({
   parkingId: 1,

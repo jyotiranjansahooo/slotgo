@@ -347,6 +347,7 @@ class BookingService {
 
     try {
       const paymentResult = await paymentService.createPayment(
+        driverId,
         booking._id.toString(),
       );
 
@@ -366,23 +367,23 @@ class BookingService {
     }
   }
 
-  // ============================================================
-  // VERIFY NORMAL PAYMENT
-  // ============================================================
-
-  async verifyPayment(orderId: string, paymentId: string, signature: string) {
-    return paymentService.verifyPayment(orderId, paymentId, signature);
+  async verifyPayment(
+    userId: string,
+    orderId: string,
+    paymentId: string,
+    signature: string,
+  ) {
+    return paymentService.verifyPayment(userId, orderId, paymentId, signature);
   }
 
-  // ============================================================
-  // CREATE OVERTIME PAYMENT
-  // ============================================================
-
-  async createOvertimePayment(bookingId: string) {
+  async createOvertimePayment(userId: string, bookingId: string) {
     const booking = await bookingRepository.findById(bookingId);
 
     if (!booking) {
       throw new ApiError(404, "Booking not found.");
+    }
+    if (booking.driverId.toString() !== userId) {
+      throw new ApiError(403, "You are not authorized to make this payment.");
     }
 
     if (booking.bookingStatus !== BOOKING_STATUS.ACTIVE) {
@@ -400,24 +401,23 @@ class BookingService {
       throw new ApiError(400, "Overtime payment has already been completed.");
     }
 
-    return paymentService.createOvertimePayment(bookingId);
+    return paymentService.createOvertimePayment(  userId,
+bookingId);
   }
 
-  // ============================================================
-  // VERIFY OVERTIME PAYMENT
-  // ============================================================
-
   async verifyOvertimePayment(
+    userId: string,
     orderId: string,
     paymentId: string,
     signature: string,
   ) {
-    return paymentService.verifyOvertimePayment(orderId, paymentId, signature);
+    return paymentService.verifyOvertimePayment(
+      userId,
+      orderId,
+      paymentId,
+      signature,
+    );
   }
-
-  // ============================================================
-  // GET SINGLE BOOKING
-  // ============================================================
 
   async getBooking(userId: string, bookingId: string) {
     const booking = await bookingRepository.findById(bookingId);
@@ -506,6 +506,7 @@ class BookingService {
       if (payment.status === PAYMENT_STATUS.SUCCESS) {
         if (refundAmount > 0) {
           refundedPayment = await paymentService.refundPayment(
+            driverId,
             payment._id.toString(),
             refundAmount,
           );

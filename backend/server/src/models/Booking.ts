@@ -807,7 +807,6 @@ bookingSchema.index({
    ============================================================== */
 
 const Booking =
-  mongoose.models.Booking ||
-  mongoose.model<IBooking>("Booking", bookingSchema);
+  mongoose.models.Booking || mongoose.model<IBooking>("Booking", bookingSchema);
 
 export default Booking;

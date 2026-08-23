@@ -8,9 +8,6 @@ import parkingSlotRepository from "../../repositories/parkingSlot.repository.js"
 import { CreateParkingSlotInput } from "../../validations/parkingslot/create.validation.js";
 
 class ParkingSlotService {
-  // ==========================================================
-  // CREATE SLOT
-  // ==========================================================
 
   async createSlot(
     ownerId: string,
@@ -78,10 +75,8 @@ class ParkingSlotService {
     return slot;
   }
 
-  // ==========================================================
-  // GET AVAILABLE SLOTS
-  // ==========================================================
-
+    // GET AVAILABLE SLOTS
+  
   async getAvailableSlots(parkingId: string) {
     if (!Types.ObjectId.isValid(parkingId)) {
       throw new ApiError(400, "Invalid parking ID.");
@@ -99,10 +94,8 @@ class ParkingSlotService {
     return parkingSlotRepository.findAvailable(parkingId);
   }
 
-  // ==========================================================
-  // GET ALL SLOTS FOR PARKING
-  // ==========================================================
-
+    // GET ALL SLOTS FOR PARKING
+  
   async getParkingSlots(parkingId: string) {
     if (!Types.ObjectId.isValid(parkingId)) {
       throw new ApiError(400, "Invalid parking ID.");
@@ -117,10 +110,8 @@ class ParkingSlotService {
     return parkingSlotRepository.findByParking(parkingId);
   }
 
-  // ==========================================================
-  // DELETE SLOT
-  // ==========================================================
-
+    // DELETE SLOT
+  
   async deleteSlot(ownerId: string, slotId: string) {
     if (!Types.ObjectId.isValid(slotId)) {
       throw new ApiError(400, "Invalid slot ID.");

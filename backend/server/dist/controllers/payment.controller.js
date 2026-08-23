@@ -6,19 +6,23 @@ import paymentService from "../services/payment/payment.service.js";
 import { verifyPaymentSchema } from "../validations/payment/verify.validation.js";
 export const createPayment = asyncHandler(async (req, res) => {
     const data = createPaymentSchema.parse(req.body);
-    const result = await paymentService.createPayment(data.bookingId);
-    res.status(201).json(new ApiResponse(201, result, "Payment order created successfully."));
+    const result = await paymentService.createPayment(req.user._id.toString(), data.bookingId);
+    res
+        .status(201)
+        .json(new ApiResponse(201, result, "Payment order created successfully."));
 });
 export const verifyPayment = asyncHandler(async (req, res) => {
     const data = verifyPaymentSchema.parse(req.body);
-    const result = await paymentService.verifyPayment(data.orderId, data.paymentId, data.signature);
+    const result = await paymentService.verifyPayment(req.user._id.toString(), data.orderId, data.paymentId, data.signature);
     return res
         .status(200)
         .json(new ApiResponse(200, result, "Payment verified successfully."));
 });
 export const refundPayment = asyncHandler(async (req, res) => {
     const data = refundPaymentSchema.parse(req.body);
-    const result = await paymentService.refundPayment(data.paymentId, data.amount);
-    res.status(200).json(new ApiResponse(200, result, "Refund initiated successfully."));
+    const result = await paymentService.refundPayment(req.user._id.toString(), data.paymentId, data.amount);
+    res
+        .status(200)
+        .json(new ApiResponse(200, result, "Refund initiated successfully."));
 });
 //# sourceMappingURL=payment.controller.js.map

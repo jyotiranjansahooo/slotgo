@@ -17,26 +17,20 @@ export interface CreateVehicleData {
 }
 
 class VehicleRepository {
-  // ==========================================================
-  // CREATE
-  // ==========================================================
-
+    // CREATE
+  
   async create(vehicleData: CreateVehicleData) {
     return Vehicle.create(vehicleData);
   }
 
-  // ==========================================================
-  // FIND BY ID
-  // ==========================================================
-
+    // FIND BY ID
+  
   async findById(id: string) {
     return Vehicle.findById(id);
   }
 
-  // ==========================================================
-  // FIND ALL VEHICLES OF OWNER
-  // ==========================================================
-
+    // FIND ALL VEHICLES OF OWNER
+  
   async findByOwnerId(ownerId: string) {
     return Vehicle.find({
       ownerId,
@@ -47,20 +41,16 @@ class VehicleRepository {
     });
   }
 
-  // ==========================================================
-  // FIND BY REGISTRATION NUMBER
-  // ==========================================================
-
+    // FIND BY REGISTRATION NUMBER
+  
   async findByRegistrationNumber(registrationNumber: string) {
     return Vehicle.findOne({
       registrationNumber: registrationNumber.toUpperCase(),
     });
   }
 
-  // ==========================================================
-  // UPDATE
-  // ==========================================================
-
+    // UPDATE
+  
   async update(
     id: string,
     data: Partial<Omit<CreateVehicleData, "ownerId">>,
@@ -75,10 +65,8 @@ class VehicleRepository {
     );
   }
 
-  // ==========================================================
-  // SOFT DELETE
-  // ==========================================================
-
+    // SOFT DELETE
+  
   async delete(id: string) {
     return Vehicle.findByIdAndUpdate(
       id,
@@ -92,10 +80,8 @@ class VehicleRepository {
     );
   }
 
-  // ==========================================================
-  // CLEAR DEFAULT
-  // ==========================================================
-
+    // CLEAR DEFAULT
+  
   async clearDefault(ownerId: string) {
     return Vehicle.updateMany(
       {
@@ -108,10 +94,8 @@ class VehicleRepository {
     );
   }
 
-  // ==========================================================
-  // SET DEFAULT
-  // ==========================================================
-
+    // SET DEFAULT
+  
   async setDefault(id: string) {
     return Vehicle.findByIdAndUpdate(
       id,

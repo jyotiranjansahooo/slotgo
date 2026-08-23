@@ -19,9 +19,7 @@ const router = Router();
 
 router.use(authMiddleware);
 
-// ==========================================================
 // DELETE SLOT
-// ==========================================================
 
 router.delete(
   "/slot/:slotId",
@@ -29,27 +27,15 @@ router.delete(
   deleteSlot,
 );
 
-// ==========================================================
 // GET AVAILABLE SLOTS
-// ==========================================================
 
-router.get(
-  "/:parkingId/available",
-  getAvailableSlots,
-);
+router.get("/:parkingId/available", getAvailableSlots);
 
-// ==========================================================
 // GET ALL SLOTS
-// ==========================================================
 
-router.get(
-  "/:parkingId",
-  getParkingSlots,
-);
+router.get("/:parkingId", getParkingSlots);
 
-// ==========================================================
 // CREATE SLOT
-// ==========================================================
 
 router.post(
   "/:parkingId",

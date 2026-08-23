@@ -18,11 +18,7 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const router = useRouter();
 
-  const {
-    user,
-    isAuthenticated,
-    isLoading,
-  } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
 
   /*
    * ============================================================
@@ -52,13 +48,7 @@ export default function ProtectedRoute({
     if (allowedRoles && !allowedRoles.includes(user.role)) {
       router.replace("/dashboard");
     }
-  }, [
-    isLoading,
-    isAuthenticated,
-    user,
-    allowedRoles,
-    router,
-  ]);
+  }, [isLoading, isAuthenticated, user, allowedRoles, router]);
 
   /*
    * ============================================================
@@ -75,9 +65,7 @@ export default function ProtectedRoute({
             aria-label="Loading"
           />
 
-          <p className="text-sm text-zinc-400">
-            Checking authentication...
-          </p>
+          <p className="text-sm text-zinc-400">Checking authentication...</p>
         </div>
       </main>
     );
@@ -93,13 +81,9 @@ export default function ProtectedRoute({
     return (
       <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
         <div className="text-center">
-          <h1 className="text-xl font-semibold">
-            Authentication required
-          </h1>
+          <h1 className="text-xl font-semibold">Authentication required</h1>
 
-          <p className="mt-2 text-sm text-zinc-400">
-            Redirecting to login...
-          </p>
+          <p className="mt-2 text-sm text-zinc-400">Redirecting to login...</p>
         </div>
       </main>
     );
@@ -115,9 +99,7 @@ export default function ProtectedRoute({
     return (
       <main className="flex min-h-screen items-center justify-center bg-zinc-950 px-4 text-white">
         <div className="text-center">
-          <h1 className="text-xl font-semibold">
-            Access denied
-          </h1>
+          <h1 className="text-xl font-semibold">Access denied</h1>
 
           <p className="mt-2 text-sm text-zinc-400">
             You don`t have permission to access this page.

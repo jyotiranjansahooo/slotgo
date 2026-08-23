@@ -1,5 +1,5 @@
 declare class PaymentService {
-    createPayment(bookingId: string): Promise<{
+    createPayment(userId: string, bookingId: string): Promise<{
         booking: any;
         payment: any;
         razorpayOrder: {
@@ -12,13 +12,13 @@ declare class PaymentService {
         payment: any;
         razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
     }>;
-    verifyPayment(orderId: string, paymentId: string, signature: string): Promise<{
+    verifyPayment(userId: string, orderId: string, paymentId: string, signature: string): Promise<{
         payment: any;
         booking: any;
         wallet: any;
         transaction: any;
     }>;
-    createOvertimePayment(bookingId: string): Promise<{
+    createOvertimePayment(userId: string, bookingId: string): Promise<{
         booking: any;
         razorpayOrder: {
             id: any;
@@ -29,7 +29,7 @@ declare class PaymentService {
         booking: any;
         razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
     }>;
-    verifyOvertimePayment(orderId: string, paymentId: string, signature: string): Promise<{
+    verifyOvertimePayment(userId: string, orderId: string, paymentId: string, signature: string): Promise<{
         booking: any;
         payment: {
             orderId: string;
@@ -60,7 +60,7 @@ declare class PaymentService {
         wallet: {} | null;
         transaction: {} | null;
     }>;
-    refundPayment(paymentId: string, amount?: number): Promise<{
+    refundPayment(userId: string, paymentId: string, amount?: number): Promise<{
         payment: any;
         refund: import("razorpay/dist/types/refunds.js").Refunds.RazorpayRefund;
         wallet: {} | null;

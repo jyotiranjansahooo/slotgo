@@ -13,39 +13,25 @@ export const createBooking = asyncHandler(
 
     res
       .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          result,
-          "Booking created successfully.",
-        ),
-      );
+      .json(new ApiResponse(201, result, "Booking created successfully."));
   },
 );
 
 export const verifyPayment = asyncHandler(
   async (req: Request, res: Response) => {
-    const {
+    const { orderId, paymentId, signature } = req.body;
+
+    const result = await bookingService.verifyPayment(
+      req.user!._id.toString(),
       orderId,
       paymentId,
       signature,
-    } = req.body;
-
-    const result =
-      await bookingService.verifyPayment(
-        orderId,
-        paymentId,
-        signature,
-      );
+    );
 
     res
       .status(200)
       .json(
-        new ApiResponse(
-          200,
-          result,
-          "Payment verified and booking confirmed.",
-        ),
+        new ApiResponse(200, result, "Payment verified and booking confirmed."),
       );
   },
 );

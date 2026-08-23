@@ -13,13 +13,13 @@ declare class BookingService {
             currency: any;
         };
     }>;
-    verifyPayment(orderId: string, paymentId: string, signature: string): Promise<{
+    verifyPayment(userId: string, orderId: string, paymentId: string, signature: string): Promise<{
         payment: any;
         booking: any;
         wallet: any;
         transaction: any;
     }>;
-    createOvertimePayment(bookingId: string): Promise<{
+    createOvertimePayment(userId: string, bookingId: string): Promise<{
         booking: any;
         razorpayOrder: {
             id: any;
@@ -30,7 +30,7 @@ declare class BookingService {
         booking: any;
         razorpayOrder: import("razorpay/dist/types/orders.js").Orders.RazorpayOrder;
     }>;
-    verifyOvertimePayment(orderId: string, paymentId: string, signature: string): Promise<{
+    verifyOvertimePayment(userId: string, orderId: string, paymentId: string, signature: string): Promise<{
         booking: any;
         payment: {
             orderId: string;

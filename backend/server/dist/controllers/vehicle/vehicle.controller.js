@@ -1,27 +1,21 @@
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiResponse from "../../utils/ApiResponse.js";
 import vehicleService from "../../services/vehicle/vehicle.service.js";
-// ==========================================================
 // CREATE VEHICLE
-// ==========================================================
 export const createVehicle = asyncHandler(async (req, res) => {
     const vehicle = await vehicleService.create(req.user._id.toString(), req.body);
     res
         .status(201)
         .json(new ApiResponse(201, vehicle, "Vehicle created successfully"));
 });
-// ==========================================================
 // GET MY VEHICLES
-// ==========================================================
 export const getMyVehicles = asyncHandler(async (req, res) => {
     const vehicles = await vehicleService.getAll(req.user._id.toString());
     res
         .status(200)
         .json(new ApiResponse(200, vehicles, "Vehicles fetched successfully"));
 });
-// ==========================================================
 // GET SINGLE VEHICLE
-// ==========================================================
 export const getVehicle = asyncHandler(async (req, res) => {
     const vehicleId = Array.isArray(req.params.id)
         ? req.params.id[0]
@@ -31,9 +25,7 @@ export const getVehicle = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, vehicle, "Vehicle fetched successfully"));
 });
-// ==========================================================
 // UPDATE VEHICLE
-// ==========================================================
 export const updateVehicle = asyncHandler(async (req, res) => {
     const vehicleId = Array.isArray(req.params.id)
         ? req.params.id[0]
@@ -43,9 +35,7 @@ export const updateVehicle = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, vehicle, "Vehicle updated successfully"));
 });
-// ==========================================================
 // DELETE VEHICLE
-// ==========================================================
 export const deleteVehicle = asyncHandler(async (req, res) => {
     const vehicleId = Array.isArray(req.params.id)
         ? req.params.id[0]
@@ -55,9 +45,7 @@ export const deleteVehicle = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, null, "Vehicle deleted successfully"));
 });
-// ==========================================================
 // SET DEFAULT VEHICLE
-// ==========================================================
 export const setDefaultVehicle = asyncHandler(async (req, res) => {
     const vehicleId = Array.isArray(req.params.id)
         ? req.params.id[0]

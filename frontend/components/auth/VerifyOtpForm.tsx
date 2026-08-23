@@ -70,8 +70,7 @@ export default function VerifyOtpForm() {
       console.error("OTP verification error:", error);
 
       setError(
-        getApiErrorMessage(error) ||
-          "Invalid or expired verification code.",
+        getApiErrorMessage(error) || "Invalid or expired verification code.",
       );
     } finally {
       setIsSubmitting(false);
@@ -102,9 +101,9 @@ export default function VerifyOtpForm() {
       >
         {/* Background bubbles */}
 
-        <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-white/[0.08] blur-[110px]" />
+        <div className="pointer-events-none absolute -left-40 -top-40 h-125 w-125 rounded-full bg-white/8 blur-[110px]" />
 
-        <div className="pointer-events-none absolute -right-40 top-20 h-[550px] w-[550px] rounded-full bg-indigo-300/[0.18] blur-[120px]" />
+        <div className="pointer-events-none absolute -right-40 top-20 h-137.5 w-137.5 rounded-full bg-indigo-300/18 blur-[120px]" />
 
         <div className="pointer-events-none absolute -bottom-40 left-1/4 h-[500px] w-[500px] rounded-full bg-purple-300/[0.12] blur-[110px]" />
 
@@ -125,9 +124,8 @@ export default function VerifyOtpForm() {
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-white/60">
-              We couldn&apos;t find the email address required for
-              verification. Please register again to receive a new
-              verification code.
+              We couldn&apos;t find the email address required for verification.
+              Please register again to receive a new verification code.
             </p>
 
             <button
@@ -218,9 +216,7 @@ export default function VerifyOtpForm() {
               </svg>
             </div>
 
-            <span className="text-xl font-bold tracking-tight">
-              SlotGo
-            </span>
+            <span className="text-xl font-bold tracking-tight">SlotGo</span>
           </button>
 
           <button
@@ -249,14 +245,13 @@ export default function VerifyOtpForm() {
             <div className="pointer-events-none absolute -bottom-32 -left-28 h-72 w-72 rounded-full bg-indigo-300/[0.08] blur-[80px]" />
 
             <div className="relative z-10">
-
               <h1 className="mt-7 text-3xl font-bold tracking-tight">
                 Verify your email
               </h1>
 
               <p className="mt-1 text-sm leading-6 text-white/80">
-                We&apos;ve sent a 6-digit verification code to the
-                email address below.
+                We&apos;ve sent a 6-digit verification code to the email address
+                below.
               </p>
 
               {/* EMAIL */}
@@ -283,9 +278,7 @@ export default function VerifyOtpForm() {
                       Verification code
                     </label>
 
-                    <span className="text-xs text-white/70">
-                      6 digits
-                    </span>
+                    <span className="text-xs text-white/70">6 digits</span>
                   </div>
 
                   <input
@@ -332,10 +325,7 @@ export default function VerifyOtpForm() {
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2
-                        size={19}
-                        className="animate-spin"
-                      />
+                      <Loader2 size={19} className="animate-spin" />
                       Verifying...
                     </>
                   ) : (
@@ -357,8 +347,8 @@ export default function VerifyOtpForm() {
                   />
 
                   <p className="text-xs leading-4 text-white/75">
-                    Your verification code is temporary and can only
-                    be used within the configured expiration period.
+                    Your verification code is temporary and can only be used
+                    within the configured expiration period.
                   </p>
                 </div>
               </div>

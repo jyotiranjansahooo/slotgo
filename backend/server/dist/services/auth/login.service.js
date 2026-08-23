@@ -1,6 +1,6 @@
 import ApiError from "../../utils/ApiError.js";
 import userRepository from "../../repositories/user.repository.js";
-import { generateAccessToken, generateRefreshToken, } from "../../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 export const loginService = async (data) => {
     const { email, password } = data;
     // Find user with password
@@ -11,6 +11,9 @@ export const loginService = async (data) => {
     // Check account status
     if (!user.isActive) {
         throw new ApiError(403, "Account is deactivated");
+    }
+    if (!user.isVerified) {
+        throw new ApiError(403, "Please verify your email before logging in.");
     }
     // Compare password
     const isPasswordValid = await user.comparePassword(password);

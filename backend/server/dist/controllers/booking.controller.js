@@ -14,21 +14,18 @@ export const createBooking = asyncHandler(async (req, res) => {
 // VERIFY NORMAL PAYMENT
 // ============================================================
 export const verifyPayment = asyncHandler(async (req, res) => {
-    const { orderId, paymentId, signature, } = req.body;
-    const result = await bookingService.verifyPayment(orderId, paymentId, signature);
+    const { orderId, paymentId, signature } = req.body;
+    const result = await bookingService.verifyPayment(req.user._id.toString(), orderId, paymentId, signature);
     res
         .status(200)
         .json(new ApiResponse(200, result, "Payment verified successfully."));
 });
-// ============================================================
-// CREATE OVERTIME PAYMENT
-// ============================================================
 export const createOvertimePayment = asyncHandler(async (req, res) => {
     const bookingId = req.params.bookingId;
     if (!bookingId) {
         throw new Error("Booking ID is required.");
     }
-    const result = await bookingService.createOvertimePayment(bookingId);
+    const result = await bookingService.createOvertimePayment(req.user._id.toString(), bookingId);
     res
         .status(200)
         .json(new ApiResponse(200, result, "Overtime payment order created successfully."));
@@ -37,13 +34,11 @@ export const createOvertimePayment = asyncHandler(async (req, res) => {
 // VERIFY OVERTIME PAYMENT
 // ============================================================
 export const verifyOvertimePayment = asyncHandler(async (req, res) => {
-    const { orderId, paymentId, signature, } = req.body;
-    if (!orderId ||
-        !paymentId ||
-        !signature) {
+    const { orderId, paymentId, signature } = req.body;
+    if (!orderId || !paymentId || !signature) {
         throw new Error("orderId, paymentId and signature are required.");
     }
-    const result = await bookingService.verifyOvertimePayment(orderId, paymentId, signature);
+    const result = await bookingService.verifyPayment(req.user._id.toString(), orderId, paymentId, signature);
     res
         .status(200)
         .json(new ApiResponse(200, result, "Overtime payment verified successfully."));

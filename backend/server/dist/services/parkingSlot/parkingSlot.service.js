@@ -3,9 +3,6 @@ import ApiError from "../../utils/ApiError.js";
 import parkingRepository from "../../repositories/parking.repository.js";
 import parkingSlotRepository from "../../repositories/parkingSlot.repository.js";
 class ParkingSlotService {
-    // ==========================================================
-    // CREATE SLOT
-    // ==========================================================
     async createSlot(ownerId, parkingId, data) {
         if (!Types.ObjectId.isValid(parkingId)) {
             throw new ApiError(400, "Invalid parking ID.");
@@ -45,9 +42,7 @@ class ParkingSlotService {
         });
         return slot;
     }
-    // ==========================================================
     // GET AVAILABLE SLOTS
-    // ==========================================================
     async getAvailableSlots(parkingId) {
         if (!Types.ObjectId.isValid(parkingId)) {
             throw new ApiError(400, "Invalid parking ID.");
@@ -58,9 +53,7 @@ class ParkingSlotService {
         }
         return parkingSlotRepository.findAvailable(parkingId);
     }
-    // ==========================================================
     // GET ALL SLOTS FOR PARKING
-    // ==========================================================
     async getParkingSlots(parkingId) {
         if (!Types.ObjectId.isValid(parkingId)) {
             throw new ApiError(400, "Invalid parking ID.");
@@ -71,9 +64,7 @@ class ParkingSlotService {
         }
         return parkingSlotRepository.findByParking(parkingId);
     }
-    // ==========================================================
     // DELETE SLOT
-    // ==========================================================
     async deleteSlot(ownerId, slotId) {
         if (!Types.ObjectId.isValid(slotId)) {
             throw new ApiError(400, "Invalid slot ID.");

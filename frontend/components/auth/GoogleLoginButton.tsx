@@ -22,11 +22,7 @@ interface GoogleAccountsId {
       type?: "standard" | "icon";
       theme?: "outline" | "filled_blue" | "filled_black";
       size?: "large" | "medium" | "small";
-      text?:
-        | "signin_with"
-        | "signup_with"
-        | "continue_with"
-        | "signin";
+      text?: "signin_with" | "signup_with" | "continue_with" | "signin";
       shape?: "rectangular" | "pill" | "circle" | "square";
       width?: number;
       logo_alignment?: "left" | "center";
@@ -93,11 +89,7 @@ function loadGoogleScript(): Promise<void> {
       existingScript.addEventListener("load", () => resolve());
 
       existingScript.addEventListener("error", () => {
-        reject(
-          new Error(
-            "Failed to load Google Identity Services.",
-          ),
-        );
+        reject(new Error("Failed to load Google Identity Services."));
       });
 
       return;
@@ -117,11 +109,7 @@ function loadGoogleScript(): Promise<void> {
     };
 
     script.onerror = () => {
-      reject(
-        new Error(
-          "Failed to load Google Identity Services.",
-        ),
-      );
+      reject(new Error("Failed to load Google Identity Services."));
     };
 
     document.head.appendChild(script);
@@ -130,9 +118,7 @@ function loadGoogleScript(): Promise<void> {
   return googleScriptPromise;
 }
 
-export default function GoogleLoginButton({
-  role,
-}: GoogleLoginButtonProps) {
+export default function GoogleLoginButton({ role }: GoogleLoginButtonProps) {
   const router = useRouter();
   const { googleLogin } = useAuth();
 
@@ -148,17 +134,12 @@ export default function GoogleLoginButton({
 
     const initializeGoogle = async () => {
       try {
-        const clientId =
-          process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+        const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
         if (!clientId) {
-          console.error(
-            "NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing.",
-          );
+          console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing.");
 
-          setError(
-            "Google login is not configured.",
-          );
+          setError("Google login is not configured.");
 
           return;
         }
@@ -173,9 +154,7 @@ export default function GoogleLoginButton({
         }
 
         if (!window.google?.accounts?.id) {
-          throw new Error(
-            "Google Identity Services failed to initialize.",
-          );
+          throw new Error("Google Identity Services failed to initialize.");
         }
 
         if (!buttonRef.current) {
@@ -200,21 +179,14 @@ export default function GoogleLoginButton({
         window.google.accounts.id.initialize({
           client_id: clientId,
 
-          callback: async (
-            response: GoogleCredentialResponse,
-          ) => {
+          callback: async (response: GoogleCredentialResponse) => {
             /*
              * Google must return a credential
              */
             if (!response?.credential) {
-              console.error(
-                "Google credential was not returned.",
-                response,
-              );
+              console.error("Google credential was not returned.", response);
 
-              setError(
-                "Google did not return a login credential.",
-              );
+              setError("Google did not return a login credential.");
 
               return;
             }
@@ -225,17 +197,13 @@ export default function GoogleLoginButton({
 
               console.log(
                 "Google credential received:",
-                response.credential
-                  ? "YES"
-                  : "NO",
+                response.credential ? "YES" : "NO",
               );
 
               /*
                * Send Google ID token to backend
                */
-              const user = await googleLogin(
-                response.credential,
-              );
+              const user = await googleLogin(response.credential);
 
               /*
                * Redirect according to backend user role
@@ -257,17 +225,12 @@ export default function GoogleLoginButton({
 
               setError("Unknown user role.");
             } catch (error: unknown) {
-              console.error(
-                "Google login error:",
-                error,
-              );
+              console.error("Google login error:", error);
 
               if (error instanceof Error) {
                 setError(error.message);
               } else {
-                setError(
-                  "Google login failed. Please try again.",
-                );
+                setError("Google login failed. Please try again.");
               }
             } finally {
               setLoading(false);
@@ -289,28 +252,20 @@ export default function GoogleLoginButton({
          * We don't need it.
          */
 
-        window.google.accounts.id.renderButton(
-          buttonRef.current,
-          {
-            type: "standard",
-            theme: "outline",
-            size: "large",
-            text: "continue_with",
-            shape: "rectangular",
-            width: buttonRef.current.clientWidth || 400,
-            logo_alignment: "left",
-          },
-        );
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "continue_with",
+          shape: "rectangular",
+          width: buttonRef.current.clientWidth || 400,
+          logo_alignment: "left",
+        });
       } catch (error) {
-        console.error(
-          "Google initialization error:",
-          error,
-        );
+        console.error("Google initialization error:", error);
 
         if (!cancelled) {
-          setError(
-            "Unable to initialize Google login.",
-          );
+          setError("Unable to initialize Google login.");
         }
       }
     };

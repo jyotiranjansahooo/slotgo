@@ -8,8 +8,8 @@ export const createBooking = asyncHandler(async (req, res) => {
         .json(new ApiResponse(201, result, "Booking created successfully."));
 });
 export const verifyPayment = asyncHandler(async (req, res) => {
-    const { orderId, paymentId, signature, } = req.body;
-    const result = await bookingService.verifyPayment(orderId, paymentId, signature);
+    const { orderId, paymentId, signature } = req.body;
+    const result = await bookingService.verifyPayment(req.user._id.toString(), orderId, paymentId, signature);
     res
         .status(200)
         .json(new ApiResponse(200, result, "Payment verified and booking confirmed."));
