@@ -6,10 +6,6 @@ export const BOOKING_MODES = {
 
 export type BookingMode = (typeof BOOKING_MODES)[keyof typeof BOOKING_MODES];
 
-// ============================================================
-// CREATE BOOKING
-// ============================================================
-
 export interface CreateBookingData {
   parkingId: string;
   vehicleId: string;
@@ -75,20 +71,21 @@ export interface Booking {
 
   overtimeTotal: number;
 
-  vehicleSnapshot: {
-    brand: string;
-
-    vehicleModel: string;
-
-    registrationNumber: string;
-
-    vehicleType: string;
+  driverSnapshot: {
+    name: string;
+    phoneNumber: string;
   };
 
   parkingSnapshot: {
     parkingName: string;
-
     address: string;
+  };
+
+  vehicleSnapshot: {
+    registrationNumber: string;
+    brand: string;
+    vehicleModel: string;
+    vehicleType: string;
   };
 
   createdAt: string;
@@ -116,10 +113,6 @@ export interface Payment {
   paidAt?: string;
 }
 
-// ============================================================
-// CREATE BOOKING RESPONSE
-// ============================================================
-
 export interface CreateBookingResponse {
   booking: Booking;
 
@@ -132,10 +125,6 @@ export interface CreateBookingResponse {
   };
 }
 
-// ============================================================
-// OVERTIME DETAILS
-// ============================================================
-
 export interface OvertimeDetails {
   overtimeMinutes: number;
 
@@ -145,10 +134,6 @@ export interface OvertimeDetails {
 
   overtimeTotal: number;
 }
-
-// ============================================================
-// CREATE OVERTIME PAYMENT RESPONSE
-// ============================================================
 
 export interface CreateOvertimePaymentResponse {
   booking: Booking;
@@ -161,10 +146,6 @@ export interface CreateOvertimePaymentResponse {
     currency: string;
   };
 }
-
-// ============================================================
-// VERIFY OVERTIME PAYMENT RESPONSE
-// ============================================================
 
 export interface VerifyOvertimePaymentResponse {
   booking: Booking;
@@ -183,10 +164,6 @@ export interface VerifyOvertimePaymentResponse {
 
   transaction?: unknown;
 }
-
-// ============================================================
-// CHECKOUT RESPONSE
-// ============================================================
 
 export interface CheckoutResponse {
   requiresAdditionalPayment: boolean;

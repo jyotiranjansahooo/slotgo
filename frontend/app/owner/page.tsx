@@ -1,66 +1,78 @@
 "use client";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import OwnerNavbar from "@/components/owner/OwnerNavbar";
 
 import { useAuth } from "@/providers/AuthProvider";
+import { CalendarDays, CarFront, ChevronRight, Wallet } from "lucide-react";
+import Link from "next/link";
 
 export default function OwnerPage() {
   return (
-    <ProtectedRoute
-      allowedRoles={["parkingOwner"]}
-    >
+    <ProtectedRoute allowedRoles={["parkingOwner"]}>
       <OwnerDashboard />
     </ProtectedRoute>
   );
 }
 
 function OwnerDashboard() {
-  const {
-    user,
-    logout,
-  } = useAuth();
+  const { user } = useAuth();
 
   return (
-    <main className="min-h-screen bg-zinc-950 p-8 text-white">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-zinc-500">
-              Parking Owner
-            </p>
+    <main className="min-h-screen overflow-hidden bg-[#06544E] text-white">
+      {/* BACKGROUND */}
+      <div className="pointer-events-none fixed inset-0">
+        <div
+          className="absolute inset-0 opacity-40"
+          style={{
+            backgroundImage:
+              "linear-gradient(135deg, rgba(255,255,255,0.025) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.025) 50%, rgba(255,255,255,0.025) 75%, transparent 75%)",
+            backgroundSize: "90px 90px",
+          }}
+        />
 
-            <h1 className="mt-1 text-3xl font-bold">
-              Welcome, {user?.firstName}
-            </h1>
+        <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-emerald-300/10 blur-[140px]" />
+      </div>
 
-            <p className="mt-2 text-zinc-400">
-              {user?.email}
-            </p>
-          </div>
+      <OwnerNavbar />
 
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm transition hover:bg-zinc-800"
-          >
-            Logout
-          </button>
+      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        {/* HEADER */}
+        <div>
+          <p className="text-sm font-medium text-emerald-200/60">
+            Parking Owner
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            Welcome back, {user?.firstName}.
+          </h1>
+
+          <p className="mt-3 text-sm text-white/45">
+            Manage your parking locations, bookings and earnings.
+          </p>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
+        {/* CARDS */}
+        <div className="mt-10 grid gap-5 md:grid-cols-3">
           <DashboardCard
+            href="/owner/parkings"
+            icon={CarFront}
             title="My Parkings"
-            description="Manage your parking locations."
+            description="Manage your parking locations and availability."
           />
 
           <DashboardCard
+            href="/owner/bookings"
+            icon={CalendarDays}
             title="Bookings"
-            description="View and manage parking bookings."
+            description="View and manage bookings from drivers."
           />
 
           <DashboardCard
+            href="/owner/wallet"
+            icon={Wallet}
             title="Wallet"
-            description="View earnings and transactions."
+            description="View your earnings and transactions."
           />
         </div>
       </div>
@@ -68,24 +80,37 @@ function OwnerDashboard() {
   );
 }
 
-interface DashboardCardProps {
-  title: string;
-  description: string;
-}
-
 function DashboardCard({
+  href,
+  icon: Icon,
   title,
   description,
-}: DashboardCardProps) {
+}: {
+  href: string;
+  icon: typeof CarFront;
+  title: string;
+  description: string;
+}) {
   return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <h2 className="text-lg font-semibold">
-        {title}
-      </h2>
+    <Link
+      href={href}
+      className="group relative overflow-hidden rounded-3xl border border-white/10 bg-black/10 p-6 backdrop-blur-xl transition duration-300 hover:-translate-y-1 hover:border-emerald-200/20 hover:bg-white/[0.07]"
+    >
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-300/[0.06] via-transparent to-transparent opacity-0 transition group-hover:opacity-100" />
 
-      <p className="mt-2 text-sm text-zinc-400">
-        {description}
-      </p>
-    </div>
+      <div className="relative">
+        <div className="flex items-center justify-between">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-200/10 bg-emerald-300/10">
+            <Icon className="h-5 w-5 text-emerald-100" />
+          </div>
+
+          <ChevronRight className="h-5 w-5 text-white/20 transition group-hover:translate-x-1 group-hover:text-emerald-200" />
+        </div>
+
+        <h2 className="mt-6 text-lg font-semibold">{title}</h2>
+
+        <p className="mt-2 text-sm leading-6 text-white/40">{description}</p>
+      </div>
+    </Link>
   );
 }

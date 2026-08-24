@@ -6,8 +6,7 @@ export const PARKING_TYPES = {
   STREET: "street",
 } as const;
 
-export type ParkingType =
-  (typeof PARKING_TYPES)[keyof typeof PARKING_TYPES];
+export type ParkingType = (typeof PARKING_TYPES)[keyof typeof PARKING_TYPES];
 
 export interface ParkingLocation {
   latitude: number;
@@ -55,12 +54,19 @@ export interface Parking {
 
   address: string;
   landmark?: string;
-
   city: string;
   state: string;
   pincode: string;
 
-  location: ParkingLocation;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+
+  ownerName?: string;
+  contactNumber?: string;
+
+  parkingArea?: number;
 
   facilities: string[];
   rules: string[];
@@ -73,12 +79,16 @@ export interface Parking {
 
   images: ParkingImage[];
 
-  operatingHours: OperatingHours;
+  operatingHours: {
+    open: string;
+    close: string;
+  };
 
   averageRating: number;
   totalReviews: number;
 
   status: "pending" | "approved" | "rejected";
+
   isActive: boolean;
 
   createdAt: string;

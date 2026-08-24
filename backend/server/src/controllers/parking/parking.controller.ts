@@ -71,30 +71,16 @@ export const approveParking = asyncHandler(
 
     res
       .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          parking,
-          "Parking approved successfully.",
-        ),
-      );
+      .json(new ApiResponse(200, parking, "Parking approved successfully."));
   },
 );
 
 export const rejectParking = asyncHandler(
   async (req: Request, res: Response) => {
-    const parking = await parkingService.rejectParking(
-      req.params.id as string,
-    );
+    const parking = await parkingService.rejectParking(req.params.id as string);
 
     res
       .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          parking,
-          "Parking rejected successfully.",
-        ),
-      );
+      .json(new ApiResponse(200, parking, "Parking rejected successfully."));
   },
 );

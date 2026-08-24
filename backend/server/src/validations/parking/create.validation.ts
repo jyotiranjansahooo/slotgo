@@ -24,6 +24,20 @@ const pricingSchema = z.object({
 });
 
 export const createParkingSchema = z.object({
+  ownerName: z
+  .string()
+  .trim()
+  .min(2, "Owner name is required")
+  .max(100, "Owner name cannot exceed 100 characters"),
+
+contactNumber: z
+  .string()
+  .trim()
+  .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+
+parkingArea: z
+  .number()
+  .positive("Parking area must be greater than 0"),
   parkingName: z
     .string()
     .trim()
@@ -73,14 +87,15 @@ export const createParkingSchema = z.object({
 
   pricing: pricingSchema,
 
-  images: z
-    .array(
-      z.object({
-        url: z.string().url(),
-        publicId: z.string().min(1),
-      }),
-    )
-    .default([]),
+ images: z
+  .array(
+    z.object({
+      url: z.string().url(),
+      publicId: z.string().min(1),
+    }),
+  )
+  .min(2, "At least 2 parking images are required")
+  .max(5, "Maximum 5 parking images are allowed"),
 
   operatingHours: z.object({
     open: z.string().min(1),

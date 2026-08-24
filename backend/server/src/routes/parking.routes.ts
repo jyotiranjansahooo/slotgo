@@ -21,46 +21,26 @@ const router = Router();
 
 // PARKING OWNER AUTHORIZATION
 
-router.use(
-  authMiddleware,
-  requireRole(USER_ROLES.PARKING_OWNER),
-);
+router.use(authMiddleware, requireRole(USER_ROLES.PARKING_OWNER));
 
 // CREATE PARKING
 
-router.post(
-  "/",
-  validate(createParkingSchema),
-  createParking,
-);
+router.post("/", validate(createParkingSchema), createParking);
 
 // GET MY PARKINGS
 
-router.get(
-  "/",
-  getMyParkings,
-);
+router.get("/", getMyParkings);
 
 // GET SINGLE PARKING
 
-router.get(
-  "/:id",
-  getParking,
-);
+router.get("/:id", getParking);
 
 // UPDATE PARKING
 
-router.patch(
-  "/:id",
-  validate(updateParkingSchema),
-  updateParking,
-);
+router.patch("/:id", validate(updateParkingSchema), updateParking);
 
 // DEACTIVATE PARKING
 
-router.delete(
-  "/:id",
-  deleteParking,
-);
+router.delete("/:id", deleteParking);
 
 export default router;

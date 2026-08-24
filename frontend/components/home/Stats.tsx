@@ -25,7 +25,7 @@ export default function Stats() {
 
   if (statsQuery.isError) {
     return (
-      <section className="relative overflow-hidden bg-[#06544E] px-4 py-16 text-white sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden bg-[#072C4B] px-4 py-16 text-white sm:px-6 lg:px-8">
         <Background />
 
         <div className="relative mx-auto max-w-7xl">
@@ -81,7 +81,7 @@ export default function Stats() {
   ];
 
   return (
-    <section className="relative overflow-hidden bg-[#06544E] px-4 py-16 text-white sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-[#072C4B] px-4 py-16 text-white sm:px-6 lg:px-8">
       <Background />
 
       <div className="relative mx-auto max-w-7xl">

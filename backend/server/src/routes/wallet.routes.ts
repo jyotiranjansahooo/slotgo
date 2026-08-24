@@ -13,19 +13,11 @@ const router = Router();
 
 // GET OWNER WALLET
 
-router.get(
-  "/",
-  authMiddleware,
-  getWallet,
-);
+router.get("/", authMiddleware, getWallet);
 
 // GET WALLET TRANSACTIONS
 
-router.get(
-  "/transactions",
-  authMiddleware,
-  getWalletTransactions,
-);
+router.get("/transactions", authMiddleware, getWalletTransactions);
 
 // GET SINGLE TRANSACTION
 
@@ -37,10 +29,6 @@ router.get(
 
 // WITHDRAW WALLET BALANCE
 
-router.post(
-  "/withdraw",
-  authMiddleware,
-  withdrawWallet,
-);
+router.post("/withdraw", authMiddleware, withdrawWallet);
 
 export default router;

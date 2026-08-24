@@ -15,7 +15,7 @@ export default function ParkingMap() {
   return (
     <section
       id="parking-map"
-      className="relative isolate overflow-hidden bg-[#073B3A] px-4 py-20 text-white sm:px-6 lg:px-8"
+      className="relative isolate overflow-hidden bg-[#072C4B] px-4 py-20 text-white sm:px-6 lg:px-8"
     >
       <div
         className="pointer-events-none absolute inset-0 opacity-30"
@@ -25,7 +25,6 @@ export default function ParkingMap() {
         }}
       />
 
-      {/* Soft vertical color bands */}
       <div
         className="pointer-events-none absolute inset-0 opacity-40"
         style={{
@@ -43,15 +42,10 @@ export default function ParkingMap() {
       {/* Right glow */}
       <div className="pointer-events-none absolute -right-40 bottom-0 h-96 w-96 rounded-full bg-emerald-400/10 blur-3xl" />
 
-      {/* ======================================================
-          CONTENT
-         ====================================================== */}
+
 
       <div className="relative mx-auto max-w-7xl">
-        {/* ======================================================
-            HEADER
-           ====================================================== */}
-
+ 
         <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
           <div>
             {/* BADGE */}
@@ -137,9 +131,6 @@ export default function ParkingMap() {
               Downtown
             </span>
 
-            {/* ==================================================
-                PARKING MARKERS
-               ================================================== */}
 
             <ParkingMarker className="left-[20%] top-[35%]" label="₹40" />
 
@@ -155,9 +146,7 @@ export default function ParkingMap() {
 
             <ParkingMarker className="right-[35%] bottom-[25%]" label="₹45" />
 
-            {/* ==================================================
-                USER LOCATION
-               ================================================== */}
+          
 
             <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
               <div className="absolute -inset-5 animate-pulse rounded-full bg-teal-400/10" />
@@ -167,15 +156,11 @@ export default function ParkingMap() {
               <div className="relative flex h-5 w-5 items-center justify-center rounded-full border-4 border-white bg-teal-400 shadow-lg shadow-teal-400/50" />
             </div>
 
-            {/* ==================================================
-                MAP CONTROLS
-               ================================================== */}
-
             <div className="absolute bottom-5 right-5 flex flex-col gap-2">
               <button
                 type="button"
                 aria-label="Use current location"
-                className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#063A38]/90 text-teal-100/70 shadow-xl backdrop-blur-md transition hover:border-teal-300/20 hover:bg-[#07504C] hover:text-white"
+                className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-[#072C4B] text-teal-100/70 shadow-xl backdrop-blur-md transition hover:border-teal-300/20 hover:bg-[#072C4B] hover:text-white"
               >
                 <LocateFixed className="h-5 w-5" />
               </button>

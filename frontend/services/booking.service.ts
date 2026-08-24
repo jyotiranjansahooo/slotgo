@@ -11,8 +11,6 @@ import type {
   CheckoutResponse,
 } from "@/types/booking";
 
-// CREATE BOOKING
-
 export const createBooking = async (
   data: CreateBookingData,
 ): Promise<ApiResponse<CreateBookingResponse>> => {
@@ -24,15 +22,17 @@ export const createBooking = async (
   return response.data;
 };
 
-// GET MY BOOKINGS
-
 export const getMyBookings = async (): Promise<ApiResponse<Booking[]>> => {
   const response = await api.get<ApiResponse<Booking[]>>("/bookings");
 
   return response.data;
 };
 
-// GET SINGLE BOOKING
+export const getOwnerBookings = async (): Promise<ApiResponse<Booking[]>> => {
+  const response = await api.get<ApiResponse<Booking[]>>("/bookings/owner");
+
+  return response.data;
+};
 
 export const getBooking = async (
   bookingId: string,
@@ -44,10 +44,6 @@ export const getBooking = async (
   return response.data;
 };
 
-// CHECK OUT
-//
-// Backend decides whether overtime payment is required.
-
 export const checkOutBooking = async (
   bookingId: string,
 ): Promise<ApiResponse<CheckoutResponse>> => {
@@ -57,8 +53,6 @@ export const checkOutBooking = async (
 
   return response.data;
 };
-
-// CREATE OVERTIME PAYMENT
 
 export const createOvertimePayment = async (
   bookingId: string,

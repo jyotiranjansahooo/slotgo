@@ -11,8 +11,6 @@ import {
 } from "../../constants/wallet.js";
 
 class WalletService {
-    // GET OR CREATE OWNER WALLET
-  
   async getOrCreateWallet(ownerId: string) {
     let wallet = await walletRepository.findByOwnerId(ownerId);
 
@@ -37,14 +35,14 @@ class WalletService {
     return wallet;
   }
 
-    // GET OWNER WALLET
-  
+  // GET OWNER WALLET
+
   async getWallet(ownerId: string) {
     return this.getOrCreateWallet(ownerId);
   }
 
-    // CREDIT OWNER EARNINGS
-  
+  // CREDIT OWNER EARNINGS
+
   async creditOwnerEarnings(
     ownerId: string,
     amount: number,
@@ -135,8 +133,8 @@ class WalletService {
     };
   }
 
-    // REVERSE OWNER EARNINGS
-  
+  // REVERSE OWNER EARNINGS
+
   async reverseOwnerEarnings(
     ownerId: string,
     amount: number,
@@ -331,8 +329,8 @@ class WalletService {
     };
   }
 
-    // GET WALLET TRANSACTIONS
-  
+  // GET WALLET TRANSACTIONS
+
   async getTransactions(ownerId: string) {
     const wallet = await walletRepository.findByOwnerId(ownerId);
 
@@ -343,8 +341,8 @@ class WalletService {
     return transactionRepository.findByWalletId(wallet._id.toString());
   }
 
-    // GET SINGLE TRANSACTION
-  
+  // GET SINGLE TRANSACTION
+
   async getTransaction(ownerId: string, transactionId: string) {
     const transaction = await transactionRepository.findById(transactionId);
 
