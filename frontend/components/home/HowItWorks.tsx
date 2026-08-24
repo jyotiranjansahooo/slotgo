@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  ArrowRight,
-  CalendarCheck,
-  MapPin,
-  CreditCard,
-} from "lucide-react";
+import { ArrowRight, CalendarCheck, MapPin, CreditCard } from "lucide-react";
 
 const steps = [
   {
@@ -35,35 +30,59 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="relative overflow-hidden bg-[#080b18] px-4 py-20 text-white sm:px-6 lg:px-8"
+      className="relative overflow-hidden bg-[#06294a] px-4 py-20 text-white sm:px-6 lg:px-8"
     >
-      {/* Background glow */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/[0.07] blur-3xl" />
+      <div
+        className="pointer-events-none absolute inset-0 opacity-40"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 72px)",
+        }}
+      />
 
-      <div className="relative mx-auto max-w-7xl">
-        {/* HEADER */}
+      {/* Secondary fine vertical stripes */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-20"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(90deg, transparent 0px, transparent 35px, rgba(0,0,0,0.12) 36px, transparent 37px, transparent 72px)",
+        }}
+      />
+
+      {/* Soft center glow */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[28rem] w-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-teal-300/[0.06] blur-3xl" />
+
+      {/* Top glow */}
+      <div className="pointer-events-none absolute left-[-8rem] top-[-10rem] h-80 w-80 rounded-full bg-emerald-300/[0.05] blur-3xl" />
+
+      {/* Bottom glow */}
+      <div className="pointer-events-none absolute bottom-[-10rem] right-[-8rem] h-80 w-80 rounded-full bg-teal-200/[0.05] blur-3xl" />
+
+      <div className="relative z-10 mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center">
-          <div className="mb-4 inline-flex items-center rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300">
+          {/* Label */}
+
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-teal-200/20 bg-teal-300/[0.08] px-3.5 py-1.5 text-xs font-medium text-teal-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-teal-300 shadow-lg shadow-teal-300/40" />
             How it works
           </div>
 
+          {/* Heading */}
+
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
             Park in
-            <span className="block bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">
-              three simple steps.
-            </span>
+            <span className="block text-teal-200">three simple steps.</span>
           </h2>
-
-          <p className="mt-4 text-sm leading-6 text-slate-400 sm:text-base">
-            From finding a spot to completing your parking session, SlotGo
-            keeps the entire process straightforward.
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-6 text-teal-50/55 sm:text-base">
+            From finding a spot to completing your parking session, SlotGo keeps
+            the entire process straightforward.
           </p>
         </div>
 
-        {/* STEPS */}
+      
         <div className="relative mt-14">
-          {/* Desktop connector */}
-          <div className="pointer-events-none absolute left-[16.66%] right-[16.66%] top-16 hidden h-px bg-gradient-to-r from-indigo-500/20 via-violet-500/40 to-indigo-500/20 lg:block" />
+
+          <div className="pointer-events-none absolute left-[16.66%] right-[16.66%] top-[4.5rem] hidden h-px bg-[#06294a] lg:block" />
 
           <div className="grid gap-6 lg:grid-cols-3">
             {steps.map((step, index) => {
@@ -71,57 +90,104 @@ export default function HowItWorks() {
 
               return (
                 <div key={step.number} className="relative">
-                  <article className="group relative h-full rounded-3xl border border-white/10 bg-white/[0.025] p-6 transition duration-300 hover:-translate-y-1 hover:border-indigo-400/20 hover:bg-white/[0.045] sm:p-8">
-                    {/* Number */}
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-semibold tracking-[0.2em] text-indigo-400">
+             
+                  <article
+                    className="
+                      group
+                      relative
+                      h-full
+                      overflow-hidden
+                      rounded-[1.75rem]
+                      border
+                      border-teal-100/10
+                      bg-[#06294a]/70
+                      p-6
+                      shadow-2xl
+                      shadow-black/10
+                      backdrop-blur-xl
+                      transition
+                      duration-300
+                      hover:-translate-y-1
+                      hover:border-teal-200/25
+                      hover:bg-[#086159]/80
+                      sm:p-8
+                    "
+                  >
+                    {/* Card vertical accent */}
+
+                    <div className="absolute inset-y-0 left-0 w-px bg-teal-200/20 transition group-hover:bg-teal-200/50" />
+
+                    {/* Card top glow */}
+
+                    <div className="pointer-events-none absolute left-1/2 top-0 h-32 w-48 -translate-x-1/2 rounded-full bg-teal-300/[0.05] blur-3xl opacity-0 transition duration-500 group-hover:opacity-100" />
+
+                   
+
+                    <div className="relative flex items-center justify-between">
+                      <span className="font-mono text-xs font-semibold tracking-[0.2em] text-teal-200/80">
                         STEP {step.number}
                       </span>
 
-                      <span className="text-4xl font-bold text-white/[0.04]">
+                      <span className="text-5xl font-bold leading-none text-white/[0.045]">
                         {step.number}
                       </span>
                     </div>
 
-                    {/* Icon */}
-                    <div className="relative mt-8 flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-400/20 bg-indigo-500/10 shadow-lg shadow-indigo-950/20 transition group-hover:border-indigo-400/30 group-hover:bg-indigo-500/15">
-                      <Icon className="h-6 w-6 text-indigo-400" />
+        
+                    <div
+                      className="
+                        relative
+                        mt-8
+                        flex
+                        h-14
+                        w-14
+                        items-center
+                        justify-center
+                        rounded-2xl
+                        border
+                        border-teal-200/15
+                        bg-teal-300/[0.08]
+                        shadow-lg
+                        shadow-black/10
+                        transition
+                        duration-300
+                        group-hover:border-teal-200/30
+                        group-hover:bg-teal-300/[0.13]
+                      "
+                    >
+                      <Icon className="h-6 w-6 text-teal-200" />
                     </div>
 
-                    {/* Content */}
-                    <h3 className="mt-7 text-xl font-semibold">
+                    {/* =================================================
+                        CONTENT
+                        ================================================= */}
+
+                    <h3 className="relative mt-7 text-xl font-semibold text-white">
                       {step.title}
                     </h3>
 
-                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                    <p className="relative mt-3 text-sm leading-6 text-teal-50/50">
                       {step.description}
                     </p>
 
-                    {/* Mobile arrow */}
                     {index < steps.length - 1 && (
-                      <div className="mt-6 flex items-center justify-center lg:hidden">
-                        <ArrowRight className="h-5 w-5 rotate-90 text-indigo-500/40" />
+                      <div className="mt-7 flex items-center justify-center lg:hidden">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-teal-200/10 bg-teal-300/[0.05]">
+                          <ArrowRight className="h-4 w-4 rotate-90 text-teal-200/60" />
+                        </div>
                       </div>
                     )}
                   </article>
 
-                  {/* Desktop step indicator */}
+
                   {index < steps.length - 1 && (
-                    <div className="absolute right-[-13px] top-12 z-10 hidden h-7 w-7 items-center justify-center rounded-full border border-indigo-400/20 bg-[#0b1020] lg:flex">
-                      <ArrowRight className="h-3.5 w-3.5 text-indigo-400" />
+                    <div className="absolute right-[-14px] top-[4.1rem] z-20 hidden h-7 w-7 items-center justify-center rounded-full border border-teal-200/15 bg-[#06294a] shadow-lg lg:flex">
+                      <ArrowRight className="h-3.5 w-3.5 text-teal-200/70" />
                     </div>
                   )}
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* BOTTOM CTA */}
-        <div className="mt-12 flex justify-center">
-          <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.025] px-5 py-3 text-sm text-slate-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-lg shadow-emerald-400/40" />
-            Ready when you are
           </div>
         </div>
       </div>

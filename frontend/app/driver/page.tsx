@@ -15,12 +15,72 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/providers/AuthProvider";
-// import Footer from "@/components/home/Footer";
+import { useQuery } from "@tanstack/react-query";
+
+import { getMyBookings } from "@/services/booking.service";
+import { getApiErrorMessage } from "@/lib/api-error";
+import { getMyVehicles } from "@/services/vehicle.service";
+import type { Booking } from "@/types/booking";
 
 export default function DriverPage() {
   const { user } = useAuth();
 
   const firstName = user?.firstName || "Driver";
+
+  const vehiclesQuery = useQuery({
+    queryKey: ["my-vehicles"],
+    queryFn: getMyVehicles,
+  });
+
+  const bookingsQuery = useQuery({
+    queryKey: ["my-bookings"],
+    queryFn: getMyBookings,
+    staleTime: 30 * 1000,
+  });
+
+  const bookings: Booking[] = bookingsQuery.data?.data ?? [];
+const vehicles = vehiclesQuery.data?.data ?? [];
+
+const vehicleCount = vehicles.length;
+  const activeBookings = bookings.filter(
+    (booking) =>
+      booking.bookingStatus === "active" ||
+      booking.bookingStatus === "confirmed",
+  );
+
+
+  const currentBooking = bookings.find(
+    (booking) => booking.bookingStatus === "active",
+  );
+
+  const currentParking = currentBooking?.parkingSnapshot?.parkingName ?? "None";
+
+
+  const now = new Date();
+
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const monthlyPayments = bookings
+    .filter((booking) => {
+      if (booking.paymentStatus !== "paid") {
+        return false;
+      }
+
+      const bookingDate = new Date(booking.startTime);
+
+      if (Number.isNaN(bookingDate.getTime())) {
+        return false;
+      }
+
+      return (
+        bookingDate.getMonth() === currentMonth &&
+        bookingDate.getFullYear() === currentYear
+      );
+    })
+    .reduce((total, booking) => {
+      return total + Number(booking.driverPays || 0);
+    }, 0);
   return (
     <main className="min-h-screen bg-[#4f46f5] text-white">
       <header className="border-b border-white/10 bg-[#4f46f5]/95 backdrop-blur-xl">
@@ -42,24 +102,17 @@ export default function DriverPage() {
 
           <nav className="hidden items-center gap-8 md:flex">
             <Link
-              href="/"
+              href="/driver/parkings"
               className="text-sm font-medium text-white/80 transition hover:text-white"
             >
               Find Parking
             </Link>
 
             <Link
-              href="/bookings"
+              href="/driver/bookings"
               className="text-sm font-medium text-white/80 transition hover:text-white"
             >
               My Bookings
-            </Link>
-
-            <Link
-              href="/how-it-works"
-              className="text-sm font-medium text-white/80 transition hover:text-white"
-            >
-              How It Works
             </Link>
           </nav>
 
@@ -120,7 +173,7 @@ export default function DriverPage() {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  href="/parking"
+                  href="/driver/parkings"
                   className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3.5 font-semibold text-[#4f46f5] shadow-xl transition hover:-translate-y-0.5 hover:bg-white/95"
                 >
                   <ParkingCircle size={19} />
@@ -129,7 +182,7 @@ export default function DriverPage() {
                 </Link>
 
                 <Link
-                  href="/bookings"
+                  href="/driver/bookings"
                   className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-6 py-3.5 font-semibold backdrop-blur-md transition hover:bg-white/20"
                 >
                   <CalendarDays size={18} />
@@ -162,47 +215,47 @@ export default function DriverPage() {
           </div>
         </div>
 
-        {/* =================================================== */}
-        {/* STATS */}
-        {/* =================================================== */}
-
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <DashboardStat
             icon={<Car size={20} />}
             label="Vehicles"
-            value="0"
+            value={String(vehicleCount)}
             description="Registered vehicles"
-            href="/vehicles"
+            href="/driver/vehicles"
           />
 
           <DashboardStat
             icon={<CalendarDays size={20} />}
             label="Bookings"
-            value="0"
-            description="Active bookings"
-            href="/bookings"
+            value={String(bookings.length)}
+            description={`${activeBookings.length} active booking${
+              activeBookings.length === 1 ? "" : "s"
+            }`}
+            href="/driver/bookings"
           />
 
           <DashboardStat
             icon={<Clock3 size={20} />}
             label="Parking"
-            value="—"
-            description="Current session"
-            href="/parking"
+            value={currentParking}
+            description={
+              currentBooking ? "Current session" : "No active session"
+            }
+            href={
+              currentBooking
+                ? `/driver/bookings/${currentBooking._id}`
+                : "/driver/parkings"
+            }
           />
 
           <DashboardStat
             icon={<CreditCard size={20} />}
             label="Payments"
-            value="₹0"
-            description="This month"
-            href="/payments"
+            value={formatMoney(monthlyPayments)}
+            description="Paid this month"
+            href="/driver/bookings"
           />
         </div>
-
-        {/* =================================================== */}
-        {/* QUICK ACTIONS */}
-        {/* =================================================== */}
 
         <div className="mt-12">
           <div className="mb-6">
@@ -223,7 +276,7 @@ export default function DriverPage() {
               title="Find Parking"
               description="Discover nearby parking spaces, check availability, and reserve your spot."
               button="Explore parking"
-              href="/parking"
+              href="/driver/parkings"
               primary
             />
 
@@ -240,14 +293,10 @@ export default function DriverPage() {
               title="My Bookings"
               description="View upcoming bookings, payment status, parking history, and active sessions."
               button="View bookings"
-              href="/bookings"
+              href="/driver/bookings"
             />
           </div>
         </div>
-
-        {/* =================================================== */}
-        {/* ACCOUNT / SECURITY */}
-        {/* =================================================== */}
 
         <div className="mt-12 grid gap-5 lg:grid-cols-2">
           <div className="rounded-[1.75rem] border border-white/10 bg-white/10 p-7 backdrop-blur-xl">
@@ -288,14 +337,6 @@ export default function DriverPage() {
                   Your bookings and account information are protected by
                   SlotGo&apos;s secure authentication system.
                 </p>
-
-                <Link
-                  href="/how-it-works"
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold transition hover:gap-3"
-                >
-                  Learn more
-                  <ArrowRight size={16} />
-                </Link>
               </div>
             </div>
           </div>
@@ -323,7 +364,7 @@ export default function DriverPage() {
             </div>
 
             <Link
-              href="/parking"
+              href="/driver/parkings"
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-[#4f46f5] px-7 py-4 font-semibold text-white shadow-lg transition hover:-translate-y-0.5 hover:bg-[#4338ca]"
             >
               Find Parking
@@ -442,4 +483,11 @@ function ActionCard({
       </Link>
     </div>
   );
+}
+function formatMoney(amount: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(amount);
 }

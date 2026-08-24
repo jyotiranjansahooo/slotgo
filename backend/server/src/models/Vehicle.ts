@@ -1,9 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-import {
-  VEHICLE_TYPE_VALUES,
-  VehicleType,
-} from "../constants/vehicle.js";
+import { VEHICLE_TYPE_VALUES, VehicleType } from "../constants/vehicle.js";
 
 export interface IVehicle extends Document {
   // Permanent/original owner of the physical vehicle
@@ -30,9 +27,7 @@ export interface IVehicle extends Document {
 
 const vehicleSchema = new Schema<IVehicle>(
   {
-    // =====================================================
     // ORIGINAL OWNER
-    // =====================================================
 
     ownerId: {
       type: Schema.Types.ObjectId,
@@ -42,9 +37,7 @@ const vehicleSchema = new Schema<IVehicle>(
       index: true,
     },
 
-    // =====================================================
     // VEHICLE TYPE
-    // =====================================================
 
     vehicleType: {
       type: String,
@@ -52,9 +45,7 @@ const vehicleSchema = new Schema<IVehicle>(
       required: true,
     },
 
-    // =====================================================
     // REGISTRATION NUMBER
-    // =====================================================
 
     registrationNumber: {
       type: String,
@@ -80,9 +71,7 @@ const vehicleSchema = new Schema<IVehicle>(
       ],
     },
 
-    // =====================================================
     // BRAND
-    // =====================================================
 
     brand: {
       type: String,
@@ -91,9 +80,7 @@ const vehicleSchema = new Schema<IVehicle>(
       maxlength: 40,
     },
 
-    // =====================================================
     // MODEL
-    // =====================================================
 
     vehicleModel: {
       type: String,
@@ -102,9 +89,7 @@ const vehicleSchema = new Schema<IVehicle>(
       maxlength: 40,
     },
 
-    // =====================================================
     // COLOR
-    // =====================================================
 
     color: {
       type: String,
@@ -113,18 +98,14 @@ const vehicleSchema = new Schema<IVehicle>(
       maxlength: 20,
     },
 
-    // =====================================================
     // DEFAULT
-    // =====================================================
 
     isDefault: {
       type: Boolean,
       default: false,
     },
 
-    // =====================================================
     // ACTIVE
-    // =====================================================
 
     isActive: {
       type: Boolean,
@@ -152,7 +133,6 @@ vehicleSchema.index({
 // =========================================================
 
 const Vehicle =
-  mongoose.models.Vehicle ||
-  mongoose.model<IVehicle>("Vehicle", vehicleSchema);
+  mongoose.models.Vehicle || mongoose.model<IVehicle>("Vehicle", vehicleSchema);
 
 export default Vehicle;

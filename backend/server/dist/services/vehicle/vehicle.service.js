@@ -38,7 +38,29 @@ class VehicleService {
     // UPDATE VEHICLE
     async update(ownerId, vehicleId, data) {
         const vehicle = await this.getById(ownerId, vehicleId);
-        const updatedVehicle = await vehicleRepository.update(vehicle.id, data);
+        // Normalize registration number if provided
+        const registrationNumber = data.registrationNumber
+            ?.trim()
+            .toUpperCase();
+        // Check duplicate registration number
+        if (registrationNumber &&
+            registrationNumber !== vehicle.registrationNumber) {
+            const exists = await vehicleRepository.findByRegistrationNumber(registrationNumber);
+            if (exists && exists._id.toString() !== vehicle._id.toString()) {
+                throw new ApiError(409, "This vehicle registration number is already registered.");
+            }
+        }
+        // Handle default vehicle
+        if (data.isDefault === true && !vehicle.isDefault) {
+            await vehicleRepository.clearDefault(ownerId);
+        }
+        const updateData = {
+            ...data,
+            ...(registrationNumber && {
+                registrationNumber,
+            }),
+        };
+        const updatedVehicle = await vehicleRepository.update(vehicle.id, updateData);
         if (!updatedVehicle) {
             throw new ApiError(404, "Vehicle could not be updated");
         }

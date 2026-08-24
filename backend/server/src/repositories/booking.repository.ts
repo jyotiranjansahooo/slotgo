@@ -36,10 +36,10 @@ class BookingRepository {
     });
   }
   async findByOvertimeOrderId(orderId: string) {
-  return Booking.findOne({
-    overtimePaymentOrderId: orderId,
-  });
-}
+    return Booking.findOne({
+      overtimePaymentOrderId: orderId,
+    });
+  }
 
   // FIND BY VERIFICATION PIN
 

@@ -21,9 +21,9 @@ import {
 
 import { VehicleType } from "../constants/vehicle.js";
 
-/* ============================================================
+/* ==
    BOOKING INTERFACE
-   ============================================================ */
+   ==*/
 
 export interface IBooking {
   bookingNumber: string;
@@ -45,9 +45,9 @@ export interface IBooking {
 
   endTime: Date;
 
-  /* ============================================================
+  /* ==
      NORMAL PRICING
-     ============================================================ */
+     ==*/
 
   parkingAmount: number;
 
@@ -63,9 +63,9 @@ export interface IBooking {
 
   driverPays: number;
 
-  /* ============================================================
+  /* ==
      OVERTIME / LATE CHECKOUT
-     ============================================================ */
+     ==*/
 
   overtimeMinutes: number;
 
@@ -83,9 +83,9 @@ export interface IBooking {
 
   overtimePaidAt?: Date;
 
-  /* ============================================================
+  /* ==
      PAYMENT INFORMATION
-     ============================================================ */
+     ==*/
 
   payment: {
     method: string;
@@ -107,15 +107,7 @@ export interface IBooking {
 
   paymentStatus: BookingPaymentStatus;
 
-  /* ============================================================
-     BOOKING STATUS
-     ============================================================ */
-
   bookingStatus: BookingStatus;
-
-  /* ============================================================
-     VERIFICATION
-     ============================================================ */
 
   qrCode: string;
 
@@ -124,10 +116,6 @@ export interface IBooking {
   checkedInAt?: Date;
 
   checkedOutAt?: Date;
-
-  /* ============================================================
-     SNAPSHOTS
-     ============================================================ */
 
   driverSnapshot: {
     name: string;
@@ -151,9 +139,9 @@ export interface IBooking {
     vehicleType: VehicleType;
   };
 
-  /* ============================================================
+  /* ==
      CANCELLATION
-     ============================================================ */
+     ==*/
 
   cancellation?: {
     cancelledBy: CancelledBy;
@@ -167,10 +155,6 @@ export interface IBooking {
     penaltyAmount: number;
   };
 }
-
-/* ============================================================
-   DRIVER SNAPSHOT SCHEMA
-   ============================================================ */
 
 const driverSnapshotSchema = new Schema(
   {
@@ -191,10 +175,6 @@ const driverSnapshotSchema = new Schema(
   },
 );
 
-/* ============================================================
-   PARKING SNAPSHOT SCHEMA
-   ============================================================ */
-
 const parkingSnapshotSchema = new Schema(
   {
     parkingName: {
@@ -213,10 +193,6 @@ const parkingSnapshotSchema = new Schema(
     _id: false,
   },
 );
-
-/* ============================================================
-   VEHICLE SNAPSHOT SCHEMA
-   ============================================================ */
 
 const vehicleSnapshotSchema = new Schema(
   {
@@ -247,10 +223,6 @@ const vehicleSnapshotSchema = new Schema(
     _id: false,
   },
 );
-
-/* ============================================================
-   CANCELLATION SCHEMA
-   ============================================================ */
 
 const cancellationSchema = new Schema(
   {
@@ -288,10 +260,6 @@ const cancellationSchema = new Schema(
   },
 );
 
-/* ============================================================
-   PAYMENT SNAPSHOT SCHEMA
-   ============================================================ */
-
 const paymentSchema = new Schema(
   {
     method: {
@@ -318,16 +286,8 @@ const paymentSchema = new Schema(
   },
 );
 
-/* ============================================================
-   BOOKING SCHEMA
-   ============================================================ */
-
 const bookingSchema = new Schema<IBooking>(
   {
-    /* ==========================================================
-       BOOKING NUMBER
-       ========================================================== */
-
     bookingNumber: {
       type: String,
 
@@ -340,9 +300,9 @@ const bookingSchema = new Schema<IBooking>(
       trim: true,
     },
 
-    /* ==========================================================
+    /* 
        DRIVER
-       ========================================================== */
+       */
 
     driverId: {
       type: Schema.Types.ObjectId,
@@ -356,10 +316,6 @@ const bookingSchema = new Schema<IBooking>(
       index: true,
     },
 
-    /* ==========================================================
-       OWNER
-       ========================================================== */
-
     ownerId: {
       type: Schema.Types.ObjectId,
 
@@ -371,10 +327,6 @@ const bookingSchema = new Schema<IBooking>(
 
       index: true,
     },
-
-    /* ==========================================================
-       PARKING
-       ========================================================== */
 
     parkingId: {
       type: Schema.Types.ObjectId,
@@ -388,10 +340,6 @@ const bookingSchema = new Schema<IBooking>(
       index: true,
     },
 
-    /* ==========================================================
-       SLOT
-       ========================================================== */
-
     slotId: {
       type: Schema.Types.ObjectId,
 
@@ -403,10 +351,6 @@ const bookingSchema = new Schema<IBooking>(
 
       index: true,
     },
-
-    /* ==========================================================
-       VEHICLE
-       ========================================================== */
 
     vehicleId: {
       type: Schema.Types.ObjectId,
@@ -426,10 +370,6 @@ const bookingSchema = new Schema<IBooking>(
       required: true,
     },
 
-    /* ==========================================================
-       BOOKING MODE
-       ========================================================== */
-
     bookingMode: {
       type: String,
 
@@ -437,10 +377,6 @@ const bookingSchema = new Schema<IBooking>(
 
       required: true,
     },
-
-    /* ==========================================================
-       TIME
-       ========================================================== */
 
     startTime: {
       type: Date,
@@ -458,9 +394,9 @@ const bookingSchema = new Schema<IBooking>(
       index: true,
     },
 
-    /* ==========================================================
+    /* 
        NORMAL PRICING
-       ========================================================== */
+       */
 
     parkingAmount: {
       type: Number,
@@ -518,9 +454,9 @@ const bookingSchema = new Schema<IBooking>(
       min: 0,
     },
 
-    /* ==========================================================
+    /* 
        OVERTIME
-       ========================================================== */
+       */
 
     overtimeMinutes: {
       type: Number,
@@ -554,10 +490,6 @@ const bookingSchema = new Schema<IBooking>(
       min: 0,
     },
 
-    /* ==========================================================
-       OVERTIME RAZORPAY PAYMENT
-       ========================================================== */
-
     overtimePaymentOrderId: {
       type: String,
 
@@ -584,10 +516,6 @@ const bookingSchema = new Schema<IBooking>(
       type: Date,
     },
 
-    /* ==========================================================
-       NORMAL BOOKING PAYMENT STATUS
-       ========================================================== */
-
     paymentStatus: {
       type: String,
 
@@ -597,10 +525,6 @@ const bookingSchema = new Schema<IBooking>(
 
       required: true,
     },
-
-    /* ==========================================================
-       BOOKING STATUS
-       ========================================================== */
 
     bookingStatus: {
       type: String,
@@ -614,9 +538,9 @@ const bookingSchema = new Schema<IBooking>(
       index: true,
     },
 
-    /* ==========================================================
+    /* 
        PAYMENT DETAILS
-       ========================================================== */
+       */
 
     payment: {
       type: paymentSchema,
@@ -624,9 +548,9 @@ const bookingSchema = new Schema<IBooking>(
       default: undefined,
     },
 
-    /* ==========================================================
+    /* 
        QR CODE
-       ========================================================== */
+       */
 
     qrCode: {
       type: String,
@@ -634,9 +558,9 @@ const bookingSchema = new Schema<IBooking>(
       default: "",
     },
 
-    /* ==========================================================
+    /* 
        VERIFICATION PIN
-       ========================================================== */
+       */
 
     verificationPin: {
       type: String,
@@ -646,9 +570,9 @@ const bookingSchema = new Schema<IBooking>(
       trim: true,
     },
 
-    /* ==========================================================
+    /* 
        CHECK-IN / CHECK-OUT
-       ========================================================== */
+       */
 
     checkedInAt: {
       type: Date,
@@ -658,9 +582,9 @@ const bookingSchema = new Schema<IBooking>(
       type: Date,
     },
 
-    /* ==========================================================
+    /* 
        DRIVER SNAPSHOT
-       ========================================================== */
+       */
 
     driverSnapshot: {
       type: driverSnapshotSchema,
@@ -668,9 +592,9 @@ const bookingSchema = new Schema<IBooking>(
       required: true,
     },
 
-    /* ==========================================================
+    /* 
        PARKING SNAPSHOT
-       ========================================================== */
+       */
 
     parkingSnapshot: {
       type: parkingSnapshotSchema,
@@ -678,9 +602,9 @@ const bookingSchema = new Schema<IBooking>(
       required: true,
     },
 
-    /* ==========================================================
+    /* 
        VEHICLE SNAPSHOT
-       ========================================================== */
+       */
 
     vehicleSnapshot: {
       type: vehicleSnapshotSchema,
@@ -688,9 +612,9 @@ const bookingSchema = new Schema<IBooking>(
       required: true,
     },
 
-    /* ==========================================================
+    /* 
        CANCELLATION
-       ========================================================== */
+       */
 
     cancellation: {
       type: cancellationSchema,
@@ -706,9 +630,9 @@ const bookingSchema = new Schema<IBooking>(
   },
 );
 
-/* ==============================================================
+/* ====
    INDEXES
-   ============================================================== */
+   ====*/
 
 /*
  * Driver booking lookup
@@ -802,9 +726,9 @@ bookingSchema.index({
   overtimePaymentStatus: 1,
 });
 
-/* ==============================================================
+/* ====
    MODEL
-   ============================================================== */
+   ====*/
 
 const Booking =
   mongoose.models.Booking || mongoose.model<IBooking>("Booking", bookingSchema);

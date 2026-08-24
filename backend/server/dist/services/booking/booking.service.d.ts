@@ -43,8 +43,8 @@ declare class BookingService {
             overtimeFine: any;
             overtimeTotal: any;
         };
-        wallet?: undefined;
-        transaction?: undefined;
+        wallet: null;
+        transaction: null;
     } | {
         booking: any;
         payment: {

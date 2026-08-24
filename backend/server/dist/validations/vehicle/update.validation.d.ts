@@ -6,6 +6,7 @@ export declare const updateVehicleSchema: z.ZodObject<{
         twoWheeler: "twoWheeler";
         vanMinibus: "vanMinibus";
     }>>;
+    registrationNumber: z.ZodOptional<z.ZodString>;
     brand: z.ZodOptional<z.ZodString>;
     vehicleModel: z.ZodOptional<z.ZodString>;
     color: z.ZodOptional<z.ZodString>;

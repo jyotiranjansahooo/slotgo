@@ -28,10 +28,9 @@ function BookingDetails() {
   const router = useRouter();
   const params = useParams();
 
-  const bookingId = typeof params.Id === "string" ? params.Id : "";
+  const bookingId = typeof params.id === "string" ? params.id : "";
 
   const [error, setError] = useState("");
-
 
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId],

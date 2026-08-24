@@ -2,12 +2,11 @@ import { Request, Response } from "express";
 
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
+import ApiError from "../utils/ApiError.js";
 
 import bookingService from "../services/booking/booking.service.js";
 
-// ============================================================
 // CREATE BOOKING
-// ============================================================
 
 export const createBooking = asyncHandler(
   async (req: Request, res: Response) => {
@@ -22,33 +21,39 @@ export const createBooking = asyncHandler(
   },
 );
 
-// ============================================================
 // VERIFY NORMAL PAYMENT
-// ============================================================
 
 export const verifyPayment = asyncHandler(
   async (req: Request, res: Response) => {
     const { orderId, paymentId, signature } = req.body;
 
+    if (!orderId || !paymentId || !signature) {
+      throw new ApiError(400, "orderId, paymentId and signature are required.");
+    }
+
     const result = await bookingService.verifyPayment(
-  req.user!._id.toString(),
-  orderId,
-  paymentId,
-  signature,
-);
+      req.user!._id.toString(),
+      orderId,
+      paymentId,
+      signature,
+    );
 
     res
       .status(200)
-      .json(new ApiResponse(200, result, "Payment verified successfully."));
+      .json(
+        new ApiResponse(200, result, "Payment verified and booking confirmed."),
+      );
   },
 );
+
+// CREATE OVERTIME PAYMENT
 
 export const createOvertimePayment = asyncHandler(
   async (req: Request, res: Response) => {
     const bookingId = req.params.bookingId as string;
 
     if (!bookingId) {
-      throw new Error("Booking ID is required.");
+      throw new ApiError(400, "Booking ID is required.");
     }
 
     const result = await bookingService.createOvertimePayment(
@@ -68,24 +73,26 @@ export const createOvertimePayment = asyncHandler(
   },
 );
 
-// ============================================================
 // VERIFY OVERTIME PAYMENT
-// ============================================================
 
 export const verifyOvertimePayment = asyncHandler(
   async (req: Request, res: Response) => {
     const { orderId, paymentId, signature } = req.body;
 
     if (!orderId || !paymentId || !signature) {
-      throw new Error("orderId, paymentId and signature are required.");
+      throw new ApiError(400, "orderId, paymentId and signature are required.");
     }
 
-    const result = await bookingService.verifyPayment(
-  req.user!._id.toString(),
-  orderId,
-  paymentId,
-  signature,
-);
+    // IMPORTANT:
+    // This must call verifyOvertimePayment(),
+    // NOT verifyPayment().
+
+    const result = await bookingService.verifyOvertimePayment(
+      req.user!._id.toString(),
+      orderId,
+      paymentId,
+      signature,
+    );
 
     res
       .status(200)
@@ -95,9 +102,7 @@ export const verifyOvertimePayment = asyncHandler(
   },
 );
 
-// ============================================================
 // GET DRIVER BOOKINGS
-// ============================================================
 
 export const getDriverBookings = asyncHandler(
   async (req: Request, res: Response) => {
@@ -111,9 +116,7 @@ export const getDriverBookings = asyncHandler(
   },
 );
 
-// ============================================================
 // GET OWNER BOOKINGS
-// ============================================================
 
 export const getOwnerBookings = asyncHandler(
   async (req: Request, res: Response) => {
@@ -129,14 +132,18 @@ export const getOwnerBookings = asyncHandler(
   },
 );
 
-// ============================================================
 // GET SINGLE BOOKING
-// ============================================================
 
 export const getBooking = asyncHandler(async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+
+  if (!bookingId) {
+    throw new ApiError(400, "Booking ID is required.");
+  }
+
   const booking = await bookingService.getBooking(
     req.user!._id.toString(),
-    req.params.bookingId as string,
+    bookingId,
   );
 
   res
@@ -144,32 +151,40 @@ export const getBooking = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, booking, "Booking fetched successfully."));
 });
 
-// ============================================================
 // CANCEL BOOKING
-// ============================================================
 
 export const cancelBooking = asyncHandler(
   async (req: Request, res: Response) => {
-    const booking = await bookingService.cancelBooking(
+    const bookingId = req.params.bookingId as string;
+
+    if (!bookingId) {
+      throw new ApiError(400, "Booking ID is required.");
+    }
+
+    const result = await bookingService.cancelBooking(
       req.user!._id.toString(),
-      req.params.bookingId as string,
+      bookingId,
       req.body,
     );
 
     res
       .status(200)
-      .json(new ApiResponse(200, booking, "Booking cancelled successfully."));
+      .json(new ApiResponse(200, result, "Booking cancelled successfully."));
   },
 );
 
-// ============================================================
 // CHECK-IN
-// ============================================================
 
 export const checkIn = asyncHandler(async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+
+  if (!bookingId) {
+    throw new ApiError(400, "Booking ID is required.");
+  }
+
   const booking = await bookingService.checkIn(
     req.user!._id.toString(),
-    req.params.bookingId as string,
+    bookingId,
     req.body,
   );
 
@@ -178,14 +193,18 @@ export const checkIn = asyncHandler(async (req: Request, res: Response) => {
     .json(new ApiResponse(200, booking, "Driver checked in successfully."));
 });
 
-// ============================================================
 // CHECK-OUT
-// ============================================================
 
 export const checkOut = asyncHandler(async (req: Request, res: Response) => {
+  const bookingId = req.params.bookingId as string;
+
+  if (!bookingId) {
+    throw new ApiError(400, "Booking ID is required.");
+  }
+
   const result = await bookingService.checkOut(
     req.user!._id.toString(),
-    req.params.bookingId as string,
+    bookingId,
   );
 
   res

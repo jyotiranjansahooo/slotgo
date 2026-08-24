@@ -1,9 +1,7 @@
 import mongoose, { Schema } from "mongoose";
-import { VEHICLE_TYPE_VALUES, } from "../constants/vehicle.js";
+import { VEHICLE_TYPE_VALUES } from "../constants/vehicle.js";
 const vehicleSchema = new Schema({
-    // =====================================================
     // ORIGINAL OWNER
-    // =====================================================
     ownerId: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -11,17 +9,13 @@ const vehicleSchema = new Schema({
         immutable: true,
         index: true,
     },
-    // =====================================================
     // VEHICLE TYPE
-    // =====================================================
     vehicleType: {
         type: String,
         enum: VEHICLE_TYPE_VALUES,
         required: true,
     },
-    // =====================================================
     // REGISTRATION NUMBER
-    // =====================================================
     registrationNumber: {
         type: String,
         required: true,
@@ -42,43 +36,33 @@ const vehicleSchema = new Schema({
             "Invalid registration number",
         ],
     },
-    // =====================================================
     // BRAND
-    // =====================================================
     brand: {
         type: String,
         required: true,
         trim: true,
         maxlength: 40,
     },
-    // =====================================================
     // MODEL
-    // =====================================================
     vehicleModel: {
         type: String,
         required: true,
         trim: true,
         maxlength: 40,
     },
-    // =====================================================
     // COLOR
-    // =====================================================
     color: {
         type: String,
         required: true,
         trim: true,
         maxlength: 20,
     },
-    // =====================================================
     // DEFAULT
-    // =====================================================
     isDefault: {
         type: Boolean,
         default: false,
     },
-    // =====================================================
     // ACTIVE
-    // =====================================================
     isActive: {
         type: Boolean,
         default: true,
@@ -97,7 +81,6 @@ vehicleSchema.index({
 // =========================================================
 // MODEL
 // =========================================================
-const Vehicle = mongoose.models.Vehicle ||
-    mongoose.model("Vehicle", vehicleSchema);
+const Vehicle = mongoose.models.Vehicle || mongoose.model("Vehicle", vehicleSchema);
 export default Vehicle;
 //# sourceMappingURL=Vehicle.js.map

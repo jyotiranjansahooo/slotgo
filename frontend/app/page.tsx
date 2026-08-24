@@ -3,7 +3,6 @@ import Hero from "@/components/landing/Hero";
 import NearbyParking from "@/components/home/NearbyParking";
 import ParkingMap from "@/components/home/ParkingMap";
 import Stats from "@/components/home/Stats";
-import Features from "@/components/home/Features";
 import HowItWorks from "@/components/home/HowItWorks";
 
 import Footer from "@/components/home/Footer";
@@ -20,7 +19,6 @@ export default function HomePage() {
       <ParkingMap />
 
       <Stats />
-      <Features />
       <HowItWorks />
       <Footer />
     </main>

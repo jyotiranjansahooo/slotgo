@@ -1,4 +1,5 @@
 import { z } from "zod";
+
 import { VEHICLE_TYPES } from "../../constants/vehicle.js";
 
 export const updateVehicleSchema = z.object({
@@ -9,6 +10,16 @@ export const updateVehicleSchema = z.object({
       VEHICLE_TYPES.VAN_MINIBUS,
       VEHICLE_TYPES.HEAVY_VEHICLE,
     ])
+    .optional(),
+
+  registrationNumber: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(
+      /^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{4}$/,
+      "Invalid registration number",
+    )
     .optional(),
 
   brand: z
@@ -35,6 +46,4 @@ export const updateVehicleSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export type UpdateVehicleInput = z.infer<
-  typeof updateVehicleSchema
->;
+export type UpdateVehicleInput = z.infer<typeof updateVehicleSchema>;

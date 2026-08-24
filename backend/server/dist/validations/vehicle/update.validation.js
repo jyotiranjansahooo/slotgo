@@ -9,6 +9,12 @@ export const updateVehicleSchema = z.object({
         VEHICLE_TYPES.HEAVY_VEHICLE,
     ])
         .optional(),
+    registrationNumber: z
+        .string()
+        .trim()
+        .toUpperCase()
+        .regex(/^[A-Z]{2}[0-9]{1,2}[A-Z]{1,2}[0-9]{4}$/, "Invalid registration number")
+        .optional(),
     brand: z
         .string()
         .trim()

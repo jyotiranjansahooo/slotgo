@@ -10,23 +10,18 @@ class SlotAllocatorService {
 
     return parkingSlotRepository.findFirstAvailable(parkingId, vehicleType);
   }
-async confirmReservation(
-  slotId: string,
-) {
-  const slot =
-    await parkingSlotRepository.confirmReservation(
-      slotId,
-    );
+  async confirmReservation(slotId: string) {
+    const slot = await parkingSlotRepository.confirmReservation(slotId);
 
-  if (!slot) {
-    throw new ApiError(
-      409,
-      "Parking slot reservation could not be confirmed.",
-    );
+    if (!slot) {
+      throw new ApiError(
+        409,
+        "Parking slot reservation could not be confirmed.",
+      );
+    }
+
+    return slot;
   }
-
-  return slot;
-}
 
   async reserveAvailableSlot(parkingId: string, vehicleType: VehicleType) {
     // Release expired temporary reservations first.

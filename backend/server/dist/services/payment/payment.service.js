@@ -15,11 +15,11 @@ class PaymentService {
         if (!booking) {
             throw new ApiError(404, "Booking not found.");
         }
-        // Check booking ownership
+        // DRIVER AUTHORIZATION
         if (booking.driverId.toString() !== userId) {
             throw new ApiError(403, "You are not authorized to pay for this booking.");
         }
-        // Prevent duplicate payment records
+        // PREVENT DUPLICATE PAYMENT RECORDS
         const existingPayment = await paymentRepository.findByBookingId(bookingId);
         if (existingPayment) {
             return {
@@ -32,7 +32,7 @@ class PaymentService {
                 },
             };
         }
-        // Validate booking state
+        // VALIDATE BOOKING STATE
         if (booking.paymentStatus === BOOKING_PAYMENT_STATUS.PAID) {
             throw new ApiError(400, "Booking has already been paid.");
         }
@@ -42,14 +42,14 @@ class PaymentService {
         if (booking.bookingStatus === BOOKING_STATUS.COMPLETED) {
             throw new ApiError(400, "Completed booking cannot be paid.");
         }
-        // Calculate payment amount
+        // CALCULATE PAYMENT AMOUNT
         const amountInPaise = Math.round(booking.driverPays * 100);
         if (amountInPaise <= 0) {
             throw new ApiError(400, "Invalid payment amount.");
         }
-        // Create Razorpay order
+        // CREATE RAZORPAY ORDER
         const razorpayOrder = await razorpayService.createOrder(amountInPaise, booking.bookingNumber);
-        // Create payment record
+        // CREATE PAYMENT RECORD
         const payment = await paymentRepository.create({
             bookingId: booking._id,
             driverId: booking.driverId,
@@ -76,21 +76,25 @@ class PaymentService {
         if (!payment) {
             throw new ApiError(404, "Payment record not found.");
         }
-        // Find booking
+        // FIND BOOKING
         const booking = await bookingRepository.findById(payment.bookingId.toString());
         if (!booking) {
             throw new ApiError(404, "Booking not found.");
         }
-        // Check ownership
+        // DRIVER AUTHORIZATION
         if (booking.driverId.toString() !== userId) {
             throw new ApiError(403, "You are not authorized to verify this payment.");
+        }
+        // VERIFY ORDER ID
+        if (payment.orderId !== orderId) {
+            throw new ApiError(400, "Invalid payment order.");
         }
         // ==========================================================
         // ALREADY SUCCESSFUL
         // ==========================================================
         if (payment.status === PAYMENT_STATUS.SUCCESS) {
             let updatedBooking = booking;
-            // Ensure booking is confirmed
+            // ENSURE BOOKING IS CONFIRMED
             if (booking.bookingStatus === BOOKING_STATUS.PENDING ||
                 booking.paymentStatus !== BOOKING_PAYMENT_STATUS.PAID) {
                 const confirmedSlot = await slotAllocatorService.confirmReservation(booking.slotId.toString());
@@ -106,13 +110,11 @@ class PaymentService {
                 }
                 updatedBooking = result;
             }
-            // Credit owner
-            const walletResult = await walletService.creditOwnerEarnings(updatedBooking.ownerId.toString(), updatedBooking.ownerReceives, updatedBooking._id.toString(), `booking:${updatedBooking._id.toString()}`, `Earnings from booking ${updatedBooking.bookingNumber}`);
             return {
                 payment,
                 booking: updatedBooking,
-                wallet: walletResult.wallet,
-                transaction: walletResult.transaction,
+                wallet: null,
+                transaction: null,
             };
         }
         // ==========================================================
@@ -173,23 +175,23 @@ class PaymentService {
         if (!booking) {
             throw new ApiError(404, "Booking not found.");
         }
-        // Check booking owner
+        // DRIVER AUTHORIZATION
         if (booking.driverId.toString() !== userId) {
             throw new ApiError(403, "You are not authorized to pay overtime for this booking.");
         }
-        // Booking must be active
+        // BOOKING MUST BE ACTIVE
         if (booking.bookingStatus !== BOOKING_STATUS.ACTIVE) {
             throw new ApiError(400, "Only active bookings can have overtime payment.");
         }
-        // Overtime must exist
+        // OVERTIME MUST EXIST
         if (!booking.overtimeTotal || booking.overtimeTotal <= 0) {
             throw new ApiError(400, "No overtime payment is required.");
         }
-        // Already paid
+        // ALREADY PAID
         if (booking.overtimePaymentStatus === PAYMENT_STATUS.SUCCESS) {
             throw new ApiError(400, "Overtime payment has already been completed.");
         }
-        // Reuse existing Razorpay order
+        // REUSE EXISTING RAZORPAY ORDER
         if (booking.overtimePaymentOrderId) {
             return {
                 booking,
@@ -200,9 +202,9 @@ class PaymentService {
                 },
             };
         }
-        // Create Razorpay order
+        // CREATE RAZORPAY ORDER
         const razorpayOrder = await razorpayService.createOrder(Math.round(booking.overtimeTotal * 100), `${booking.bookingNumber}-OT`);
-        // Save Razorpay order
+        // SAVE RAZORPAY ORDER
         const updatedBooking = await bookingRepository.update(booking._id.toString(), {
             overtimePaymentOrderId: razorpayOrder.id,
             overtimePaymentStatus: PAYMENT_STATUS.CREATED,
@@ -223,12 +225,19 @@ class PaymentService {
         if (!booking) {
             throw new ApiError(404, "Overtime booking payment not found.");
         }
-        // Check booking owner
+        // DRIVER AUTHORIZATION
         if (booking.driverId.toString() !== userId) {
             throw new ApiError(403, "You are not authorized to verify this overtime payment.");
         }
-        // Already paid
-        if (booking.overtimePaymentStatus === PAYMENT_STATUS.SUCCESS) {
+        // VERIFY ORDER ID
+        if (booking.overtimePaymentOrderId !== orderId) {
+            throw new ApiError(400, "Invalid overtime payment order.");
+        }
+        // ==========================================================
+        // ALREADY PAID
+        // ==========================================================
+        if (booking.overtimePaymentStatus ===
+            PAYMENT_STATUS.SUCCESS) {
             return {
                 booking,
                 payment: {
@@ -241,18 +250,20 @@ class PaymentService {
                     overtimeFine: booking.overtimeFine,
                     overtimeTotal: booking.overtimeTotal,
                 },
+                wallet: null,
+                transaction: null,
             };
         }
-        // Verify order
-        if (booking.overtimePaymentOrderId !== orderId) {
-            throw new ApiError(400, "Invalid overtime payment order.");
-        }
-        // Verify Razorpay signature
+        // ==========================================================
+        // VERIFY RAZORPAY SIGNATURE
+        // ==========================================================
         const isValid = razorpayService.verifySignature(orderId, paymentId, signature);
         if (!isValid) {
             throw new ApiError(400, "Invalid overtime payment signature.");
         }
-        // Update overtime payment
+        // ==========================================================
+        // UPDATE OVERTIME PAYMENT
+        // ==========================================================
         const updatedBooking = await bookingRepository.update(booking._id.toString(), {
             overtimePaymentStatus: PAYMENT_STATUS.SUCCESS,
             overtimePaymentId: paymentId,
@@ -263,24 +274,31 @@ class PaymentService {
         }
         // ==========================================================
         // CREDIT OWNER ONLY FOR EXTRA PARKING
+        //
+        // OVERTIME FINE REMAINS PLATFORM REVENUE
         // ==========================================================
         let walletResult = null;
         if (updatedBooking.overtimeParkingAmount > 0) {
-            walletResult = await walletService.creditOwnerEarnings(updatedBooking.ownerId.toString(), updatedBooking.overtimeParkingAmount, updatedBooking._id.toString(), `overtime:${updatedBooking._id.toString()}`, `Overtime parking earnings from booking ${updatedBooking.bookingNumber}`);
+            walletResult =
+                await walletService.creditOwnerEarnings(updatedBooking.ownerId.toString(), updatedBooking.overtimeParkingAmount, updatedBooking._id.toString(), `overtime:${updatedBooking._id.toString()}`, `Overtime parking earnings from booking ${updatedBooking.bookingNumber}`);
         }
         // ==========================================================
         // RELEASE PARKING SLOT
         // ==========================================================
-        await slotAllocatorService.releaseSlot(updatedBooking.slotId.toString());
+        const released = await slotAllocatorService.releaseSlot(updatedBooking.slotId.toString());
+        if (!released) {
+            throw new ApiError(500, "Overtime payment succeeded but parking slot could not be released.");
+        }
         // ==========================================================
         // COMPLETE BOOKING
         // ==========================================================
         const completedBooking = await bookingRepository.update(updatedBooking._id.toString(), {
             bookingStatus: BOOKING_STATUS.COMPLETED,
-            checkedOutAt: updatedBooking.checkedOutAt ?? new Date(),
+            checkedOutAt: updatedBooking.checkedOutAt ??
+                new Date(),
         });
         if (!completedBooking) {
-            // Try to restore slot
+            // TRY TO RESTORE SLOT
             await slotAllocatorService.occupySlot(updatedBooking.slotId.toString());
             throw new ApiError(500, "Overtime payment succeeded but booking could not be completed.");
         }
@@ -309,38 +327,48 @@ class PaymentService {
         if (!payment) {
             throw new ApiError(404, "Payment not found.");
         }
-        // Payment must be successful
-        if (payment.status !== PAYMENT_STATUS.SUCCESS) {
+        // PAYMENT MUST BE SUCCESSFUL
+        if (payment.status !==
+            PAYMENT_STATUS.SUCCESS) {
             throw new ApiError(400, "Only successful payments can be refunded.");
         }
-        // Find booking
+        // FIND BOOKING
         const booking = await bookingRepository.findById(payment.bookingId.toString());
         if (!booking) {
             throw new ApiError(404, "Booking not found.");
         }
-        // Check booking owner
+        // DRIVER AUTHORIZATION
         if (booking.driverId.toString() !== userId) {
             throw new ApiError(403, "You are not authorized to refund this payment.");
         }
-        // Calculate refundable amount
-        const refundableAmount = payment.amount - payment.refundAmount;
+        // CALCULATE REFUNDABLE AMOUNT
+        const refundableAmount = payment.amount -
+            payment.refundAmount;
         const refundAmount = amount ?? refundableAmount;
         if (refundAmount <= 0) {
             throw new ApiError(400, "Refund amount must be greater than zero.");
         }
-        if (refundAmount > refundableAmount) {
+        if (refundAmount >
+            refundableAmount) {
             throw new ApiError(400, "Refund amount exceeds the refundable amount.");
         }
-        // Payment ID required
+        // PAYMENT ID REQUIRED
         if (!payment.paymentId) {
             throw new ApiError(400, "Payment transaction ID is missing.");
         }
-        // Process Razorpay refund
+        // ==========================================================
+        // PROCESS RAZORPAY REFUND
+        // ==========================================================
         const refund = await razorpayService.refundPayment(payment.paymentId, Math.round(refundAmount * 100));
-        // Calculate total refunded
-        const totalRefunded = payment.refundAmount + refundAmount;
+        // ==========================================================
+        // CALCULATE TOTAL REFUNDED
+        // ==========================================================
+        const totalRefunded = payment.refundAmount +
+            refundAmount;
         const fullyRefunded = totalRefunded >= payment.amount;
-        // Update payment
+        // ==========================================================
+        // UPDATE PAYMENT
+        // ==========================================================
         const updatedPayment = await paymentRepository.update(payment._id.toString(), {
             refundId: refund.id,
             refundAmount: totalRefunded,
@@ -348,17 +376,25 @@ class PaymentService {
             status: fullyRefunded
                 ? PAYMENT_STATUS.REFUNDED
                 : PAYMENT_STATUS.PARTIALLY_REFUNDED,
-            refundedAt: fullyRefunded ? new Date() : undefined,
+            refundedAt: fullyRefunded
+                ? new Date()
+                : undefined,
         });
         if (!updatedPayment) {
             throw new ApiError(500, "Unable to update refund information.");
         }
-        // Calculate owner earning reversal
-        const ownerRefundAmount = Number((booking.ownerReceives * (refundAmount / payment.amount)).toFixed(2));
-        // Reverse owner wallet
+        // ==========================================================
+        // CALCULATE OWNER EARNING REVERSAL
+        // ==========================================================
+        const ownerRefundAmount = Number((booking.ownerReceives *
+            (refundAmount / payment.amount)).toFixed(2));
+        // ==========================================================
+        // REVERSE OWNER WALLET
+        // ==========================================================
         let walletResult = null;
         if (ownerRefundAmount > 0) {
-            walletResult = await walletService.reverseOwnerEarnings(booking.ownerId.toString(), ownerRefundAmount, booking._id.toString(), `refund:${refund.id}`, `Owner earning reversal for booking ${booking.bookingNumber}`);
+            walletResult =
+                await walletService.reverseOwnerEarnings(booking.ownerId.toString(), ownerRefundAmount, booking._id.toString(), `refund:${refund.id}`, `Owner earning reversal for booking ${booking.bookingNumber}`);
         }
         return {
             payment: updatedPayment,

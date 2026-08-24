@@ -5,8 +5,8 @@ import { CreateVehicleInput } from "../../validations/vehicle/create.validation.
 import { UpdateVehicleInput } from "../../validations/vehicle/update.validation.js";
 
 class VehicleService {
-    // CREATE VEHICLE
-  
+  // CREATE VEHICLE
+
   async create(ownerId: string, data: CreateVehicleInput) {
     const registrationNumber = data.registrationNumber.trim().toUpperCase();
 
@@ -35,14 +35,14 @@ class VehicleService {
     return vehicle;
   }
 
-    // GET ALL MY VEHICLES
-  
+  // GET ALL MY VEHICLES
+
   async getAll(ownerId: string) {
     return vehicleRepository.findByOwnerId(ownerId);
   }
 
-    // GET SINGLE VEHICLE
-  
+  // GET SINGLE VEHICLE
+
   async getById(ownerId: string, vehicleId: string) {
     const vehicle = await vehicleRepository.findById(vehicleId);
 
@@ -57,22 +57,59 @@ class VehicleService {
     return vehicle;
   }
 
-    // UPDATE VEHICLE
-  
-  async update(ownerId: string, vehicleId: string, data: UpdateVehicleInput) {
-    const vehicle = await this.getById(ownerId, vehicleId);
+// UPDATE VEHICLE
 
-    const updatedVehicle = await vehicleRepository.update(vehicle.id, data);
+async update(ownerId: string, vehicleId: string, data: UpdateVehicleInput) {
+  const vehicle = await this.getById(ownerId, vehicleId);
 
-    if (!updatedVehicle) {
-      throw new ApiError(404, "Vehicle could not be updated");
+  // Normalize registration number if provided
+  const registrationNumber = data.registrationNumber
+    ?.trim()
+    .toUpperCase();
+
+  // Check duplicate registration number
+  if (
+    registrationNumber &&
+    registrationNumber !== vehicle.registrationNumber
+  ) {
+    const exists =
+      await vehicleRepository.findByRegistrationNumber(registrationNumber);
+
+    if (exists && exists._id.toString() !== vehicle._id.toString()) {
+      throw new ApiError(
+        409,
+        "This vehicle registration number is already registered.",
+      );
     }
-
-    return updatedVehicle;
   }
 
-    // DELETE VEHICLE
-  
+  // Handle default vehicle
+  if (data.isDefault === true && !vehicle.isDefault) {
+    await vehicleRepository.clearDefault(ownerId);
+  }
+
+  const updateData = {
+    ...data,
+
+    ...(registrationNumber && {
+      registrationNumber,
+    }),
+  };
+
+  const updatedVehicle = await vehicleRepository.update(
+    vehicle.id,
+    updateData,
+  );
+
+  if (!updatedVehicle) {
+    throw new ApiError(404, "Vehicle could not be updated");
+  }
+
+  return updatedVehicle;
+}
+
+  // DELETE VEHICLE
+
   async delete(ownerId: string, vehicleId: string) {
     const vehicle = await this.getById(ownerId, vehicleId);
 
@@ -85,8 +122,8 @@ class VehicleService {
     return deletedVehicle;
   }
 
-    // SET DEFAULT VEHICLE
-  
+  // SET DEFAULT VEHICLE
+
   async setDefault(ownerId: string, vehicleId: string) {
     const vehicle = await this.getById(ownerId, vehicleId);
 

@@ -12,23 +12,11 @@ export default function Navbar() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  /*
-   * ============================================================
-   * NORMAL NAVIGATION
-   * ============================================================
-   */
-
   const goTo = (path: string) => {
     setMobileOpen(false);
 
     router.push(path);
   };
-
-  /*
-   * ============================================================
-   * ROLE DASHBOARD
-   * ============================================================
-   */
 
   const goToDashboard = () => {
     setMobileOpen(false);
@@ -56,52 +44,18 @@ export default function Navbar() {
     router.push("/");
   };
 
-  /*
-   * ============================================================
-   * DRIVER-ONLY NAVIGATION
-   * ============================================================
-   *
-   * Find Parking + My Bookings
-   *
-   * Not authenticated
-   *      ↓
-   * /login
-   *
-   * Driver
-   *      ↓
-   * requested page
-   *
-   * Parking Owner
-   *      ↓
-   * /owner
-   *
-   * Admin
-   *      ↓
-   * /admin
-   */
-
   const goToDriverPage = (path: string) => {
     setMobileOpen(false);
 
-    /*
-     * Do not navigate while AuthProvider
-     * is still checking localStorage.
-     */
     if (isLoading) {
       return;
     }
 
-    /*
-     * User is not authenticated.
-     */
     if (!isAuthenticated || !user) {
       router.push("/login");
       return;
     }
 
-    /*
-     * Driver can access the page.
-     */
     if (user.role === "driver") {
       router.push(path);
       return;
@@ -170,11 +124,7 @@ export default function Navbar() {
           className="group flex items-center gap-2"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white shadow-lg">
-            <MapPin
-              size={21}
-              strokeWidth={2.5}
-              className="text-indigo-600"
-            />
+            <MapPin size={21} strokeWidth={2.5} className="text-indigo-600" />
           </div>
 
           <span className="text-xl font-bold tracking-tight text-white">
@@ -196,8 +146,6 @@ export default function Navbar() {
           >
             Find Parking
           </button>
-
-          {/* MY BOOKINGS */}
 
           <button
             type="button"
@@ -255,7 +203,6 @@ export default function Navbar() {
                 className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-md transition hover:bg-white/20"
               >
                 <LogIn size={16} />
-
                 Sign in
               </button>
 
@@ -267,7 +214,6 @@ export default function Navbar() {
                 className="flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-lg transition hover:bg-white/90"
               >
                 <UserPlus size={16} />
-
                 Get Started
               </button>
             </>

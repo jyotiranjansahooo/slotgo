@@ -16,13 +16,7 @@ export const createVehicle = asyncHandler(
 
     res
       .status(201)
-      .json(
-        new ApiResponse(
-          201,
-          vehicle,
-          "Vehicle created successfully",
-        ),
-      );
+      .json(new ApiResponse(201, vehicle, "Vehicle created successfully"));
   },
 );
 
@@ -30,46 +24,30 @@ export const createVehicle = asyncHandler(
 
 export const getMyVehicles = asyncHandler(
   async (req: Request, res: Response) => {
-    const vehicles = await vehicleService.getAll(
-      req.user!._id.toString(),
-    );
+    const vehicles = await vehicleService.getAll(req.user!._id.toString());
 
     res
       .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          vehicles,
-          "Vehicles fetched successfully",
-        ),
-      );
+      .json(new ApiResponse(200, vehicles, "Vehicles fetched successfully"));
   },
 );
 
 // GET SINGLE VEHICLE
 
-export const getVehicle = asyncHandler(
-  async (req: Request, res: Response) => {
-    const vehicleId = Array.isArray(req.params.id)
-      ? req.params.id[0]
-      : req.params.id;
+export const getVehicle = asyncHandler(async (req: Request, res: Response) => {
+  const vehicleId = Array.isArray(req.params.id)
+    ? req.params.id[0]
+    : req.params.id;
 
-    const vehicle = await vehicleService.getById(
-      req.user!._id.toString(),
-      vehicleId,
-    );
+  const vehicle = await vehicleService.getById(
+    req.user!._id.toString(),
+    vehicleId,
+  );
 
-    res
-      .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          vehicle,
-          "Vehicle fetched successfully",
-        ),
-      );
-  },
-);
+  res
+    .status(200)
+    .json(new ApiResponse(200, vehicle, "Vehicle fetched successfully"));
+});
 
 // UPDATE VEHICLE
 
@@ -87,13 +65,7 @@ export const updateVehicle = asyncHandler(
 
     res
       .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          vehicle,
-          "Vehicle updated successfully",
-        ),
-      );
+      .json(new ApiResponse(200, vehicle, "Vehicle updated successfully"));
   },
 );
 
@@ -105,20 +77,11 @@ export const deleteVehicle = asyncHandler(
       ? req.params.id[0]
       : req.params.id;
 
-    await vehicleService.delete(
-      req.user!._id.toString(),
-      vehicleId,
-    );
+    await vehicleService.delete(req.user!._id.toString(), vehicleId);
 
     res
       .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          null,
-          "Vehicle deleted successfully",
-        ),
-      );
+      .json(new ApiResponse(200, null, "Vehicle deleted successfully"));
   },
 );
 
@@ -137,12 +100,6 @@ export const setDefaultVehicle = asyncHandler(
 
     res
       .status(200)
-      .json(
-        new ApiResponse(
-          200,
-          vehicle,
-          "Default vehicle updated",
-        ),
-      );
+      .json(new ApiResponse(200, vehicle, "Default vehicle updated"));
   },
 );
