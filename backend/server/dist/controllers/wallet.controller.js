@@ -31,8 +31,7 @@ export const getWalletTransaction = asyncHandler(async (req, res) => {
 export const withdrawWallet = asyncHandler(async (req, res) => {
     const ownerId = req.user._id.toString();
     const data = withdrawWalletSchema.parse(req.body);
-    const result = await walletService.withdraw(ownerId, data.amount, data.referenceId, data.description ??
-        "Wallet withdrawal");
+    const result = await walletService.withdraw(ownerId, data.amount, data.referenceId, data.description ?? "Wallet withdrawal");
     return res
         .status(200)
         .json(new ApiResponse(200, result, "Withdrawal processed successfully."));

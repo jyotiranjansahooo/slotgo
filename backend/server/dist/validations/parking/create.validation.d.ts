@@ -3,7 +3,11 @@ export declare const createParkingSchema: z.ZodObject<{
     parkingName: z.ZodString;
     description: z.ZodDefault<z.ZodString>;
     parkingType: z.ZodEnum<{
-        [x: string]: string;
+        basement: "basement";
+        covered: "covered";
+        multiLevel: "multiLevel";
+        open: "open";
+        street: "street";
     }>;
     address: z.ZodString;
     landmark: z.ZodOptional<z.ZodString>;
@@ -14,15 +18,16 @@ export declare const createParkingSchema: z.ZodObject<{
         latitude: z.ZodNumber;
         longitude: z.ZodNumber;
     }, z.core.$strip>;
-    facilities: z.ZodDefault<z.ZodArray<z.ZodEnum<{
-        [x: string]: string;
-    }>>>;
+    ownerName: z.ZodString;
+    contactNumber: z.ZodString;
+    parkingArea: z.ZodNumber;
+    facilities: z.ZodDefault<z.ZodArray<z.ZodString>>;
     rules: z.ZodDefault<z.ZodArray<z.ZodString>>;
     entryInstructions: z.ZodDefault<z.ZodString>;
     bookingModes: z.ZodObject<{
-        hourly: z.ZodDefault<z.ZodBoolean>;
-        daily: z.ZodDefault<z.ZodBoolean>;
-        monthly: z.ZodDefault<z.ZodBoolean>;
+        hourly: z.ZodBoolean;
+        daily: z.ZodBoolean;
+        monthly: z.ZodBoolean;
     }, z.core.$strip>;
     pricing: z.ZodObject<{
         currency: z.ZodDefault<z.ZodString>;
@@ -47,10 +52,6 @@ export declare const createParkingSchema: z.ZodObject<{
             monthly: z.ZodOptional<z.ZodNumber>;
         }, z.core.$strip>;
     }, z.core.$strip>;
-    images: z.ZodDefault<z.ZodArray<z.ZodObject<{
-        url: z.ZodString;
-        publicId: z.ZodString;
-    }, z.core.$strip>>>;
     operatingHours: z.ZodObject<{
         open: z.ZodString;
         close: z.ZodString;

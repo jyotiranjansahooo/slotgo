@@ -4,7 +4,6 @@ import walletRepository from "../../repositories/wallet.repository.js";
 import transactionRepository from "../../repositories/transaction.repository.js";
 import { WALLET_TRANSACTION_STATUS, WALLET_TRANSACTION_TYPE, } from "../../constants/wallet.js";
 class WalletService {
-    // GET OR CREATE OWNER WALLET
     async getOrCreateWallet(ownerId) {
         let wallet = await walletRepository.findByOwnerId(ownerId);
         if (wallet) {

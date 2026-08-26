@@ -236,8 +236,7 @@ class PaymentService {
         // ==========================================================
         // ALREADY PAID
         // ==========================================================
-        if (booking.overtimePaymentStatus ===
-            PAYMENT_STATUS.SUCCESS) {
+        if (booking.overtimePaymentStatus === PAYMENT_STATUS.SUCCESS) {
             return {
                 booking,
                 payment: {
@@ -279,8 +278,7 @@ class PaymentService {
         // ==========================================================
         let walletResult = null;
         if (updatedBooking.overtimeParkingAmount > 0) {
-            walletResult =
-                await walletService.creditOwnerEarnings(updatedBooking.ownerId.toString(), updatedBooking.overtimeParkingAmount, updatedBooking._id.toString(), `overtime:${updatedBooking._id.toString()}`, `Overtime parking earnings from booking ${updatedBooking.bookingNumber}`);
+            walletResult = await walletService.creditOwnerEarnings(updatedBooking.ownerId.toString(), updatedBooking.overtimeParkingAmount, updatedBooking._id.toString(), `overtime:${updatedBooking._id.toString()}`, `Overtime parking earnings from booking ${updatedBooking.bookingNumber}`);
         }
         // ==========================================================
         // RELEASE PARKING SLOT
@@ -294,8 +292,7 @@ class PaymentService {
         // ==========================================================
         const completedBooking = await bookingRepository.update(updatedBooking._id.toString(), {
             bookingStatus: BOOKING_STATUS.COMPLETED,
-            checkedOutAt: updatedBooking.checkedOutAt ??
-                new Date(),
+            checkedOutAt: updatedBooking.checkedOutAt ?? new Date(),
         });
         if (!completedBooking) {
             // TRY TO RESTORE SLOT
@@ -328,8 +325,7 @@ class PaymentService {
             throw new ApiError(404, "Payment not found.");
         }
         // PAYMENT MUST BE SUCCESSFUL
-        if (payment.status !==
-            PAYMENT_STATUS.SUCCESS) {
+        if (payment.status !== PAYMENT_STATUS.SUCCESS) {
             throw new ApiError(400, "Only successful payments can be refunded.");
         }
         // FIND BOOKING
@@ -342,14 +338,12 @@ class PaymentService {
             throw new ApiError(403, "You are not authorized to refund this payment.");
         }
         // CALCULATE REFUNDABLE AMOUNT
-        const refundableAmount = payment.amount -
-            payment.refundAmount;
+        const refundableAmount = payment.amount - payment.refundAmount;
         const refundAmount = amount ?? refundableAmount;
         if (refundAmount <= 0) {
             throw new ApiError(400, "Refund amount must be greater than zero.");
         }
-        if (refundAmount >
-            refundableAmount) {
+        if (refundAmount > refundableAmount) {
             throw new ApiError(400, "Refund amount exceeds the refundable amount.");
         }
         // PAYMENT ID REQUIRED
@@ -363,8 +357,7 @@ class PaymentService {
         // ==========================================================
         // CALCULATE TOTAL REFUNDED
         // ==========================================================
-        const totalRefunded = payment.refundAmount +
-            refundAmount;
+        const totalRefunded = payment.refundAmount + refundAmount;
         const fullyRefunded = totalRefunded >= payment.amount;
         // ==========================================================
         // UPDATE PAYMENT
@@ -376,9 +369,7 @@ class PaymentService {
             status: fullyRefunded
                 ? PAYMENT_STATUS.REFUNDED
                 : PAYMENT_STATUS.PARTIALLY_REFUNDED,
-            refundedAt: fullyRefunded
-                ? new Date()
-                : undefined,
+            refundedAt: fullyRefunded ? new Date() : undefined,
         });
         if (!updatedPayment) {
             throw new ApiError(500, "Unable to update refund information.");
@@ -386,15 +377,13 @@ class PaymentService {
         // ==========================================================
         // CALCULATE OWNER EARNING REVERSAL
         // ==========================================================
-        const ownerRefundAmount = Number((booking.ownerReceives *
-            (refundAmount / payment.amount)).toFixed(2));
+        const ownerRefundAmount = Number((booking.ownerReceives * (refundAmount / payment.amount)).toFixed(2));
         // ==========================================================
         // REVERSE OWNER WALLET
         // ==========================================================
         let walletResult = null;
         if (ownerRefundAmount > 0) {
-            walletResult =
-                await walletService.reverseOwnerEarnings(booking.ownerId.toString(), ownerRefundAmount, booking._id.toString(), `refund:${refund.id}`, `Owner earning reversal for booking ${booking.bookingNumber}`);
+            walletResult = await walletService.reverseOwnerEarnings(booking.ownerId.toString(), ownerRefundAmount, booking._id.toString(), `refund:${refund.id}`, `Owner earning reversal for booking ${booking.bookingNumber}`);
         }
         return {
             payment: updatedPayment,

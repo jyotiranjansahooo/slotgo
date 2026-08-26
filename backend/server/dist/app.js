@@ -9,6 +9,8 @@ import adminUserRoutes from "./routes/admin/user.routes.js";
 import adminDashboardRoutes from "./routes/admin/dashboard.routes.js";
 import parkingBookingBlockRoutes from "./routes/parking-booking-block.routes.js";
 import vehicleRoutes from "./routes/vehicle.routes.js";
+import statsRoutes from "./routes/stats.routes.js";
+import uploadRoutes from "./routes/upload.routes.js";
 import { env } from "./config/env.js";
 import routes from "./routes/index.js";
 import notFoundMiddleware from "./middleware/notFound.middleware.js";
@@ -26,20 +28,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 // Cookie Parser
 app.use(cookieParser());
-// Compression
 app.use(compression());
-// Logger
 app.use(morgan("dev"));
-// Routes
 app.use("/api/v1", routes);
 app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/vehicles", vehicleRoutes);
+app.use("/api/v1/stats", statsRoutes);
+app.use("/api/uploads", uploadRoutes);
 app.use("/api/v1/admin/users", adminUserRoutes);
 app.use("/api/v1/admin/dashboard", adminDashboardRoutes);
 app.use("/api/v1/parking-booking-blocks", parkingBookingBlockRoutes);
-// 404 Handler
 app.use(notFoundMiddleware);
-// Global Error Handler
 app.use(errorMiddleware);
 export default app;
 //# sourceMappingURL=app.js.map

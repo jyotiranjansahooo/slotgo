@@ -14,6 +14,9 @@ export interface IParking {
         latitude: number;
         longitude: number;
     };
+    ownerName: string;
+    contactNumber: string;
+    parkingArea: number;
     facilities: string[];
     rules: string[];
     entryInstructions: string;

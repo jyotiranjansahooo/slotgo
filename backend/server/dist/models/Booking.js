@@ -1,9 +1,6 @@
 import mongoose, { Schema } from "mongoose";
 import { BOOKING_STATUS, BOOKING_STATUS_VALUES, PAYMENT_STATUS as BOOKING_PAYMENT_STATUS, PAYMENT_STATUS_VALUES as BOOKING_PAYMENT_STATUS_VALUES, BOOKING_MODE_VALUES, CANCELLED_BY_VALUES, } from "../constants/booking.js";
 import { PAYMENT_STATUS as GATEWAY_PAYMENT_STATUS, PAYMENT_STATUS_VALUES as GATEWAY_PAYMENT_STATUS_VALUES, } from "../constants/payment.js";
-/* ============================================================
-   DRIVER SNAPSHOT SCHEMA
-   ============================================================ */
 const driverSnapshotSchema = new Schema({
     name: {
         type: String,
@@ -18,9 +15,6 @@ const driverSnapshotSchema = new Schema({
 }, {
     _id: false,
 });
-/* ============================================================
-   PARKING SNAPSHOT SCHEMA
-   ============================================================ */
 const parkingSnapshotSchema = new Schema({
     parkingName: {
         type: String,
@@ -35,9 +29,6 @@ const parkingSnapshotSchema = new Schema({
 }, {
     _id: false,
 });
-/* ============================================================
-   VEHICLE SNAPSHOT SCHEMA
-   ============================================================ */
 const vehicleSnapshotSchema = new Schema({
     registrationNumber: {
         type: String,
@@ -61,9 +52,6 @@ const vehicleSnapshotSchema = new Schema({
 }, {
     _id: false,
 });
-/* ============================================================
-   CANCELLATION SCHEMA
-   ============================================================ */
 const cancellationSchema = new Schema({
     cancelledBy: {
         type: String,
@@ -92,9 +80,6 @@ const cancellationSchema = new Schema({
 }, {
     _id: false,
 });
-/* ============================================================
-   PAYMENT SNAPSHOT SCHEMA
-   ============================================================ */
 const paymentSchema = new Schema({
     method: {
         type: String,
@@ -114,13 +99,7 @@ const paymentSchema = new Schema({
 }, {
     _id: false,
 });
-/* ============================================================
-   BOOKING SCHEMA
-   ============================================================ */
 const bookingSchema = new Schema({
-    /* ==========================================================
-       BOOKING NUMBER
-       ========================================================== */
     bookingNumber: {
         type: String,
         required: true,
@@ -128,9 +107,9 @@ const bookingSchema = new Schema({
         index: true,
         trim: true,
     },
-    /* ==========================================================
+    /*
        DRIVER
-       ========================================================== */
+       */
     driverId: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -138,9 +117,6 @@ const bookingSchema = new Schema({
         immutable: true,
         index: true,
     },
-    /* ==========================================================
-       OWNER
-       ========================================================== */
     ownerId: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -148,9 +124,6 @@ const bookingSchema = new Schema({
         immutable: true,
         index: true,
     },
-    /* ==========================================================
-       PARKING
-       ========================================================== */
     parkingId: {
         type: Schema.Types.ObjectId,
         ref: "Parking",
@@ -158,9 +131,6 @@ const bookingSchema = new Schema({
         immutable: true,
         index: true,
     },
-    /* ==========================================================
-       SLOT
-       ========================================================== */
     slotId: {
         type: Schema.Types.ObjectId,
         ref: "ParkingSlot",
@@ -168,9 +138,6 @@ const bookingSchema = new Schema({
         immutable: true,
         index: true,
     },
-    /* ==========================================================
-       VEHICLE
-       ========================================================== */
     vehicleId: {
         type: Schema.Types.ObjectId,
         ref: "Vehicle",
@@ -182,17 +149,11 @@ const bookingSchema = new Schema({
         type: String,
         required: true,
     },
-    /* ==========================================================
-       BOOKING MODE
-       ========================================================== */
     bookingMode: {
         type: String,
         enum: BOOKING_MODE_VALUES,
         required: true,
     },
-    /* ==========================================================
-       TIME
-       ========================================================== */
     startTime: {
         type: Date,
         required: true,
@@ -203,9 +164,9 @@ const bookingSchema = new Schema({
         required: true,
         index: true,
     },
-    /* ==========================================================
+    /*
        NORMAL PRICING
-       ========================================================== */
+       */
     parkingAmount: {
         type: Number,
         required: true,
@@ -241,9 +202,9 @@ const bookingSchema = new Schema({
         required: true,
         min: 0,
     },
-    /* ==========================================================
+    /*
        OVERTIME
-       ========================================================== */
+       */
     overtimeMinutes: {
         type: Number,
         default: 0,
@@ -264,9 +225,6 @@ const bookingSchema = new Schema({
         default: 0,
         min: 0,
     },
-    /* ==========================================================
-       OVERTIME RAZORPAY PAYMENT
-       ========================================================== */
     overtimePaymentOrderId: {
         type: String,
         default: "",
@@ -284,18 +242,12 @@ const bookingSchema = new Schema({
     overtimePaidAt: {
         type: Date,
     },
-    /* ==========================================================
-       NORMAL BOOKING PAYMENT STATUS
-       ========================================================== */
     paymentStatus: {
         type: String,
         enum: BOOKING_PAYMENT_STATUS_VALUES,
         default: BOOKING_PAYMENT_STATUS.PENDING,
         required: true,
     },
-    /* ==========================================================
-       BOOKING STATUS
-       ========================================================== */
     bookingStatus: {
         type: String,
         enum: BOOKING_STATUS_VALUES,
@@ -303,61 +255,61 @@ const bookingSchema = new Schema({
         required: true,
         index: true,
     },
-    /* ==========================================================
+    /*
        PAYMENT DETAILS
-       ========================================================== */
+       */
     payment: {
         type: paymentSchema,
         default: undefined,
     },
-    /* ==========================================================
+    /*
        QR CODE
-       ========================================================== */
+       */
     qrCode: {
         type: String,
         default: "",
     },
-    /* ==========================================================
+    /*
        VERIFICATION PIN
-       ========================================================== */
+       */
     verificationPin: {
         type: String,
         required: true,
         trim: true,
     },
-    /* ==========================================================
+    /*
        CHECK-IN / CHECK-OUT
-       ========================================================== */
+       */
     checkedInAt: {
         type: Date,
     },
     checkedOutAt: {
         type: Date,
     },
-    /* ==========================================================
+    /*
        DRIVER SNAPSHOT
-       ========================================================== */
+       */
     driverSnapshot: {
         type: driverSnapshotSchema,
         required: true,
     },
-    /* ==========================================================
+    /*
        PARKING SNAPSHOT
-       ========================================================== */
+       */
     parkingSnapshot: {
         type: parkingSnapshotSchema,
         required: true,
     },
-    /* ==========================================================
+    /*
        VEHICLE SNAPSHOT
-       ========================================================== */
+       */
     vehicleSnapshot: {
         type: vehicleSnapshotSchema,
         required: true,
     },
-    /* ==========================================================
+    /*
        CANCELLATION
-       ========================================================== */
+       */
     cancellation: {
         type: cancellationSchema,
         default: undefined,
@@ -366,9 +318,9 @@ const bookingSchema = new Schema({
     timestamps: true,
     versionKey: false,
 });
-/* ==============================================================
+/* ====
    INDEXES
-   ============================================================== */
+   ====*/
 /*
  * Driver booking lookup
  */
@@ -433,9 +385,9 @@ bookingSchema.index({
 bookingSchema.index({
     overtimePaymentStatus: 1,
 });
-/* ==============================================================
+/* ====
    MODEL
-   ============================================================== */
+   ====*/
 const Booking = mongoose.models.Booking || mongoose.model("Booking", bookingSchema);
 export default Booking;
 //# sourceMappingURL=Booking.js.map

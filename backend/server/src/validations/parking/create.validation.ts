@@ -1,105 +1,94 @@
 import { z } from "zod";
 
-import {
-  PARKING_TYPE_VALUES,
-  PARKING_FACILITY_VALUES,
-} from "../../constants/parking.js";
-
 const vehiclePricingSchema = z.object({
   hourly: z.number().min(0).optional(),
   daily: z.number().min(0).optional(),
   monthly: z.number().min(0).optional(),
 });
 
-const pricingSchema = z.object({
-  currency: z.string().default("INR"),
-
-  twoWheeler: vehiclePricingSchema,
-
-  fourWheeler: vehiclePricingSchema,
-
-  vanMinibus: vehiclePricingSchema,
-
-  heavyVehicle: vehiclePricingSchema,
-});
-
 export const createParkingSchema = z.object({
-  ownerName: z
-  .string()
-  .trim()
-  .min(2, "Owner name is required")
-  .max(100, "Owner name cannot exceed 100 characters"),
+  parkingName: z.string().trim().min(2, "Parking name is required.").max(100),
 
-contactNumber: z
-  .string()
-  .trim()
-  .regex(/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"),
+  description: z.string().trim().max(1000).default(""),
 
-parkingArea: z
-  .number()
-  .positive("Parking area must be greater than 0"),
-  parkingName: z
-    .string()
-    .trim()
-    .min(2, "Parking name must be at least 2 characters")
-    .max(100, "Parking name cannot exceed 100 characters"),
+  parkingType: z.enum([
+    "open",
+    "covered",
+    "basement",
+    "multiLevel",
+    "street",
+  ]),
 
-  description: z
-    .string()
-    .trim()
-    .max(1000, "Description cannot exceed 1000 characters")
-    .default(""),
+  address: z.string().trim().min(5, "Parking address is required.").max(250),
 
-  parkingType: z.enum(PARKING_TYPE_VALUES as [string, ...string[]]),
+  landmark: z.string().trim().max(150).optional(),
 
-  address: z.string().trim().min(5, "Address is required"),
+  city: z.string().trim().min(2).max(100),
 
-  landmark: z.string().trim().optional(),
+  state: z.string().trim().min(2).max(100),
 
-  city: z.string().trim().min(2, "City is required"),
-
-  state: z.string().trim().min(2, "State is required"),
-
-  pincode: z
-    .string()
-    .trim()
-    .regex(/^\d{6}$/, "Invalid pincode"),
+  pincode: z.string().regex(/^[1-9][0-9]{5}$/, "Invalid pincode."),
 
   location: z.object({
     latitude: z.number().min(-90).max(90),
-
     longitude: z.number().min(-180).max(180),
   }),
 
-  facilities: z
-    .array(z.enum(PARKING_FACILITY_VALUES as [string, ...string[]]))
-    .default([]),
+  ownerName: z.string().trim().min(2, "Owner name is required.").max(100),
 
-  rules: z.array(z.string().trim().min(1)).default([]),
+  contactNumber: z
+    .string()
+    .regex(/^[6-9]\d{9}$/, "Invalid contact number."),
+
+  parkingArea: z
+    .number()
+    .positive("Parking area must be greater than 0."),
+
+  facilities: z.array(z.string()).default([]),
+
+  rules: z.array(z.string().trim().min(1).max(300)).default([]),
 
   entryInstructions: z.string().trim().max(1000).default(""),
 
-  bookingModes: z.object({
-    hourly: z.boolean().default(true),
-    daily: z.boolean().default(true),
-    monthly: z.boolean().default(false),
+  bookingModes: z
+    .object({
+      hourly: z.boolean(),
+      daily: z.boolean(),
+      monthly: z.boolean(),
+    })
+    .refine(
+      (value) => value.hourly || value.daily || value.monthly,
+      {
+        message: "At least one booking mode must be selected.",
+      },
+    ),
+
+  pricing: z.object({
+    currency: z.string().trim().min(1).max(10).default("INR"),
+
+    twoWheeler: vehiclePricingSchema,
+
+    fourWheeler: vehiclePricingSchema,
+
+    vanMinibus: vehiclePricingSchema,
+
+    heavyVehicle: vehiclePricingSchema,
   }),
 
-  pricing: pricingSchema,
-
- images: z
-  .array(
-    z.object({
-      url: z.string().url(),
-      publicId: z.string().min(1),
-    }),
-  )
-  .min(2, "At least 2 parking images are required")
-  .max(5, "Maximum 5 parking images are allowed"),
-
   operatingHours: z.object({
-    open: z.string().min(1),
-    close: z.string().min(1),
+    open: z
+      .string()
+      .regex(
+        /^([01]\d|2[0-3]):[0-5]\d$/,
+        "Invalid opening time.",
+      ),
+
+    close: z
+      .string()
+      .regex(
+        /^([01]\d|2[0-3]):[0-5]\d$/,
+        "Invalid closing time.",
+      ),
   }),
 });
 

@@ -2,13 +2,14 @@
 
 import { ArrowRight, Car, MapPin, Navigation, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function Hero() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
 
   return (
     <section className="relative min-h-[760px] overflow-hidden bg-[#4d4ff2] text-white sm:min-h-[820px] lg:min-h-[880px]">
-      {/* Background stripes */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-[#4c50f4] via-[#5658f5] to-[#3e42dc]" />
 
@@ -42,8 +43,8 @@ export default function Hero() {
             </h1>
 
             <p className="mt-7 max-w-lg text-base leading-7 text-white/75 sm:text-lg">
-              Discover nearby parking spaces, check availability, reserve
-              your spot, and park without the usual hassle.
+              Discover nearby parking spaces, check availability, reserve your
+              spot, and park without the usual hassle.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -59,13 +60,15 @@ export default function Hero() {
                 />
               </button>
 
-              <button
-                type="button"
-                onClick={() => router.push("/register")}
-                className="rounded-2xl border border-white/25 bg-white/10 px-6 py-4 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20"
-              >
-                Create Account
-              </button>
+              {!isLoading && !isAuthenticated && (
+                <button
+                  type="button"
+                  onClick={() => router.push("/register")}
+                  className="rounded-2xl border border-white/25 bg-white/10 px-6 py-4 text-sm font-semibold text-white backdrop-blur-md transition hover:bg-white/20"
+                >
+                  Create Account
+                </button>
+              )}
             </div>
 
             {/* Small stats */}
@@ -115,7 +118,11 @@ export default function Hero() {
                 {/* Parking pins */}
                 <ParkingPin className="left-[20%] top-[32%]" price="₹40" />
                 <ParkingPin className="right-[20%] top-[26%]" price="₹60" />
-                <ParkingPin className="left-[42%] top-[53%]" price="₹50" active />
+                <ParkingPin
+                  className="left-[42%] top-[53%]"
+                  price="₹50"
+                  active
+                />
                 <ParkingPin className="right-[25%] top-[65%]" price="₹35" />
 
                 {/* Current location */}
@@ -139,17 +146,13 @@ export default function Hero() {
                             Central Parking Hub
                           </p>
 
-                          <p className="text-xs text-slate-400">
-                            350m away
-                          </p>
+                          <p className="text-xs text-slate-400">350m away</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right">
-                      <p className="text-lg font-black text-indigo-600">
-                        ₹40
-                      </p>
+                      <p className="text-lg font-black text-indigo-600">₹40</p>
                       <p className="text-[11px] text-slate-400">per hour</p>
                     </div>
                   </div>
@@ -198,13 +201,7 @@ export default function Hero() {
   );
 }
 
-function Stat({
-  value,
-  label,
-}: {
-  value: string;
-  label: string;
-}) {
+function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div>
       <p className="text-lg font-bold text-white sm:text-xl">{value}</p>

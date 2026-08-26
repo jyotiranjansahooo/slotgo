@@ -746,7 +746,7 @@ function DriverNavbar() {
 
         <button
           type="button"
-          onClick={() => router.push("/driver")}
+          onClick={() => router.push("/")}
           className="flex items-center gap-2.5"
         >
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#4338ff] shadow-lg">
@@ -1019,9 +1019,7 @@ function NoParkingState({
   );
 }
 
-/* ============================================================
-   SKELETON PAGE
-   ============================================================ */
+
 
 function ParkingSkeletonPage() {
   return (

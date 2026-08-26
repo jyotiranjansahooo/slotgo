@@ -7,9 +7,12 @@ import parkingService from "../../services/parking/parking.service.js";
 
 export const createParking = asyncHandler(
   async (req: Request, res: Response) => {
+    const files = (req.files ?? []) as Express.Multer.File[];
+
     const parking = await parkingService.createParking(
       req.user!._id.toString(),
       req.body,
+      files,
     );
 
     res
@@ -37,6 +40,7 @@ export const getParking = asyncHandler(async (req: Request, res: Response) => {
     .status(200)
     .json(new ApiResponse(200, parking, "Parking fetched successfully."));
 });
+
 export const updateParking = asyncHandler(
   async (req: Request, res: Response) => {
     const parking = await parkingService.updateParking(
@@ -61,26 +65,5 @@ export const deleteParking = asyncHandler(
     res
       .status(200)
       .json(new ApiResponse(200, null, "Parking deactivated successfully."));
-  },
-);
-export const approveParking = asyncHandler(
-  async (req: Request, res: Response) => {
-    const parking = await parkingService.approveParking(
-      req.params.id as string,
-    );
-
-    res
-      .status(200)
-      .json(new ApiResponse(200, parking, "Parking approved successfully."));
-  },
-);
-
-export const rejectParking = asyncHandler(
-  async (req: Request, res: Response) => {
-    const parking = await parkingService.rejectParking(req.params.id as string);
-
-    res
-      .status(200)
-      .json(new ApiResponse(200, parking, "Parking rejected successfully."));
   },
 );

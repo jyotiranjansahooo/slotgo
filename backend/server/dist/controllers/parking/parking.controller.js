@@ -2,7 +2,8 @@ import asyncHandler from "../../utils/asyncHandler.js";
 import ApiResponse from "../../utils/ApiResponse.js";
 import parkingService from "../../services/parking/parking.service.js";
 export const createParking = asyncHandler(async (req, res) => {
-    const parking = await parkingService.createParking(req.user._id.toString(), req.body);
+    const files = (req.files ?? []);
+    const parking = await parkingService.createParking(req.user._id.toString(), req.body, files);
     res
         .status(201)
         .json(new ApiResponse(201, parking, "Parking created successfully."));
@@ -30,17 +31,5 @@ export const deleteParking = asyncHandler(async (req, res) => {
     res
         .status(200)
         .json(new ApiResponse(200, null, "Parking deactivated successfully."));
-});
-export const approveParking = asyncHandler(async (req, res) => {
-    const parking = await parkingService.approveParking(req.params.id);
-    res
-        .status(200)
-        .json(new ApiResponse(200, parking, "Parking approved successfully."));
-});
-export const rejectParking = asyncHandler(async (req, res) => {
-    const parking = await parkingService.rejectParking(req.params.id);
-    res
-        .status(200)
-        .json(new ApiResponse(200, parking, "Parking rejected successfully."));
 });
 //# sourceMappingURL=parking.controller.js.map

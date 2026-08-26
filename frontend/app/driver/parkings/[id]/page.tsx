@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
-
+import type { Parking } from "@/types/parking";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import { getApiErrorMessage } from "@/lib/api-error";
@@ -86,14 +86,8 @@ function ParkingDetails() {
     );
   }
 
-  /*
-   * --------------------------------------------------
-   * PARKING DATA
-   * --------------------------------------------------
-   */
-
 const parking =
-  parkingQuery.data?.data?.parking;
+  parkingQuery.data?.data
   if (!parking) {
     return (
       <ErrorState
@@ -103,11 +97,6 @@ const parking =
     );
   }
 
-  /*
-   * --------------------------------------------------
-   * SAFE DEFAULTS
-   * --------------------------------------------------
-   */
 
   const images = parking.images ?? [];
 

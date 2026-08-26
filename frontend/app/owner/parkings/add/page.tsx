@@ -1,9 +1,19 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
+  type ChangeEvent,
+  type DragEvent,
+  type FormEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+
+import {
   Check,
   ChevronDown,
   Clock3,
@@ -18,26 +28,58 @@ import {
   Trash2,
   User,
   X,
+  Car,
+  Bike,
+  Bus,
+  Truck,
+  AlertCircle,
+  CheckCircle2,
 } from "lucide-react";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import OwnerNavbar from "@/components/owner/OwnerNavbar";
-import { useAuth } from "@/providers/AuthProvider";
 
-import { createParking } from "@/services/parking.service";
+import {
+  createParking,
+  type CreateParkingPayload,
+} from "@/services/parking.service";
+
 import { getApiErrorMessage } from "@/lib/api-error";
 
 import type { ParkingType } from "@/types/parking";
+
+/* ============================================================
+   CONSTANTS
+   ============================================================ */
+
+const MAX_IMAGES = 5;
+const MIN_IMAGES = 2;
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 const PARKING_TYPES: {
   value: ParkingType;
   label: string;
 }[] = [
-  { value: "open", label: "Open Parking" },
-  { value: "covered", label: "Covered Parking" },
-  { value: "basement", label: "Basement" },
-  { value: "multiLevel", label: "Multi Level" },
-  { value: "street", label: "Street Parking" },
+  {
+    value: "open",
+    label: "Open Parking",
+  },
+  {
+    value: "covered",
+    label: "Covered Parking",
+  },
+  {
+    value: "basement",
+    label: "Basement",
+  },
+  {
+    value: "multiLevel",
+    label: "Multi Level",
+  },
+  {
+    value: "street",
+    label: "Street Parking",
+  },
 ];
 
 const FACILITIES = [
@@ -59,10 +101,43 @@ const DEFAULT_RULES = [
   "Park only in the assigned slot.",
 ];
 
-interface ImageItem {
-  url: string;
-  publicId: string;
-}
+type VehicleType = "twoWheeler" | "fourWheeler" | "vanMinibus" | "heavyVehicle";
+
+const VEHICLE_TYPES: {
+  value: VehicleType;
+  label: string;
+  description: string;
+  icon: ReactNode;
+}[] = [
+  {
+    value: "twoWheeler",
+    label: "Two Wheeler",
+    description: "Bike / Scooter",
+    icon: <Bike className="h-5 w-5" />,
+  },
+  {
+    value: "fourWheeler",
+    label: "Four Wheeler",
+    description: "Car / SUV",
+    icon: <Car className="h-5 w-5" />,
+  },
+  {
+    value: "vanMinibus",
+    label: "Van / Minibus",
+    description: "Van / Minibus",
+    icon: <Bus className="h-5 w-5" />,
+  },
+  {
+    value: "heavyVehicle",
+    label: "Heavy Vehicle",
+    description: "Truck / Bus",
+    icon: <Truck className="h-5 w-5" />,
+  },
+];
+
+/* ============================================================
+   FORM TYPE
+   ============================================================ */
 
 interface FormState {
   parkingName: string;
@@ -87,6 +162,8 @@ interface FormState {
   facilities: string[];
   rules: string[];
   entryInstructions: string;
+
+  vehicleTypes: VehicleType[];
 
   hourlyBooking: boolean;
   dailyBooking: boolean;
@@ -114,6 +191,30 @@ interface FormState {
   closingTime: string;
 }
 
+/* ============================================================
+   IMAGE TYPE
+   ============================================================ */
+
+interface ImageFile {
+  file: File;
+  preview: string;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+type ToastType = "error" | "success";
+
+interface ToastState {
+  type: ToastType;
+  message: string;
+}
+
+/* ============================================================
+   INITIAL FORM
+   ============================================================ */
+
 const initialForm: FormState = {
   parkingName: "",
   description: "",
@@ -135,9 +236,11 @@ const initialForm: FormState = {
   parkingArea: "",
 
   facilities: [],
-  rules: DEFAULT_RULES,
+  rules: [...DEFAULT_RULES],
 
   entryInstructions: "",
+
+  vehicleTypes: [],
 
   hourlyBooking: true,
   dailyBooking: true,
@@ -165,6 +268,10 @@ const initialForm: FormState = {
   closingTime: "23:00",
 };
 
+/* ============================================================
+   PAGE
+   ============================================================ */
+
 export default function OwnerAddParkingPage() {
   return (
     <ProtectedRoute allowedRoles={["parkingOwner"]}>
@@ -173,26 +280,73 @@ export default function OwnerAddParkingPage() {
   );
 }
 
+/* ============================================================
+   MAIN PAGE
+   ============================================================ */
+
 function OwnerAddParking() {
   const router = useRouter();
-  const { user } = useAuth();
 
   const [form, setForm] = useState<FormState>(initialForm);
-  const [images, setImages] = useState<ImageItem[]>([]);
+
+  const [imageFiles, setImageFiles] = useState<ImageFile[]>([]);
+
+  const [isDragging, setIsDragging] = useState(false);
 
   const [newRule, setNewRule] = useState("");
 
   const [loadingLocation, setLoadingLocation] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [toast, setToast] = useState<ToastState | null>(null);
 
-  /*
-   * ----------------------------------------------------------
-   * HELPERS
-   * ----------------------------------------------------------
-   */
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  /* ==========================================================
+     TOAST
+     ========================================================== */
+
+  function showToast(type: ToastType, message: string) {
+    setToast({
+      type,
+      message,
+    });
+  }
+
+  function hideToast() {
+    setToast(null);
+  }
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setToast(null);
+    }, 4500);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [toast]);
+
+  /* ==========================================================
+     CLEANUP IMAGE PREVIEWS
+     ========================================================== */
+
+  useEffect(() => {
+    return () => {
+      imageFiles.forEach((image) => {
+        URL.revokeObjectURL(image.preview);
+      });
+    };
+  }, [imageFiles]);
+
+  /* ==========================================================
+     UPDATE FORM FIELD
+     ========================================================== */
 
   function updateField<K extends keyof FormState>(
     field: K,
@@ -204,18 +358,85 @@ function OwnerAddParking() {
     }));
   }
 
+  /* ==========================================================
+     VEHICLE TYPE
+     ========================================================== */
+
+  function toggleVehicleType(vehicleType: VehicleType) {
+    setForm((previous) => {
+      const exists = previous.vehicleTypes.includes(vehicleType);
+
+      return {
+        ...previous,
+
+        vehicleTypes: exists
+          ? previous.vehicleTypes.filter((item) => item !== vehicleType)
+          : [...previous.vehicleTypes, vehicleType],
+      };
+    });
+  }
+
+  function isVehicleSelected(vehicleType: VehicleType) {
+    return form.vehicleTypes.includes(vehicleType);
+  }
+
+  /* ==========================================================
+     BOOKING MODE
+     ========================================================== */
+
+  function toggleBookingMode(
+    mode: "hourlyBooking" | "dailyBooking" | "monthlyBooking",
+  ) {
+    setForm((previous) => {
+      const nextValue = !previous[mode];
+
+      const next = {
+        ...previous,
+        [mode]: nextValue,
+      };
+
+      /*
+       * If monthly booking is disabled,
+       * automatically remove monthly prices.
+       */
+
+      if (mode === "monthlyBooking" && !nextValue) {
+        next.twoWheelerMonthly = "";
+        next.fourWheelerMonthly = "";
+        next.vanMonthly = "";
+        next.heavyMonthly = "";
+      }
+
+      /*
+       * Never allow all booking modes to become false
+       * without the validation warning.
+       */
+
+      return next;
+    });
+  }
+
+  /* ==========================================================
+     FACILITIES
+     ========================================================== */
+
   function toggleFacility(facility: string) {
     setForm((previous) => {
       const exists = previous.facilities.includes(facility);
 
       return {
         ...previous,
+
         facilities: exists
           ? previous.facilities.filter((item) => item !== facility)
           : [...previous.facilities, facility],
       };
     });
   }
+
+  /* ==========================================================
+     RULES
+     ========================================================== */
 
   function addRule() {
     const rule = newRule.trim();
@@ -244,17 +465,15 @@ function OwnerAddParking() {
     }));
   }
 
-  /*
-   * ----------------------------------------------------------
-   * LIVE LOCATION
-   * ----------------------------------------------------------
-   */
+  /* ==========================================================
+     LIVE LOCATION
+     ========================================================== */
 
   function getLiveLocation() {
-    setError("");
+    hideToast();
 
     if (!navigator.geolocation) {
-      setError("Your browser does not support live location.");
+      showToast("error", "Your browser does not support live location.");
       return;
     }
 
@@ -262,24 +481,43 @@ function OwnerAddParking() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        updateField("latitude", String(position.coords.latitude));
-        updateField("longitude", String(position.coords.longitude));
+        const { latitude, longitude } = position.coords;
+
+        setForm((previous) => ({
+          ...previous,
+          latitude: latitude.toFixed(7),
+          longitude: longitude.toFixed(7),
+        }));
 
         setLoadingLocation(false);
+
+        showToast("success", "Current location added successfully.");
       },
+
       (locationError) => {
         setLoadingLocation(false);
 
-        if (locationError.code === 1) {
-          setError(
-            "Location permission was denied. Please allow location access.",
-          );
-        } else if (locationError.code === 2) {
-          setError("Unable to determine your current location.");
-        } else {
-          setError("Unable to get your current location.");
+        switch (locationError.code) {
+          case 1:
+            showToast(
+              "error",
+              "Location permission was denied. Please allow location access.",
+            );
+            break;
+
+          case 2:
+            showToast("error", "Unable to determine your current location.");
+            break;
+
+          case 3:
+            showToast("error", "Location request timed out. Please try again.");
+            break;
+
+          default:
+            showToast("error", "Unable to get your current location.");
         }
       },
+
       {
         enableHighAccuracy: true,
         timeout: 15000,
@@ -288,90 +526,217 @@ function OwnerAddParking() {
     );
   }
 
-  /*
-   * ----------------------------------------------------------
-   * IMAGE URL
-   *
-   * This keeps the page compatible with your backend's
-   * { url, publicId } image structure.
-   *
-   * Replace the upload function with your existing Cloudinary
-   * uploader if you already have one.
-   * ----------------------------------------------------------
-   */
+  /* ==========================================================
+     IMAGE PICKER
+     ========================================================== */
 
   function addImage() {
-    if (images.length >= 5) {
-      setError("Maximum 5 images are allowed.");
+    if (imageFiles.length >= MAX_IMAGES) {
+      showToast("error", `Maximum ${MAX_IMAGES} parking images are allowed.`);
       return;
     }
 
-    const url = window.prompt("Enter the parking image URL");
-
-    if (!url) {
-      return;
-    }
-
-    try {
-      new URL(url);
-    } catch {
-      setError("Please enter a valid image URL.");
-      return;
-    }
-
-    setImages((previous) => [
-      ...previous,
-      {
-        url,
-        publicId: `parking-${Date.now()}`,
-      },
-    ]);
-
-    setError("");
+    fileInputRef.current?.click();
   }
 
   function removeImage(index: number) {
-    setImages((previous) =>
-      previous.filter((_, imageIndex) => imageIndex !== index),
-    );
+    setImageFiles((previous) => {
+      const image = previous[index];
+
+      if (image) {
+        URL.revokeObjectURL(image.preview);
+      }
+
+      return previous.filter((_, fileIndex) => fileIndex !== index);
+    });
+
+    hideToast();
   }
 
-  /*
-   * ----------------------------------------------------------
-   * VALIDATION
-   * ----------------------------------------------------------
-   */
+  function addFiles(files: File[]) {
+    if (files.length === 0) {
+      return;
+    }
 
-  const validationErrors = useMemo(() => {
+    const remainingSlots = MAX_IMAGES - imageFiles.length;
+
+    if (remainingSlots <= 0) {
+      showToast("error", `Maximum ${MAX_IMAGES} parking images are allowed.`);
+      return;
+    }
+
+    const filesToAdd = files.slice(0, remainingSlots);
+
+    /* ----------------------------------------------------------
+       FILE TYPE
+       ---------------------------------------------------------- */
+
+    const invalidFile = filesToAdd.find(
+      (file) => !file.type.startsWith("image/"),
+    );
+
+    if (invalidFile) {
+      showToast("error", `"${invalidFile.name}" is not a valid image file.`);
+      return;
+    }
+
+    /* ----------------------------------------------------------
+       FILE SIZE
+       ---------------------------------------------------------- */
+
+    const oversizedFile = filesToAdd.find((file) => file.size > MAX_IMAGE_SIZE);
+
+    if (oversizedFile) {
+      showToast(
+        "error",
+        `"${oversizedFile.name}" is too large. Each image must be smaller than 5 MB.`,
+      );
+      return;
+    }
+
+    /* ----------------------------------------------------------
+       DUPLICATES
+       ---------------------------------------------------------- */
+
+    const uniqueFiles = filesToAdd.filter((newFile) => {
+      return !imageFiles.some(
+        (existingImage) =>
+          existingImage.file.name === newFile.name &&
+          existingImage.file.size === newFile.size &&
+          existingImage.file.lastModified === newFile.lastModified,
+      );
+    });
+
+    if (uniqueFiles.length === 0) {
+      showToast("error", "Those images have already been added.");
+      return;
+    }
+
+    /*
+     * IMPORTANT:
+     * Create the object URL when the File is accepted,
+     * not inside render.
+     */
+
+    const newImages: ImageFile[] = uniqueFiles.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setImageFiles((previous) => [...previous, ...newImages]);
+
+    if (files.length > remainingSlots) {
+      showToast(
+        "error",
+        `Only ${remainingSlots} more image${
+          remainingSlots === 1 ? "" : "s"
+        } can be added.`,
+      );
+    } else {
+      hideToast();
+    }
+  }
+
+  function handleImageSelect(event: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(event.target.files ?? []);
+
+    addFiles(files);
+
+    /*
+     * Allows selecting the same file again after removing it.
+     */
+
+    event.target.value = "";
+  }
+
+  function handleDragOver(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (imageFiles.length < MAX_IMAGES) {
+      setIsDragging(true);
+    }
+  }
+
+  function handleDragLeave(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragging(false);
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setIsDragging(false);
+
+    if (imageFiles.length >= MAX_IMAGES) {
+      showToast("error", `Maximum ${MAX_IMAGES} parking images are allowed.`);
+      return;
+    }
+
+    const files = Array.from(event.dataTransfer.files);
+
+    addFiles(files);
+  }
+
+  /* ==========================================================
+     VALIDATION
+     ========================================================== */
+
+  function getValidationErrors(): string[] {
     const errors: string[] = [];
+
+    /* Parking name */
 
     if (form.parkingName.trim().length < 2) {
       errors.push("Parking name is required.");
     }
 
+    /* Description */
+
+    if (form.description.trim().length > 2000) {
+      errors.push("Description cannot exceed 2000 characters.");
+    }
+
+    /* Address */
+
     if (form.address.trim().length < 5) {
       errors.push("Parking address is required.");
     }
+
+    /* City */
 
     if (form.city.trim().length < 2) {
       errors.push("City is required.");
     }
 
+    /* State */
+
     if (form.state.trim().length < 2) {
       errors.push("State is required.");
     }
+
+    /* Pincode */
 
     if (!/^\d{6}$/.test(form.pincode.trim())) {
       errors.push("Enter a valid 6-digit pincode.");
     }
 
-    if (!form.ownerName.trim()) {
+    /* Owner */
+
+    if (form.ownerName.trim().length < 2) {
       errors.push("Owner name is required.");
     }
+
+    /* Contact */
 
     if (!/^[6-9]\d{9}$/.test(form.contactNumber.trim())) {
       errors.push("Enter a valid 10-digit mobile number.");
     }
+
+    /* Parking area */
 
     const area = Number(form.parkingArea);
 
@@ -379,60 +744,125 @@ function OwnerAddParking() {
       errors.push("Parking area must be greater than 0.");
     }
 
+    /* Latitude */
+
     const latitude = Number(form.latitude);
-    const longitude = Number(form.longitude);
 
     if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
       errors.push("Valid latitude is required.");
     }
 
+    /* Longitude */
+
+    const longitude = Number(form.longitude);
+
     if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
       errors.push("Valid longitude is required.");
     }
 
-    if (images.length < 2) {
-      errors.push("At least 2 parking images are required.");
+    /* Images */
+
+    if (imageFiles.length < MIN_IMAGES) {
+      errors.push(`At least ${MIN_IMAGES} parking images are required.`);
     }
 
-    if (images.length > 5) {
-      errors.push("Maximum 5 parking images are allowed.");
+    if (imageFiles.length > MAX_IMAGES) {
+      errors.push(`Maximum ${MAX_IMAGES} parking images are allowed.`);
     }
+
+    /* Vehicle types */
+
+    if (form.vehicleTypes.length === 0) {
+      errors.push("Select at least one vehicle type.");
+    }
+
+    /* Operating hours */
 
     if (!form.openingTime || !form.closingTime) {
       errors.push("Opening and closing time are required.");
     }
 
+    /* Booking modes */
+
     if (!form.hourlyBooking && !form.dailyBooking && !form.monthlyBooking) {
       errors.push("Select at least one booking mode.");
     }
 
-    return errors;
-  }, [form, images]);
+    /* Currency */
 
-  /*
-   * ----------------------------------------------------------
-   * SUBMIT
-   * ----------------------------------------------------------
-   */
+    if (!/^[A-Z]{3}$/.test(form.currency.trim().toUpperCase())) {
+      errors.push("Currency must be a valid 3-letter code such as INR.");
+    }
+
+    /* Pricing */
+
+    const pricingValues = [
+      form.twoWheelerHourly,
+      form.twoWheelerDaily,
+      form.twoWheelerMonthly,
+
+      form.fourWheelerHourly,
+      form.fourWheelerDaily,
+      form.fourWheelerMonthly,
+
+      form.vanHourly,
+      form.vanDaily,
+      form.vanMonthly,
+
+      form.heavyHourly,
+      form.heavyDaily,
+      form.heavyMonthly,
+    ];
+
+    const invalidPricing = pricingValues.some((value) => {
+      if (!value.trim()) {
+        return false;
+      }
+
+      const number = Number(value);
+
+      return !Number.isFinite(number) || number < 0;
+    });
+
+    if (invalidPricing) {
+      errors.push("Parking prices must be valid non-negative numbers.");
+    }
+
+    return errors;
+  }
+
+  /* ==========================================================
+     SUBMIT
+     ========================================================== */
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    setError("");
-    setSuccess("");
+    hideToast();
+
+    const validationErrors = getValidationErrors();
 
     if (validationErrors.length > 0) {
-      setError(validationErrors[0]);
+      showToast("error", validationErrors[0]);
       return;
     }
 
     try {
       setSubmitting(true);
 
-      const payload = {
+      /*
+       * Only selected vehicle types are sent.
+       *
+       * `vehicleTypes` assumes your backend parking schema
+       * accepts this field.
+       */
+
+      const payload: CreateParkingPayload & {
+        vehicleTypes: VehicleType[];
+      } = {
         parkingName: form.parkingName.trim(),
 
-        description: form.description.trim(),
+        description: form.description.trim() || undefined,
 
         parkingType: form.parkingType,
 
@@ -461,7 +891,17 @@ function OwnerAddParking() {
 
         rules: form.rules,
 
-        entryInstructions: form.entryInstructions.trim(),
+        entryInstructions: form.entryInstructions.trim() || undefined,
+
+        /*
+         * VEHICLE TYPES
+         */
+
+        vehicleTypes: form.vehicleTypes,
+
+        /*
+         * BOOKING MODES
+         */
 
         bookingModes: {
           hourly: form.hourlyBooking,
@@ -469,35 +909,79 @@ function OwnerAddParking() {
           monthly: form.monthlyBooking,
         },
 
+        /*
+         * PRICING
+         *
+         * Unselected vehicle types get undefined values.
+         */
+
         pricing: {
-          currency: form.currency,
+          currency: form.currency.trim().toUpperCase(),
 
           twoWheeler: {
-            hourly: optionalNumber(form.twoWheelerHourly),
-            daily: optionalNumber(form.twoWheelerDaily),
-            monthly: optionalNumber(form.twoWheelerMonthly),
+            hourly: isVehicleSelected("twoWheeler")
+              ? optionalNumber(form.twoWheelerHourly)
+              : undefined,
+
+            daily: isVehicleSelected("twoWheeler")
+              ? optionalNumber(form.twoWheelerDaily)
+              : undefined,
+
+            monthly:
+              isVehicleSelected("twoWheeler") && form.monthlyBooking
+                ? optionalNumber(form.twoWheelerMonthly)
+                : undefined,
           },
 
           fourWheeler: {
-            hourly: optionalNumber(form.fourWheelerHourly),
-            daily: optionalNumber(form.fourWheelerDaily),
-            monthly: optionalNumber(form.fourWheelerMonthly),
+            hourly: isVehicleSelected("fourWheeler")
+              ? optionalNumber(form.fourWheelerHourly)
+              : undefined,
+
+            daily: isVehicleSelected("fourWheeler")
+              ? optionalNumber(form.fourWheelerDaily)
+              : undefined,
+
+            monthly:
+              isVehicleSelected("fourWheeler") && form.monthlyBooking
+                ? optionalNumber(form.fourWheelerMonthly)
+                : undefined,
           },
 
           vanMinibus: {
-            hourly: optionalNumber(form.vanHourly),
-            daily: optionalNumber(form.vanDaily),
-            monthly: optionalNumber(form.vanMonthly),
+            hourly: isVehicleSelected("vanMinibus")
+              ? optionalNumber(form.vanHourly)
+              : undefined,
+
+            daily: isVehicleSelected("vanMinibus")
+              ? optionalNumber(form.vanDaily)
+              : undefined,
+
+            monthly:
+              isVehicleSelected("vanMinibus") && form.monthlyBooking
+                ? optionalNumber(form.vanMonthly)
+                : undefined,
           },
 
           heavyVehicle: {
-            hourly: optionalNumber(form.heavyHourly),
-            daily: optionalNumber(form.heavyDaily),
-            monthly: optionalNumber(form.heavyMonthly),
+            hourly: isVehicleSelected("heavyVehicle")
+              ? optionalNumber(form.heavyHourly)
+              : undefined,
+
+            daily: isVehicleSelected("heavyVehicle")
+              ? optionalNumber(form.heavyDaily)
+              : undefined,
+
+            monthly:
+              isVehicleSelected("heavyVehicle") && form.monthlyBooking
+                ? optionalNumber(form.heavyMonthly)
+                : undefined,
           },
         },
 
-        images,
+        /*
+         * OPERATING HOURS
+         */
 
         operatingHours: {
           open: form.openingTime,
@@ -505,38 +989,76 @@ function OwnerAddParking() {
         },
       };
 
-      await createParking(payload);
+      /*
+       * IMPORTANT:
+       *
+       * imageFiles contains:
+       *
+       * {
+       *   file: File,
+       *   preview: string
+       * }
+       *
+       * Backend needs actual File[].
+       */
 
-      setSuccess("Parking created successfully.");
+      const filesForUpload = imageFiles.map((image) => image.file);
 
-      setTimeout(() => {
+      await createParking(payload, filesForUpload);
+
+      showToast("success", "Parking created successfully.");
+
+      window.setTimeout(() => {
         router.push("/owner/parkings");
         router.refresh();
-      }, 700);
+      }, 800);
     } catch (requestError) {
-      setError(getApiErrorMessage(requestError));
+      const message = getApiErrorMessage(requestError);
+
+      /*
+       * JWT / authentication error
+       */
+
+      if (
+        message.toLowerCase().includes("jwt") ||
+        message.toLowerCase().includes("token") ||
+        message.toLowerCase().includes("authentication") ||
+        message.toLowerCase().includes("unauthorized")
+      ) {
+        showToast(
+          "error",
+          "Your login session has expired. Please log in again.",
+        );
+      } else {
+        showToast("error", message);
+      }
     } finally {
       setSubmitting(false);
     }
   }
 
+  /* ==========================================================
+     RENDER
+     ========================================================== */
+
   return (
     <main className="min-h-screen bg-[#06544E] text-white">
       <OwnerNavbar />
 
+      {/* ======================================================
+          TOP RIGHT TOAST
+          ====================================================== */}
+
+      {toast && (
+        <Toast type={toast.type} message={toast.message} onClose={hideToast} />
+      )}
+
       <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-10">
-        {/* HEADER */}
+        {/* ====================================================
+            HEADER
+        ==================================================== */}
 
         <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => router.push("/owner/parkings")}
-            className="mb-6 inline-flex items-center gap-2 text-sm text-white/60 transition hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to parkings
-          </button>
-
           <div className="flex items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-[#06544E] shadow-xl">
               <ParkingSquare className="h-7 w-7" />
@@ -551,33 +1073,21 @@ function OwnerAddParking() {
 
               <p className="mt-2 max-w-2xl text-sm leading-6 text-white/55">
                 Add complete parking information before creating parking slots.
-                Accurate location, contact details, images and operating hours
-                are required.
+                Accurate location, vehicle types, images and pricing are
+                required.
               </p>
             </div>
           </div>
         </div>
 
-        {/* ERROR */}
-
-        {error && (
-          <div className="mb-6 rounded-2xl border border-red-300/20 bg-red-500/10 p-4 text-sm text-red-100">
-            {error}
-          </div>
-        )}
-
-        {/* SUCCESS */}
-
-        {success && (
-          <div className="mb-6 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 p-4 text-sm text-emerald-100">
-            {success}
-          </div>
-        )}
+        {/* ====================================================
+            FORM
+        ==================================================== */}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ====================================================
+          {/* ==================================================
               BASIC INFORMATION
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<ParkingSquare className="h-5 w-5" />}
@@ -611,9 +1121,9 @@ function OwnerAddParking() {
             />
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               OWNER
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<User className="h-5 w-5" />}
@@ -641,15 +1151,15 @@ function OwnerAddParking() {
                   )
                 }
                 placeholder="10-digit mobile number"
-                inputMode="numeric"
+                inputMode="tel"
                 icon={<Phone className="h-4 w-4" />}
               />
             </div>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               LOCATION
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<MapPin className="h-5 w-5" />}
@@ -707,6 +1217,7 @@ function OwnerAddParking() {
                 value={form.latitude}
                 onChange={(value) => updateField("latitude", value)}
                 placeholder="20.2961"
+                inputMode="decimal"
               />
 
               <Input
@@ -715,13 +1226,14 @@ function OwnerAddParking() {
                 value={form.longitude}
                 onChange={(value) => updateField("longitude", value)}
                 placeholder="85.8245"
+                inputMode="decimal"
               />
             </div>
 
             <button
               type="button"
               onClick={getLiveLocation}
-              disabled={loadingLocation}
+              disabled={loadingLocation || submitting}
               className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loadingLocation ? (
@@ -734,9 +1246,9 @@ function OwnerAddParking() {
             </button>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               PARKING AREA
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<ParkingSquare className="h-5 w-5" />}
@@ -749,73 +1261,165 @@ function OwnerAddParking() {
                 required
                 value={form.parkingArea}
                 onChange={(value) =>
-                  updateField("parkingArea", value.replace(/[^0-9.]/g, ""))
+                  updateField("parkingArea", sanitizeDecimal(value))
                 }
                 placeholder="e.g. 2500"
                 type="number"
+                inputMode="decimal"
                 suffix="sq ft"
+                min="0"
               />
             </div>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
+              VEHICLE TYPES
+          ================================================== */}
+
+          <FormSection
+            icon={<Car className="h-5 w-5" />}
+            title="Available vehicle types"
+            description="Select which types of vehicles can use this parking."
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {VEHICLE_TYPES.map((vehicle) => {
+                const selected = form.vehicleTypes.includes(vehicle.value);
+
+                return (
+                  <button
+                    key={vehicle.value}
+                    type="button"
+                    onClick={() => toggleVehicleType(vehicle.value)}
+                    aria-pressed={selected}
+                    className={
+                      selected
+                        ? "flex items-center justify-between rounded-2xl border border-white/20 bg-white px-4 py-4 text-left text-[#06544E] shadow-lg"
+                        : "flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4 text-left text-white/60 transition hover:bg-white/[0.08] hover:text-white"
+                    }
+                  >
+                    <span className="flex items-center gap-3">
+                      <span
+                        className={
+                          selected
+                            ? "flex h-10 w-10 items-center justify-center rounded-xl bg-[#06544E] text-white"
+                            : "flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"
+                        }
+                      >
+                        {vehicle.icon}
+                      </span>
+
+                      <span>
+                        <span className="block text-sm font-semibold">
+                          {vehicle.label}
+                        </span>
+
+                        <span
+                          className={
+                            selected
+                              ? "mt-0.5 block text-xs text-[#06544E]/60"
+                              : "mt-0.5 block text-xs text-white/30"
+                          }
+                        >
+                          {vehicle.description}
+                        </span>
+                      </span>
+                    </span>
+
+                    <span
+                      className={
+                        selected
+                          ? "flex h-6 w-6 items-center justify-center rounded-full bg-[#06544E] text-white"
+                          : "flex h-6 w-6 items-center justify-center rounded-full border border-white/20"
+                      }
+                    >
+                      {selected && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-xs text-white/35">
+              Pricing will only be shown for the vehicle types you select.
+            </p>
+          </FormSection>
+
+          {/* ==================================================
               IMAGES
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<ImagePlus className="h-5 w-5" />}
             title="Parking images"
             description="Add 2 to 5 clear images of the actual parking location."
           >
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {images.map((image, index) => (
-                <div
-                  key={`${image.url}-${index}`}
-                  className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]"
-                >
-                  <img
-                    src={image.url}
-                    alt={`Parking image ${index + 1}`}
-                    className="h-48 w-full object-cover"
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+
+            <div
+              onDragOver={handleDragOver}
+              onDragEnter={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`rounded-2xl border p-4 transition ${
+                isDragging
+                  ? "border-white/50 bg-white/[0.12]"
+                  : "border-white/10 bg-transparent"
+              }`}
+            >
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {imageFiles.map((image, index) => (
+                  <ImagePreview
+                    key={`${image.file.name}-${image.file.size}-${image.file.lastModified}`}
+                    image={image}
+                    index={index}
+                    onRemove={() => removeImage(index)}
                   />
+                ))}
 
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                    <p className="text-xs text-white/80">Image {index + 1}</p>
-                  </div>
-
+                {imageFiles.length < MAX_IMAGES && (
                   <button
                     type="button"
-                    onClick={() => removeImage(index)}
-                    className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-red-500"
+                    onClick={addImage}
+                    className={`flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed px-6 text-center transition ${
+                      isDragging
+                        ? "border-white/50 bg-white/[0.12] text-white"
+                        : "border-white/20 bg-white/[0.04] text-white/50 hover:border-white/40 hover:bg-white/[0.08] hover:text-white"
+                    }`}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <ImagePlus className="h-8 w-8" />
+
+                    <span className="mt-3 text-sm font-semibold">
+                      {isDragging ? "Drop images here" : "Add image"}
+                    </span>
+
+                    <span className="mt-1 text-xs">
+                      {imageFiles.length}/{MAX_IMAGES} images
+                    </span>
+
+                    <span className="mt-2 text-xs text-white/30">
+                      Click to browse or drag & drop
+                    </span>
                   </button>
-                </div>
-              ))}
-
-              {images.length < 5 && (
-                <button
-                  type="button"
-                  onClick={addImage}
-                  className="flex min-h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/[0.04] text-white/50 transition hover:border-white/40 hover:bg-white/[0.08] hover:text-white"
-                >
-                  <ImagePlus className="h-8 w-8" />
-
-                  <span className="mt-3 text-sm font-semibold">Add image</span>
-
-                  <span className="mt-1 text-xs">{images.length}/5 images</span>
-                </button>
-              )}
+                )}
+              </div>
             </div>
 
             <p className="mt-3 text-xs text-white/40">
-              Minimum 2 images and maximum 5 images are required.
+              Minimum {MIN_IMAGES} images and maximum {MAX_IMAGES} images. Each
+              image must be smaller than 5 MB.
             </p>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               FACILITIES
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<ShieldCheck className="h-5 w-5" />}
@@ -831,9 +1435,10 @@ function OwnerAddParking() {
                     key={facility}
                     type="button"
                     onClick={() => toggleFacility(facility)}
+                    aria-pressed={selected}
                     className={
                       selected
-                        ? "flex items-center gap-3 rounded-xl border border-white/20 bg-white text-left px-4 py-3 text-sm font-semibold text-[#06544E]"
+                        ? "flex items-center gap-3 rounded-xl border border-white/20 bg-white px-4 py-3 text-left text-sm font-semibold text-[#06544E]"
                         : "flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left text-sm text-white/60 transition hover:bg-white/[0.08] hover:text-white"
                     }
                   >
@@ -854,9 +1459,9 @@ function OwnerAddParking() {
             </div>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               RULES
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<ShieldCheck className="h-5 w-5" />}
@@ -881,34 +1486,42 @@ function OwnerAddParking() {
                 type="button"
                 onClick={addRule}
                 className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white text-[#06544E]"
+                aria-label="Add parking rule"
               >
                 <Plus className="h-5 w-5" />
               </button>
             </div>
 
             <div className="mt-4 space-y-2">
-              {form.rules.map((rule) => (
-                <div
-                  key={rule}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3"
-                >
-                  <span className="text-sm text-white/70">{rule}</span>
-
-                  <button
-                    type="button"
-                    onClick={() => removeRule(rule)}
-                    className="shrink-0 text-white/30 transition hover:text-red-300"
+              {form.rules.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-white/10 px-4 py-5 text-center text-sm text-white/30">
+                  No parking rules added.
+                </p>
+              ) : (
+                form.rules.map((rule) => (
+                  <div
+                    key={rule}
+                    className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-              ))}
+                    <span className="text-sm text-white/70">{rule}</span>
+
+                    <button
+                      type="button"
+                      onClick={() => removeRule(rule)}
+                      className="shrink-0 text-white/30 transition hover:text-red-300"
+                      aria-label={`Remove rule: ${rule}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </FormSection>
 
-          {/* ====================================================
-              ENTRY INSTRUCTIONS
-             ==================================================== */}
+          {/* ==================================================
+              ENTRY
+          ================================================== */}
 
           <FormSection
             icon={<Navigation className="h-5 w-5" />}
@@ -923,9 +1536,9 @@ function OwnerAddParking() {
             />
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               OPERATING HOURS
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<Clock3 className="h-5 w-5" />}
@@ -951,9 +1564,9 @@ function OwnerAddParking() {
             </div>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               BOOKING MODES
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<Clock3 className="h-5 w-5" />}
@@ -964,95 +1577,146 @@ function OwnerAddParking() {
               <Toggle
                 label="Hourly"
                 checked={form.hourlyBooking}
-                onChange={(value) => updateField("hourlyBooking", value)}
+                onChange={() => toggleBookingMode("hourlyBooking")}
               />
 
               <Toggle
                 label="Daily"
                 checked={form.dailyBooking}
-                onChange={(value) => updateField("dailyBooking", value)}
+                onChange={() => toggleBookingMode("dailyBooking")}
               />
 
               <Toggle
                 label="Monthly"
                 checked={form.monthlyBooking}
-                onChange={(value) => updateField("monthlyBooking", value)}
+                onChange={() => toggleBookingMode("monthlyBooking")}
               />
             </div>
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               PRICING
-             ==================================================== */}
+          ================================================== */}
 
           <FormSection
             icon={<ParkingSquare className="h-5 w-5" />}
             title="Parking pricing"
-            description="Set optional hourly, daily and monthly prices."
+            description="Pricing is shown only for selected vehicle types and enabled booking modes."
           >
             <div className="mb-5 max-w-xs">
               <Input
                 label="Currency"
                 value={form.currency}
                 onChange={(value) =>
-                  updateField("currency", value.toUpperCase())
+                  updateField(
+                    "currency",
+                    value
+                      .replace(/[^a-zA-Z]/g, "")
+                      .slice(0, 3)
+                      .toUpperCase(),
+                  )
                 }
                 placeholder="INR"
               />
             </div>
 
-            <div className="space-y-5">
-              <PricingRow
-                title="Two Wheeler"
-                hourly={form.twoWheelerHourly}
-                daily={form.twoWheelerDaily}
-                monthly={form.twoWheelerMonthly}
-                onHourly={(value) => updateField("twoWheelerHourly", value)}
-                onDaily={(value) => updateField("twoWheelerDaily", value)}
-                onMonthly={(value) => updateField("twoWheelerMonthly", value)}
-              />
+            {form.vehicleTypes.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.03] p-6 text-center">
+                <Car className="mx-auto h-8 w-8 text-white/25" />
 
-              <PricingRow
-                title="Four Wheeler"
-                hourly={form.fourWheelerHourly}
-                daily={form.fourWheelerDaily}
-                monthly={form.fourWheelerMonthly}
-                onHourly={(value) => updateField("fourWheelerHourly", value)}
-                onDaily={(value) => updateField("fourWheelerDaily", value)}
-                onMonthly={(value) => updateField("fourWheelerMonthly", value)}
-              />
+                <p className="mt-3 text-sm text-white/50">
+                  Select at least one vehicle type above to configure pricing.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-5">
+                {/* TWO WHEELER */}
 
-              <PricingRow
-                title="Van / Minibus"
-                hourly={form.vanHourly}
-                daily={form.vanDaily}
-                monthly={form.vanMonthly}
-                onHourly={(value) => updateField("vanHourly", value)}
-                onDaily={(value) => updateField("vanDaily", value)}
-                onMonthly={(value) => updateField("vanMonthly", value)}
-              />
+                {isVehicleSelected("twoWheeler") && (
+                  <PricingRow
+                    title="Two Wheeler"
+                    hourly={form.twoWheelerHourly}
+                    daily={form.twoWheelerDaily}
+                    monthly={form.twoWheelerMonthly}
+                    showHourly={form.hourlyBooking}
+                    showDaily={form.dailyBooking}
+                    showMonthly={form.monthlyBooking}
+                    onHourly={(value) => updateField("twoWheelerHourly", value)}
+                    onDaily={(value) => updateField("twoWheelerDaily", value)}
+                    onMonthly={(value) =>
+                      updateField("twoWheelerMonthly", value)
+                    }
+                  />
+                )}
 
-              <PricingRow
-                title="Heavy Vehicle"
-                hourly={form.heavyHourly}
-                daily={form.heavyDaily}
-                monthly={form.heavyMonthly}
-                onHourly={(value) => updateField("heavyHourly", value)}
-                onDaily={(value) => updateField("heavyDaily", value)}
-                onMonthly={(value) => updateField("heavyMonthly", value)}
-              />
-            </div>
+                {/* FOUR WHEELER */}
+
+                {isVehicleSelected("fourWheeler") && (
+                  <PricingRow
+                    title="Four Wheeler"
+                    hourly={form.fourWheelerHourly}
+                    daily={form.fourWheelerDaily}
+                    monthly={form.fourWheelerMonthly}
+                    showHourly={form.hourlyBooking}
+                    showDaily={form.dailyBooking}
+                    showMonthly={form.monthlyBooking}
+                    onHourly={(value) =>
+                      updateField("fourWheelerHourly", value)
+                    }
+                    onDaily={(value) => updateField("fourWheelerDaily", value)}
+                    onMonthly={(value) =>
+                      updateField("fourWheelerMonthly", value)
+                    }
+                  />
+                )}
+
+                {/* VAN */}
+
+                {isVehicleSelected("vanMinibus") && (
+                  <PricingRow
+                    title="Van / Minibus"
+                    hourly={form.vanHourly}
+                    daily={form.vanDaily}
+                    monthly={form.vanMonthly}
+                    showHourly={form.hourlyBooking}
+                    showDaily={form.dailyBooking}
+                    showMonthly={form.monthlyBooking}
+                    onHourly={(value) => updateField("vanHourly", value)}
+                    onDaily={(value) => updateField("vanDaily", value)}
+                    onMonthly={(value) => updateField("vanMonthly", value)}
+                  />
+                )}
+
+                {/* HEAVY VEHICLE */}
+
+                {isVehicleSelected("heavyVehicle") && (
+                  <PricingRow
+                    title="Heavy Vehicle"
+                    hourly={form.heavyHourly}
+                    daily={form.heavyDaily}
+                    monthly={form.heavyMonthly}
+                    showHourly={form.hourlyBooking}
+                    showDaily={form.dailyBooking}
+                    showMonthly={form.monthlyBooking}
+                    onHourly={(value) => updateField("heavyHourly", value)}
+                    onDaily={(value) => updateField("heavyDaily", value)}
+                    onMonthly={(value) => updateField("heavyMonthly", value)}
+                  />
+                )}
+              </div>
+            )}
           </FormSection>
 
-          {/* ====================================================
+          {/* ==================================================
               SUBMIT
-             ==================================================== */}
+          ================================================== */}
 
           <div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={() => router.push("/owner/parkings")}
-              className="rounded-xl border border-white/10 bg-white/[0.05] px-6 py-3.5 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
+              disabled={submitting}
+              className="rounded-xl border border-white/10 bg-white/[0.05] px-6 py-3.5 text-sm font-semibold text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Cancel
             </button>
@@ -1065,7 +1729,7 @@ function OwnerAddParking() {
               {submitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating parking...
+                  Uploading & creating...
                 </>
               ) : (
                 <>
@@ -1081,11 +1745,107 @@ function OwnerAddParking() {
   );
 }
 
-/*
- * =============================================================
- * FORM SECTION
- * =============================================================
- */
+/* ============================================================
+   IMAGE PREVIEW
+   ============================================================ */
+
+function ImagePreview({
+  image,
+  index,
+  onRemove,
+}: {
+  image: ImageFile;
+  index: number;
+  onRemove: () => void;
+}) {
+  return (
+    <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+      <div className="relative h-48 w-full">
+        <Image
+          src={image.preview}
+          alt={`Parking image ${index + 1}`}
+          fill
+          unoptimized
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          className="object-cover"
+        />
+      </div>
+
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-3 pt-10">
+        <p className="truncate text-xs text-white/80">{image.file.name}</p>
+      </div>
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur transition hover:bg-red-500"
+        aria-label={`Remove parking image ${index + 1}`}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+/* ============================================================
+   TOAST COMPONENT
+   ============================================================ */
+
+function Toast({
+  type,
+  message,
+  onClose,
+}: {
+  type: ToastType;
+  message: string;
+  onClose: () => void;
+}) {
+  const isError = type === "error";
+
+  return (
+    <div
+      role={isError ? "alert" : "status"}
+      className="fixed right-5 top-24 z-[9999] w-[calc(100vw-2.5rem)] max-w-md animate-in slide-in-from-right-5 fade-in duration-200"
+    >
+      <div
+        className={`flex items-start gap-3 rounded-2xl border p-4 shadow-2xl backdrop-blur-xl ${
+          isError
+            ? "border-red-300/20 bg-[#124D49]/95"
+            : "border-emerald-300/20 bg-[#124D49]/95"
+        }`}
+      >
+        <div
+          className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+            isError ? "bg-red-500 text-white" : "bg-emerald-500 text-white"
+          }`}
+        >
+          {isError ? (
+            <AlertCircle className="h-4 w-4" />
+          ) : (
+            <CheckCircle2 className="h-4 w-4" />
+          )}
+        </div>
+
+        <p className="flex-1 text-sm font-semibold leading-6 text-white">
+          {message}
+        </p>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white"
+          aria-label="Close notification"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   FORM SECTION
+   ============================================================ */
 
 function FormSection({
   icon,
@@ -1093,10 +1853,10 @@ function FormSection({
   description,
   children,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   description: string;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <section className="rounded-[1.75rem] border border-white/10 bg-white/[0.07] p-5 shadow-xl backdrop-blur-xl sm:p-7">
@@ -1117,11 +1877,9 @@ function FormSection({
   );
 }
 
-/*
- * =============================================================
- * INPUT
- * =============================================================
- */
+/* ============================================================
+   INPUT
+   ============================================================ */
 
 function Input({
   label,
@@ -1133,6 +1891,7 @@ function Input({
   inputMode,
   icon,
   suffix,
+  min,
 }: {
   label: string;
   required?: boolean;
@@ -1141,8 +1900,9 @@ function Input({
   placeholder?: string;
   type?: string;
   inputMode?: "text" | "numeric" | "decimal" | "tel";
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   suffix?: string;
+  min?: string;
 }) {
   return (
     <label className="block">
@@ -1165,6 +1925,7 @@ function Input({
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
           inputMode={inputMode}
+          min={min}
           className={`h-12 w-full rounded-xl border border-white/10 bg-white/[0.05] text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/30 focus:bg-white/[0.07] ${
             icon ? "pl-11" : "px-4"
           } ${suffix ? "pr-20" : ""}`}
@@ -1180,11 +1941,9 @@ function Input({
   );
 }
 
-/*
- * =============================================================
- * TEXTAREA
- * =============================================================
- */
+/* ============================================================
+   TEXT AREA
+   ============================================================ */
 
 function TextArea({
   label,
@@ -1218,11 +1977,9 @@ function TextArea({
   );
 }
 
-/*
- * =============================================================
- * SELECT
- * =============================================================
- */
+/* ============================================================
+   SELECT
+   ============================================================ */
 
 function Select({
   label,
@@ -1267,11 +2024,9 @@ function Select({
   );
 }
 
-/*
- * =============================================================
- * TOGGLE
- * =============================================================
- */
+/* ============================================================
+   TOGGLE
+   ============================================================ */
 
 function Toggle({
   label,
@@ -1280,12 +2035,13 @@ function Toggle({
 }: {
   label: string;
   checked: boolean;
-  onChange: (value: boolean) => void;
+  onChange: () => void;
 }) {
   return (
     <button
       type="button"
-      onClick={() => onChange(!checked)}
+      onClick={onChange}
+      aria-pressed={checked}
       className={
         checked
           ? "flex items-center justify-between rounded-xl border border-white/20 bg-white px-4 py-4 text-left text-sm font-semibold text-[#06544E]"
@@ -1307,61 +2063,109 @@ function Toggle({
   );
 }
 
-/*
- * =============================================================
- * PRICING ROW
- * =============================================================
- */
+/* ============================================================
+   PRICING ROW
+   ============================================================ */
 
 function PricingRow({
   title,
   hourly,
   daily,
   monthly,
+  showHourly,
+  showDaily,
+  showMonthly,
   onHourly,
   onDaily,
   onMonthly,
 }: {
   title: string;
+
   hourly: string;
   daily: string;
   monthly: string;
+
+  showHourly: boolean;
+  showDaily: boolean;
+  showMonthly: boolean;
+
   onHourly: (value: string) => void;
   onDaily: (value: string) => void;
   onMonthly: (value: string) => void;
 }) {
+  const visibleFields = [showHourly, showDaily, showMonthly].filter(
+    Boolean,
+  ).length;
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-      <p className="mb-4 text-sm font-semibold text-white">{title}</p>
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm font-semibold text-white">{title}</p>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Input
-          label="Hourly"
-          value={hourly}
-          onChange={onHourly}
-          type="number"
-          placeholder="₹ 0"
-        />
-
-        <Input
-          label="Daily"
-          value={daily}
-          onChange={onDaily}
-          type="number"
-          placeholder="₹ 0"
-        />
-
-        <Input
-          label="Monthly"
-          value={monthly}
-          onChange={onMonthly}
-          type="number"
-          placeholder="₹ 0"
-        />
+        <span className="rounded-full bg-white/5 px-3 py-1 text-[11px] text-white/40">
+          {visibleFields} mode
+          {visibleFields !== 1 ? "s" : ""}
+        </span>
       </div>
+
+      {visibleFields === 0 ? (
+        <p className="text-sm text-white/30">
+          Enable at least one booking mode.
+        </p>
+      ) : (
+        <div
+          className={`grid gap-4 ${
+            visibleFields === 1
+              ? "sm:grid-cols-1"
+              : visibleFields === 2
+                ? "sm:grid-cols-2"
+                : "sm:grid-cols-3"
+          }`}
+        >
+          {showHourly && (
+            <Input
+              label="Hourly"
+              value={hourly}
+              onChange={(value) => onHourly(sanitizeDecimal(value))}
+              type="number"
+              inputMode="decimal"
+              placeholder="₹ 0"
+              min="0"
+            />
+          )}
+
+          {showDaily && (
+            <Input
+              label="Daily"
+              value={daily}
+              onChange={(value) => onDaily(sanitizeDecimal(value))}
+              type="number"
+              inputMode="decimal"
+              placeholder="₹ 0"
+              min="0"
+            />
+          )}
+
+          {showMonthly && (
+            <Input
+              label="Monthly"
+              value={monthly}
+              onChange={(value) => onMonthly(sanitizeDecimal(value))}
+              type="number"
+              inputMode="decimal"
+              placeholder="₹ 0"
+              min="0"
+            />
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
 
 function optionalNumber(value: string): number | undefined {
   if (!value.trim()) {
@@ -1370,5 +2174,20 @@ function optionalNumber(value: string): number | undefined {
 
   const number = Number(value);
 
-  return Number.isFinite(number) ? number : undefined;
+  return Number.isFinite(number) && number >= 0 ? number : undefined;
+}
+
+function sanitizeDecimal(value: string): string {
+  const sanitized = value.replace(/[^0-9.]/g, "");
+
+  const firstDotIndex = sanitized.indexOf(".");
+
+  if (firstDotIndex === -1) {
+    return sanitized;
+  }
+
+  return (
+    sanitized.slice(0, firstDotIndex + 1) +
+    sanitized.slice(firstDotIndex + 1).replace(/\./g, "")
+  );
 }

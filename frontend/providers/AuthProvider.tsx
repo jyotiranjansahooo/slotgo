@@ -30,10 +30,7 @@ interface AuthContextValue {
 
   login: (data: LoginData) => Promise<AuthUser>;
 
-  googleLogin: (
-    credential: string,
-    role?: UserRole,
-  ) => Promise<AuthUser>;
+  googleLogin: (credential: string, role?: UserRole) => Promise<AuthUser>;
 
   verifyEmailOtp: (data: VerifyOtpData) => Promise<AuthUser>;
 
@@ -132,26 +129,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return loggedInUser;
   };
 
-const googleLogin = async (
-  credential: string,
-  role: UserRole = "driver",
-): Promise<AuthUser> => {
-  const response = await googleLoginUser(credential, role);
+  const googleLogin = async (
+    credential: string,
+    role: UserRole = "driver",
+  ): Promise<AuthUser> => {
+    const response = await googleLoginUser(credential, role);
 
-  const loggedInUser = response.data.user;
-  const accessToken = response.data.accessToken;
+    const loggedInUser = response.data.user;
+    const accessToken = response.data.accessToken;
 
-  if (!loggedInUser || !accessToken) {
-    throw new Error("Invalid Google login response.");
-  }
+    if (!loggedInUser || !accessToken) {
+      throw new Error("Invalid Google login response.");
+    }
 
-  authStorage.setToken(accessToken);
-  authStorage.setUser(loggedInUser);
+    authStorage.setToken(accessToken);
+    authStorage.setUser(loggedInUser);
 
-  notifyAuthChange(loggedInUser);
+    notifyAuthChange(loggedInUser);
 
-  return loggedInUser;
-};
+    return loggedInUser;
+  };
 
   const verifyEmailOtp = async (data: VerifyOtpData): Promise<AuthUser> => {
     const response = await verifyOtp(data);

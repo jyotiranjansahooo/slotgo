@@ -20,30 +20,18 @@ export default function ProtectedRoute({
 
   const { user, isAuthenticated, isLoading } = useAuth();
 
-  /*
-   * ============================================================
-   * AUTHENTICATION CHECK
-   * ============================================================
-   */
 
   useEffect(() => {
     if (isLoading) {
       return;
     }
 
-    /*
-     * User is not authenticated.
-     */
-
+ 
     if (!isAuthenticated || !user) {
       router.replace("/login");
       return;
     }
 
-    /*
-     * User is authenticated but doesn't have
-     * permission for this section.
-     */
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
       router.replace("/dashboard");

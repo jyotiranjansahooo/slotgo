@@ -4,35 +4,41 @@ import {
   PARKING_STATUS,
   PARKING_STATUS_VALUES,
   PARKING_TYPE_VALUES,
-  PARKING_FACILITY_VALUES,
   ParkingStatus,
 } from "../constants/parking.js";
 
-// INTERFACE
+/* ============================================================
+   TYPES
+   ============================================================ */
+
+export interface IParkingImage {
+  url: string;
+  publicId: string;
+}
 
 export interface IParking {
   ownerId: Types.ObjectId;
 
   parkingName: string;
-
   description: string;
 
   parkingType: string;
 
   address: string;
-
   landmark?: string;
-
   city: string;
-
   state: string;
-
   pincode: string;
 
   location: {
     latitude: number;
     longitude: number;
   };
+
+  ownerName: string;
+  contactNumber: string;
+
+  parkingArea: number;
 
   facilities: string[];
 
@@ -74,10 +80,7 @@ export interface IParking {
     };
   };
 
-  images: {
-    url: string;
-    publicId: string;
-  }[];
+  images: IParkingImage[];
 
   operatingHours: {
     open: string;
@@ -85,7 +88,6 @@ export interface IParking {
   };
 
   averageRating: number;
-
   totalReviews: number;
 
   status: ParkingStatus;
@@ -93,9 +95,47 @@ export interface IParking {
   isActive: boolean;
 }
 
-// IMAGE SCHEMA
+/* ============================================================
+   FACILITIES
+   ============================================================ */
 
-const imageSchema = new Schema(
+/*
+ * IMPORTANT:
+ *
+ * Your frontend currently sends:
+ *
+ * "CCTV"
+ * "Security Guard"
+ * "Covered Parking"
+ * "EV Charging"
+ * "Lighting"
+ * "Washroom"
+ * "Drinking Water"
+ * "Valet Parking"
+ * "Disabled Access"
+ * "Car Wash"
+ *
+ * Therefore the MongoDB enum must accept these exact values.
+ */
+
+export const PARKING_FACILITIES = [
+  "CCTV",
+  "Security Guard",
+  "Covered Parking",
+  "EV Charging",
+  "Lighting",
+  "Washroom",
+  "Drinking Water",
+  "Valet Parking",
+  "Disabled Access",
+  "Car Wash",
+] as const;
+
+/* ============================================================
+   IMAGE SCHEMA
+   ============================================================ */
+
+const imageSchema = new Schema<IParkingImage>(
   {
     url: {
       type: String,
@@ -114,7 +154,9 @@ const imageSchema = new Schema(
   },
 );
 
-// LOCATION SCHEMA
+/* ============================================================
+   LOCATION SCHEMA
+   ============================================================ */
 
 const locationSchema = new Schema(
   {
@@ -137,7 +179,9 @@ const locationSchema = new Schema(
   },
 );
 
-// BOOKING MODE SCHEMA
+/* ============================================================
+   BOOKING MODES
+   ============================================================ */
 
 const bookingModeSchema = new Schema(
   {
@@ -161,7 +205,9 @@ const bookingModeSchema = new Schema(
   },
 );
 
-// VEHICLE PRICING SCHEMA
+/* ============================================================
+   VEHICLE PRICING
+   ============================================================ */
 
 const vehiclePricingSchema = new Schema(
   {
@@ -185,7 +231,9 @@ const vehiclePricingSchema = new Schema(
   },
 );
 
-// PRICING SCHEMA
+/* ============================================================
+   PRICING
+   ============================================================ */
 
 const pricingSchema = new Schema(
   {
@@ -194,6 +242,7 @@ const pricingSchema = new Schema(
       default: "INR",
       trim: true,
       uppercase: true,
+      match: [/^[A-Z]{3}$/, "Currency must be a valid 3-letter code"],
     },
 
     twoWheeler: {
@@ -221,7 +270,9 @@ const pricingSchema = new Schema(
   },
 );
 
-// OPERATING HOURS SCHEMA
+/* ============================================================
+   OPERATING HOURS
+   ============================================================ */
 
 const operatingHoursSchema = new Schema(
   {
@@ -248,13 +299,15 @@ const operatingHoursSchema = new Schema(
   },
 );
 
-// PARKING SCHEMA
+/* ============================================================
+   PARKING SCHEMA
+   ============================================================ */
 
 const parkingSchema = new Schema<IParking>(
   {
-    // ========================================================
-    // OWNER
-    // ========================================================
+    /* ----------------------------------------------------------
+       OWNER
+    ---------------------------------------------------------- */
 
     ownerId: {
       type: Schema.Types.ObjectId,
@@ -264,9 +317,9 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
-    // ========================================================
-    // BASIC INFORMATION
-    // ========================================================
+    /* ----------------------------------------------------------
+       BASIC INFORMATION
+    ---------------------------------------------------------- */
 
     parkingName: {
       type: String,
@@ -279,7 +332,7 @@ const parkingSchema = new Schema<IParking>(
       type: String,
       default: "",
       trim: true,
-      maxlength: 1000,
+      maxlength: 2000,
     },
 
     parkingType: {
@@ -288,9 +341,9 @@ const parkingSchema = new Schema<IParking>(
       required: true,
     },
 
-    // ========================================================
-    // ADDRESS
-    // ========================================================
+    /* ----------------------------------------------------------
+       ADDRESS
+    ---------------------------------------------------------- */
 
     address: {
       type: String,
@@ -329,41 +382,75 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
-    // ========================================================
-    // GPS LOCATION
-    // ========================================================
+    /* ----------------------------------------------------------
+       LOCATION
+    ---------------------------------------------------------- */
 
     location: {
       type: locationSchema,
       required: true,
     },
 
-    // ========================================================
-    // FACILITIES
-    // ========================================================
+    /* ----------------------------------------------------------
+       OWNER CONTACT
+    ---------------------------------------------------------- */
 
-    facilities: [
-      {
-        type: String,
-        enum: PARKING_FACILITY_VALUES,
-      },
-    ],
+    ownerName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
 
-    // ========================================================
-    // RULES
-    // ========================================================
+    contactNumber: {
+      type: String,
+      required: true,
+      trim: true,
+      match: [/^[6-9][0-9]{9}$/, "Invalid contact number"],
+    },
 
-    rules: [
-      {
-        type: String,
-        trim: true,
-        maxlength: 300,
-      },
-    ],
+    /* ----------------------------------------------------------
+       PARKING AREA
+    ---------------------------------------------------------- */
 
-    // ========================================================
-    // ENTRY INSTRUCTIONS
-    // ========================================================
+    parkingArea: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+
+    /* ----------------------------------------------------------
+       FACILITIES
+    ---------------------------------------------------------- */
+
+    facilities: {
+      type: [
+        {
+          type: String,
+          enum: PARKING_FACILITIES,
+        },
+      ],
+      default: [],
+    },
+
+    /* ----------------------------------------------------------
+       RULES
+    ---------------------------------------------------------- */
+
+    rules: {
+      type: [
+        {
+          type: String,
+          trim: true,
+          maxlength: 300,
+        },
+      ],
+      default: [],
+    },
+
+    /* ----------------------------------------------------------
+       ENTRY INSTRUCTIONS
+    ---------------------------------------------------------- */
 
     entryInstructions: {
       type: String,
@@ -372,45 +459,56 @@ const parkingSchema = new Schema<IParking>(
       maxlength: 1000,
     },
 
-    // ========================================================
-    // BOOKING MODES
-    // ========================================================
+    /* ----------------------------------------------------------
+       BOOKING MODES
+    ---------------------------------------------------------- */
 
     bookingModes: {
       type: bookingModeSchema,
       required: true,
     },
 
-    // ========================================================
-    // PRICING
-    // ========================================================
+    /* ----------------------------------------------------------
+       PRICING
+    ---------------------------------------------------------- */
 
     pricing: {
       type: pricingSchema,
       required: true,
     },
 
-    // ========================================================
-    // IMAGES
-    // ========================================================
+    /* ----------------------------------------------------------
+       IMAGES
+    ---------------------------------------------------------- */
 
     images: {
       type: [imageSchema],
       default: [],
+
+      /*
+       * Do NOT put required: true here.
+       *
+       * Your service/controller should enforce:
+       * minimum 2 images
+       * maximum 5 images
+       *
+       * This gives you a much cleaner error:
+       * "At least 2 parking images are required."
+       */
     },
 
-    // ========================================================
-    // OPERATING HOURS
-    // ========================================================
+    /* ----------------------------------------------------------
+       OPERATING HOURS
+    ---------------------------------------------------------- */
 
     operatingHours: {
       type: operatingHoursSchema,
       required: true,
     },
 
-    // ========================================================
-    // REVIEWS
-    // ========================================================
+    /* ----------------------------------------------------------
+       RATINGS
+    ---------------------------------------------------------- */
 
     averageRating: {
       type: Number,
@@ -425,9 +523,9 @@ const parkingSchema = new Schema<IParking>(
       min: 0,
     },
 
-    // ========================================================
-    // STATUS
-    // ========================================================
+    /* ----------------------------------------------------------
+       STATUS
+    ---------------------------------------------------------- */
 
     status: {
       type: String,
@@ -436,9 +534,9 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
-    // ========================================================
-    // ACTIVE STATUS
-    // ========================================================
+    /* ----------------------------------------------------------
+       ACTIVE
+    ---------------------------------------------------------- */
 
     isActive: {
       type: Boolean,
@@ -446,49 +544,49 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
   },
+
   {
     timestamps: true,
     versionKey: false,
   },
 );
 
-// INDEXES
+/* ============================================================
+   INDEXES
+   ============================================================ */
 
-// Owner's parking locations
 parkingSchema.index({
   ownerId: 1,
   isActive: 1,
 });
 
-// Driver search by city
 parkingSchema.index({
   city: 1,
   isActive: 1,
   status: 1,
 });
 
-// Driver search by pincode
 parkingSchema.index({
   pincode: 1,
   isActive: 1,
   status: 1,
 });
 
-// Parking type search
 parkingSchema.index({
   parkingType: 1,
   isActive: 1,
   status: 1,
 });
 
-// Rating sorting/filtering
 parkingSchema.index({
   averageRating: -1,
   isActive: 1,
   status: 1,
 });
 
-// MODEL
+/* ============================================================
+   MODEL
+   ============================================================ */
 
 const Parking =
   mongoose.models.Parking || mongoose.model<IParking>("Parking", parkingSchema);

@@ -1,13 +1,8 @@
 import axios from "axios";
-
 import { authStorage } from "@/lib/auth-storage";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL,
-
-  headers: {
-    "Content-Type": "application/json",
-  },
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1",
 
   withCredentials: true,
 });
@@ -20,47 +15,21 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-api.interceptors.response.use(
-  (response) => response,
-
-  (error) => {
-    if (error.response?.status === 401) {
-      const message = error.response?.data?.message;
-
-      if (
-        message === "jwt expired" ||
-        message === "Token expired" ||
-        message === "Unauthorized"
-      ) {
-        authStorage.clear();
-
-        if (typeof window !== "undefined") {
-          const currentPath =
-            window.location.pathname;
-
-          if (currentPath !== "/login") {
-            window.location.href = `/login?redirect=${encodeURIComponent(
-              currentPath,
-            )}`;
-          }
-        }
-      }
+    // IMPORTANT:
+    // Do NOT globally force Content-Type here.
+    // Axios must be allowed to set multipart/form-data
+    // with the correct boundary for FormData.
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
     }
 
-    return Promise.reject(error);
+    return config;
   },
+  (error) => Promise.reject(error),
 );
 
 api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
 
   (error) => {
     if (error.response?.status === 401) {
@@ -69,12 +38,15 @@ api.interceptors.response.use(
       if (typeof window !== "undefined") {
         const currentPath = window.location.pathname + window.location.search;
 
-        const isAlreadyOnAuthPage =
-          currentPath === "/login" || currentPath === "/register";
+        const isAuthPage =
+          window.location.pathname === "/login" ||
+          window.location.pathname === "/register";
 
-        if (!isAlreadyOnAuthPage) {
+        if (!isAuthPage) {
           window.location.replace(
-            `/login?session=expired&redirect=${encodeURIComponent(currentPath)}`,
+            `/login?session=expired&redirect=${encodeURIComponent(
+              currentPath,
+            )}`,
           );
         }
       }

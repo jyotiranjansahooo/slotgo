@@ -1,7 +1,7 @@
 import { UpdateParkingInput } from "../../validations/parking/update.validation.js";
 import { CreateParkingInput } from "../../validations/parking/create.validation.js";
 declare class ParkingService {
-    createParking(ownerId: string, data: CreateParkingInput): Promise<any>;
+    createParking(ownerId: string, data: CreateParkingInput, files: Express.Multer.File[]): Promise<any>;
     getMyParkings(ownerId: string): Promise<any[]>;
     approveParking(parkingId: string): Promise<any>;
     rejectParking(parkingId: string): Promise<any>;

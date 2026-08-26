@@ -78,7 +78,6 @@ export const verifyOtp = async (
   return response.data;
 };
 
-
 export const registerUser = async (
   data: RegisterData,
 ): Promise<ApiResponse<RegisterResponse>> => {

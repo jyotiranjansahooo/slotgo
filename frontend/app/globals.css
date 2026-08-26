@@ -24,3 +24,1076 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* =========================================================
+   PARKING LOADER
+   ========================================================= */
+
+.parking-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 50% 45%,
+      rgba(81, 84, 244, 0.16),
+      transparent 38%
+    ),
+    #080b18;
+
+  color: white;
+
+  animation:
+    loaderFadeOut 0.45s ease forwards 2.05s,
+    loaderVisibility 0s linear forwards 2.5s;
+}
+
+/* ---------------------------------------------------------
+   BACKGROUND
+   --------------------------------------------------------- */
+
+.parking-loader-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.parking-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.parking-glow-one {
+  width: 420px;
+  height: 420px;
+  left: 15%;
+  top: 25%;
+  background: rgba(81, 84, 244, 0.12);
+}
+
+.parking-glow-two {
+  width: 500px;
+  height: 500px;
+  right: 5%;
+  bottom: 5%;
+  background: rgba(81, 84, 244, 0.08);
+}
+
+/* ---------------------------------------------------------
+   BUILDINGS
+   --------------------------------------------------------- */
+
+.building {
+  position: absolute;
+  bottom: 29%;
+  border: 1px solid rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.015);
+  opacity: 0.8;
+}
+
+.building span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: rgba(81, 84, 244, 0.14);
+}
+
+.building-one {
+  left: 5%;
+  width: 110px;
+  height: 150px;
+}
+
+.building-two {
+  left: 18%;
+  width: 130px;
+  height: 205px;
+}
+
+.building-three {
+  right: 18%;
+  width: 125px;
+  height: 175px;
+}
+
+.building-one span:nth-child(1) {
+  left: 20px;
+  top: 25px;
+}
+
+.building-one span:nth-child(2) {
+  left: 55px;
+  top: 25px;
+}
+
+.building-one span:nth-child(3) {
+  left: 20px;
+  top: 55px;
+}
+
+.building-one span:nth-child(4) {
+  left: 55px;
+  top: 55px;
+}
+
+.building-one span:nth-child(5) {
+  left: 20px;
+  top: 85px;
+}
+
+.building-one span:nth-child(6) {
+  left: 55px;
+  top: 85px;
+}
+
+.building-two span:nth-child(1) {
+  left: 20px;
+  top: 25px;
+}
+
+.building-two span:nth-child(2) {
+  left: 60px;
+  top: 25px;
+}
+
+.building-two span:nth-child(3) {
+  left: 100px;
+  top: 25px;
+}
+
+.building-two span:nth-child(4) {
+  left: 20px;
+  top: 60px;
+}
+
+.building-two span:nth-child(5) {
+  left: 60px;
+  top: 60px;
+}
+
+.building-two span:nth-child(6) {
+  left: 100px;
+  top: 60px;
+}
+
+.building-two span:nth-child(7) {
+  left: 20px;
+  top: 95px;
+}
+
+.building-two span:nth-child(8) {
+  left: 60px;
+  top: 95px;
+}
+
+.building-three span:nth-child(1) {
+  left: 20px;
+  top: 25px;
+}
+
+.building-three span:nth-child(2) {
+  left: 60px;
+  top: 25px;
+}
+
+.building-three span:nth-child(3) {
+  left: 95px;
+  top: 25px;
+}
+
+.building-three span:nth-child(4) {
+  left: 20px;
+  top: 60px;
+}
+
+.building-three span:nth-child(5) {
+  left: 60px;
+  top: 60px;
+}
+
+.building-three span:nth-child(6) {
+  left: 95px;
+  top: 60px;
+}
+
+/* ---------------------------------------------------------
+   TOP CONTENT
+   --------------------------------------------------------- */
+
+.loader-content {
+  position: absolute;
+  z-index: 20;
+  top: 15%;
+  left: 50%;
+  width: min(90%, 620px);
+  transform: translateX(-50%);
+  text-align: center;
+}
+
+.loader-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 62px;
+  height: 62px;
+  margin: 0 auto 24px;
+
+  border: 1px solid rgba(81, 84, 244, 0.35);
+  border-radius: 18px;
+
+  background: rgba(81, 84, 244, 0.1);
+
+  color: #5154f4;
+
+  box-shadow:
+    0 0 35px rgba(81, 84, 244, 0.15),
+    inset 0 0 20px rgba(81, 84, 244, 0.08);
+
+  animation: iconPulse 1.5s ease-in-out infinite;
+}
+
+.loader-content h1 {
+  margin: 0;
+
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.loader-content p {
+  margin-top: 12px;
+
+  font-size: 15px;
+  line-height: 1.7;
+
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.loader-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.loader-dots span {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #5154f4;
+
+  animation: dotPulse 1.2s ease-in-out infinite;
+}
+
+.loader-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loader-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+/* ---------------------------------------------------------
+   ROAD
+   --------------------------------------------------------- */
+
+.road {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18%;
+  height: 260px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.015),
+    rgba(255, 255, 255, 0.025)
+  );
+}
+
+/* ---------------------------------------------------------
+   ROAD LINES
+   --------------------------------------------------------- */
+
+.road-center-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+
+  display: flex;
+  justify-content: space-around;
+
+  transform: translateY(-50%);
+}
+
+.road-center-line span {
+  width: 68px;
+  height: 3px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.road-bottom-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 1px;
+
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ---------------------------------------------------------
+   ROUTE
+   --------------------------------------------------------- */
+
+.route-line {
+  position: absolute;
+  left: 8%;
+  right: 24%;
+  bottom: 48px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  color: #5154f4;
+
+  opacity: 0.55;
+}
+
+.route-line span {
+  flex: 1;
+  height: 1px;
+  border-top: 1px dashed rgba(81, 84, 244, 0.4);
+}
+
+/* ---------------------------------------------------------
+   CAR
+   --------------------------------------------------------- */
+
+.driving-car {
+  position: absolute;
+
+  left: 0;
+  bottom: 92px;
+
+  width: 130px;
+  height: 70px;
+
+  z-index: 30;
+
+  animation:
+    driveCar 2.2s cubic-bezier(0.65, 0, 0.25, 1) forwards,
+    carStop 2.2s ease forwards;
+}
+
+.car-shadow {
+  position: absolute;
+
+  left: 15px;
+  bottom: -5px;
+
+  width: 100px;
+  height: 10px;
+
+  border-radius: 50%;
+
+  background: rgba(0, 0, 0, 0.45);
+
+  filter: blur(5px);
+}
+
+.car-body {
+  position: absolute;
+
+  left: 0;
+  bottom: 8px;
+
+  width: 126px;
+  height: 38px;
+
+  border-radius: 10px 17px 9px 9px;
+
+  background: #5154f4;
+
+  box-shadow:
+    0 10px 35px rgba(81, 84, 244, 0.4),
+    0 0 25px rgba(81, 84, 244, 0.2);
+}
+
+/* ROOF */
+
+.car-roof {
+  position: absolute;
+
+  left: 25px;
+  top: -25px;
+
+  width: 73px;
+  height: 31px;
+
+  border-radius: 25px 28px 4px 4px;
+
+  background: #5154f4;
+}
+
+.car-window {
+  position: absolute;
+
+  top: 6px;
+
+  height: 18px;
+
+  background: #080b18;
+
+  opacity: 0.85;
+}
+
+.front-window {
+  right: 6px;
+  width: 31px;
+
+  border-radius: 4px 15px 2px 2px;
+}
+
+.rear-window {
+  left: 6px;
+  width: 29px;
+
+  border-radius: 14px 3px 2px 2px;
+}
+
+/* LIGHTS */
+
+.car-headlight {
+  position: absolute;
+
+  right: 2px;
+  top: 9px;
+
+  width: 7px;
+  height: 9px;
+
+  border-radius: 4px;
+
+  background: white;
+
+  box-shadow: 0 0 12px white;
+}
+
+.car-taillight {
+  position: absolute;
+
+  left: 2px;
+  top: 10px;
+
+  width: 6px;
+  height: 8px;
+
+  border-radius: 3px;
+
+  background: #ff5c72;
+
+  box-shadow: 0 0 8px rgba(255, 92, 114, 0.8);
+}
+
+/* DOOR */
+
+.car-door {
+  position: absolute;
+
+  left: 72px;
+  top: 9px;
+
+  width: 1px;
+  height: 24px;
+
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.car-handle {
+  position: absolute;
+
+  left: 78px;
+  top: 15px;
+
+  width: 9px;
+  height: 3px;
+
+  border-radius: 99px;
+
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* WHEELS */
+
+.car-wheel {
+  position: absolute;
+
+  bottom: -10px;
+
+  width: 28px;
+  height: 28px;
+
+  border: 5px solid #080b18;
+
+  border-radius: 50%;
+
+  background: #5154f4;
+}
+
+.car-wheel > div {
+  position: absolute;
+  inset: 4px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.car-wheel-front {
+  right: 15px;
+}
+
+.car-wheel-back {
+  left: 15px;
+}
+
+/* ---------------------------------------------------------
+   PARKING DESTINATION
+   --------------------------------------------------------- */
+
+.parking-destination {
+  position: absolute;
+
+  right: 7%;
+  top: 25%;
+
+  width: 260px;
+  height: 180px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  box-shadow:
+    inset 0 0 30px rgba(81, 84, 244, 0.03),
+    0 20px 60px rgba(0, 0, 0, 0.15);
+}
+
+/* P SIGN */
+
+.parking-sign {
+  position: absolute;
+
+  right: -2px;
+  top: -58px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  width: 55px;
+  height: 55px;
+
+  border: 1px solid rgba(81, 84, 244, 0.45);
+  border-radius: 14px;
+
+  background: rgba(81, 84, 244, 0.1);
+
+  color: #5154f4;
+
+  box-shadow: 0 0 25px rgba(81, 84, 244, 0.12);
+}
+
+.parking-sign span {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+/* SLOTS */
+
+.parking-slots {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 12px;
+
+  height: 100%;
+  padding: 18px;
+}
+
+.parking-slot {
+  position: relative;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.active-slot {
+  border-color: rgba(81, 84, 244, 0.55);
+
+  background: rgba(81, 84, 244, 0.08);
+
+  box-shadow:
+    inset 0 0 20px rgba(81, 84, 244, 0.08),
+    0 0 25px rgba(81, 84, 244, 0.08);
+}
+
+.slot-light {
+  position: absolute;
+
+  left: 50%;
+  top: 50%;
+
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: #5154f4;
+
+  transform: translate(-50%, -50%);
+
+  box-shadow: 0 0 18px #5154f4;
+
+  animation: destinationPulse 1s ease-in-out infinite;
+}
+
+/* DESTINATION MARKER */
+
+.destination-marker {
+  position: absolute;
+
+  left: 50%;
+  top: -45px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border-radius: 50%;
+
+  background: #5154f4;
+
+  color: white;
+
+  transform: translateX(-50%);
+
+  box-shadow:
+    0 0 0 8px rgba(81, 84, 244, 0.1),
+    0 0 30px rgba(81, 84, 244, 0.5);
+
+  animation: markerPulse 1.2s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------
+   BOTTOM STATUS
+   --------------------------------------------------------- */
+
+.loader-status {
+  position: absolute;
+
+  left: 50%;
+  bottom: 7%;
+
+  display: flex;
+  justify-content: space-between;
+
+  width: min(480px, 80%);
+
+  transform: translateX(-50%);
+
+  font-size: 13px;
+
+  color: rgba(255, 255, 255, 0.32);
+}
+
+.loader-status > div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #5154f4;
+
+  box-shadow: 0 0 10px #5154f4;
+
+  animation: statusPulse 1s ease-in-out infinite;
+}
+
+.status-location {
+  color: #5154f4;
+}
+
+.status-location span {
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #5154f4;
+}
+
+/* ---------------------------------------------------------
+   PROGRESS
+   --------------------------------------------------------- */
+
+.loader-progress {
+  position: absolute;
+
+  left: 50%;
+  bottom: 3.5%;
+
+  width: min(480px, 80%);
+  height: 3px;
+
+  overflow: hidden;
+
+  border-radius: 99px;
+
+  background: rgba(255, 255, 255, 0.07);
+
+  transform: translateX(-50%);
+}
+
+.loader-progress-bar {
+  width: 0;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: #5154f4;
+
+  box-shadow: 0 0 12px rgba(81, 84, 244, 0.7);
+
+  animation: progressLoad 2.05s linear forwards;
+}
+
+/* =========================================================
+   PAGE TRANSITION
+   ========================================================= */
+
+.page-content {
+  min-height: 100vh;
+
+  animation: pageEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* =========================================================
+   ANIMATIONS
+   ========================================================= */
+
+@keyframes driveCar {
+  0% {
+    transform: translateX(-160px);
+  }
+
+  12% {
+    transform: translateX(5vw);
+  }
+
+  30% {
+    transform: translateX(25vw);
+  }
+
+  50% {
+    transform: translateX(45vw);
+  }
+
+  70% {
+    transform: translateX(62vw);
+  }
+
+  86% {
+    transform: translateX(calc(100vw - 390px));
+  }
+
+  92% {
+    transform: translateX(calc(100vw - 350px));
+  }
+
+  100% {
+    transform: translateX(calc(100vw - 345px));
+  }
+}
+
+@keyframes carStop {
+  0% {
+    margin-left: 0;
+  }
+
+  82% {
+    margin-left: 0;
+  }
+
+  90% {
+    margin-left: 3px;
+  }
+
+  94% {
+    margin-left: -2px;
+  }
+
+  100% {
+    margin-left: 0;
+  }
+}
+
+@keyframes loaderFadeOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes loaderVisibility {
+  to {
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+@keyframes pageEnter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progressLoad {
+  0% {
+    width: 0;
+  }
+
+  25% {
+    width: 20%;
+  }
+
+  55% {
+    width: 55%;
+  }
+
+  80% {
+    width: 82%;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+@keyframes iconPulse {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes destinationPulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes markerPulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 8px rgba(81, 84, 244, 0.1),
+      0 0 30px rgba(81, 84, 244, 0.5);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 14px rgba(81, 84, 244, 0.03),
+      0 0 40px rgba(81, 84, 244, 0.7);
+  }
+}
+
+@keyframes statusPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .parking-loader,
+  .driving-car,
+  .loader-progress-bar,
+  .loader-icon,
+  .loader-dots span,
+  .slot-light,
+  .destination-marker,
+  .status-dot {
+    animation: none;
+  }
+
+  .parking-loader {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .loader-content {
+    top: 11%;
+  }
+
+  .loader-content h1 {
+    font-size: 26px;
+  }
+
+  .loader-content p {
+    font-size: 13px;
+  }
+
+  .road {
+    bottom: 20%;
+  }
+
+  .parking-destination {
+    right: 4%;
+    width: 190px;
+    height: 140px;
+  }
+
+  .parking-slots {
+    gap: 7px;
+    padding: 12px;
+  }
+
+  .parking-sign {
+    width: 45px;
+    height: 45px;
+    top: -48px;
+  }
+
+  .driving-car {
+    transform: scale(0.75);
+    transform-origin: left bottom;
+
+    animation-name: driveCarMobile, carStop;
+  }
+
+  .loader-status {
+    width: 85%;
+  }
+
+  .route-line {
+    right: 20%;
+  }
+
+  .road-center-line span {
+    width: 35px;
+  }
+
+  .building-two {
+    left: 28%;
+  }
+
+  .building-three {
+    right: 2%;
+  }
+}
+
+@keyframes driveCarMobile {
+  0% {
+    transform: translateX(-150px) scale(0.75);
+  }
+
+  20% {
+    transform: translateX(15vw) scale(0.75);
+  }
+
+  45% {
+    transform: translateX(38vw) scale(0.75);
+  }
+
+  70% {
+    transform: translateX(60vw) scale(0.75);
+  }
+
+  88% {
+    transform: translateX(calc(100vw - 245px)) scale(0.75);
+  }
+
+  100% {
+    transform: translateX(calc(100vw - 235px)) scale(0.75);
+  }
+}
