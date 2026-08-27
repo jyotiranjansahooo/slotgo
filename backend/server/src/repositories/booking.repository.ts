@@ -1,6 +1,7 @@
 import Booking, { IBooking } from "../models/Booking.js";
 import { ClientSession } from "mongoose";
-
+import { Types } from "mongoose";
+import Parking from "../models/Parking.js";
 class BookingRepository {
   // CREATE
 
@@ -67,15 +68,16 @@ class BookingRepository {
     });
   }
 
-  // OWNER BOOKINGS
+async findByOwner(ownerId: string) {
+  console.log("🔥🔥🔥 FIND BY OWNER WAS CALLED 🔥🔥🔥");
+  console.log("OWNER ID =", ownerId);
 
-  async findByOwner(ownerId: string) {
-    return Booking.find({
-      ownerId,
-    }).sort({
-      createdAt: -1,
-    });
-  }
+  const parkings = await Parking.find({});
+
+  console.log("🔥 TOTAL PARKINGS =", parkings.length);
+
+  return parkings;
+}
 
   // FIND OVERLAPPING VEHICLE BOOKING
 

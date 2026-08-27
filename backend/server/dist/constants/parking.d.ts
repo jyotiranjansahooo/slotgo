@@ -3,17 +3,9 @@ export declare const PARKING_STATUS: {
     readonly APPROVED: "approved";
     readonly REJECTED: "rejected";
 };
-export declare const PARKING_FACILITIES: {
-    readonly CCTV: "cctv";
-    readonly SECURITY_GUARD: "securityGuard";
-    readonly COVERED: "covered";
-    readonly OPEN: "open";
-    readonly LIGHTING: "lighting";
-    readonly WASHROOM: "washroom";
-    readonly CAR_WASH: "carWash";
-    readonly DISABLED_ACCESS: "disabledAccess";
-};
-export declare const PARKING_TYPES: {
+export type ParkingStatus = (typeof PARKING_STATUS)[keyof typeof PARKING_STATUS];
+export declare const PARKING_STATUS_VALUES: ParkingStatus[];
+export declare const PARKING_TYPE: {
     readonly OPEN: "open";
     readonly COVERED: "covered";
     readonly BASEMENT: "basement";
@@ -21,6 +13,16 @@ export declare const PARKING_TYPES: {
     readonly STREET: "street";
 };
 export declare const PARKING_TYPE_VALUES: ("basement" | "covered" | "multiLevel" | "open" | "street")[];
-export declare const PARKING_FACILITY_VALUES: ("carWash" | "cctv" | "covered" | "disabledAccess" | "lighting" | "open" | "securityGuard" | "washroom")[];
-export type ParkingStatus = (typeof PARKING_STATUS)[keyof typeof PARKING_STATUS];
-export declare const PARKING_STATUS_VALUES: ("approved" | "pending" | "rejected")[];
+export declare const PARKING_FACILITY: {
+    readonly CCTV: "cctv";
+    readonly SECURITY_GUARD: "security_guard";
+    readonly COVERED_PARKING: "covered_parking";
+    readonly EV_CHARGING: "ev_charging";
+    readonly LIGHTING: "lighting";
+    readonly WASHROOM: "washroom";
+    readonly DRINKING_WATER: "drinking_water";
+    readonly VALET_PARKING: "valet_parking";
+    readonly DISABLED_ACCESS: "disabled_access";
+    readonly CAR_WASH: "car_wash";
+};
+export declare const PARKING_FACILITY_VALUES: ("car_wash" | "cctv" | "covered_parking" | "disabled_access" | "drinking_water" | "ev_charging" | "lighting" | "security_guard" | "valet_parking" | "washroom")[];

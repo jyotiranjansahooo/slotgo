@@ -27,7 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuth } from "@/providers/AuthProvider";
 
-import { getParkings } from "@/services/parking.service";
+import { getMyParkings } from "@/services/parking.service";
 import { getApiErrorMessage } from "@/lib/api-error";
 
 import type { Parking } from "@/types/parking";
@@ -46,21 +46,12 @@ function OwnerParkings() {
 
   const parkingsQuery = useQuery({
     queryKey: ["owner", "parkings"],
-    queryFn: getParkings,
+    queryFn: getMyParkings,
     staleTime: 60 * 1000,
     retry: 1,
   });
 
-  const allParkings: Parking[] = parkingsQuery.data?.data ?? [];
-
-  const ownerId =
-    typeof user === "object" && user !== null && "_id" in user
-      ? String(user._id)
-      : "";
-
-  const parkings = ownerId
-    ? allParkings.filter((parking) => String(parking.ownerId) === ownerId)
-    : [];
+  const parkings: Parking[] = parkingsQuery.data ?? [];
 
   const activeParkings = parkings.filter((parking) => parking.isActive);
 
@@ -76,12 +67,6 @@ function OwnerParkings() {
     (parking) => parking.status === "rejected",
   );
 
-  /*
-   * ----------------------------------------------------------
-   * PARKING DETAILS STATUS
-   * ----------------------------------------------------------
-   */
-
   const incompleteParkings = parkings.filter(
     (parking) => !isParkingDetailsComplete(parking),
   );
@@ -90,21 +75,9 @@ function OwnerParkings() {
     isParkingDetailsComplete(parking),
   );
 
-  /*
-   * ----------------------------------------------------------
-   * LOADING
-   * ----------------------------------------------------------
-   */
-
   if (parkingsQuery.isLoading) {
     return <OwnerParkingsLoading />;
   }
-
-  /*
-   * ----------------------------------------------------------
-   * ERROR
-   * ----------------------------------------------------------
-   */
 
   if (parkingsQuery.isError) {
     return (
@@ -115,12 +88,6 @@ function OwnerParkings() {
       />
     );
   }
-
-  /*
-   * ----------------------------------------------------------
-   * PAGE
-   * ----------------------------------------------------------
-   */
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#06544E] text-white">
@@ -306,10 +273,6 @@ function OwnerParkings() {
               </div>
             </div>
 
-            {/* =================================================
-                GRID
-            ================================================== */}
-
             <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
               {parkings.map((parking) => (
                 <ParkingOwnerCard
@@ -331,12 +294,6 @@ function OwnerParkings() {
     </main>
   );
 }
-
-/*
- * =============================================================
- * PARKING DETAILS VALIDATION
- * =============================================================
- */
 
 function isParkingDetailsComplete(parking: Parking): boolean {
   const hasName = Boolean(parking.parkingName?.trim());
@@ -646,10 +603,6 @@ function ParkingOwnerCard({
           />
         </div>
 
-        {/* ===================================================
-            OWNER
-        ==================================================== */}
-
         <div className="mt-4 flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.04] p-3">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-300/10">
             <User className="h-4 w-4 text-emerald-100/70" />
@@ -667,10 +620,6 @@ function ParkingOwnerCard({
             </p>
           </div>
         </div>
-
-        {/* ===================================================
-            ACTIVE STATE
-        ==================================================== */}
 
         <div className="mt-4 flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-3">
           <span className="text-xs text-white/45">Parking status</span>
@@ -710,10 +659,6 @@ function ParkingOwnerCard({
           </button>
         </div>
 
-        {/* ===================================================
-            MANAGE SLOTS
-        ==================================================== */}
-
         <button
           type="button"
           disabled={!detailsComplete}
@@ -740,10 +685,6 @@ function ParkingOwnerCard({
           <ArrowRight className="h-4 w-4" />
         </button>
 
-        {/* ===================================================
-            VIEW DETAILS
-        ==================================================== */}
-
         <button
           type="button"
           onClick={onView}
@@ -756,12 +697,6 @@ function ParkingOwnerCard({
     </article>
   );
 }
-
-/*
- * =============================================================
- * PARKING STATUS
- * =============================================================
- */
 
 function ParkingStatus({ status }: { status: Parking["status"] }) {
   if (status === "approved") {
@@ -790,12 +725,6 @@ function ParkingStatus({ status }: { status: Parking["status"] }) {
   );
 }
 
-/*
- * =============================================================
- * INFO ITEM
- * =============================================================
- */
-
 function InfoItem({
   icon,
   label,
@@ -817,12 +746,6 @@ function InfoItem({
     </div>
   );
 }
-
-/*
- * =============================================================
- * STAT CARD
- * =============================================================
- */
 
 function OwnerStatCard({
   label,
@@ -847,12 +770,6 @@ function OwnerStatCard({
     </div>
   );
 }
-
-/*
- * =============================================================
- * EMPTY
- * =============================================================
- */
 
 function EmptyParkings({ onAdd }: { onAdd: () => void }) {
   return (
@@ -916,12 +833,6 @@ function EmptyParkings({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-/*
- * =============================================================
- * REQUIREMENT ITEM
- * =============================================================
- */
-
 function RequirementItem({
   icon,
   text,
@@ -939,12 +850,6 @@ function RequirementItem({
     </div>
   );
 }
-
-/*
- * =============================================================
- * LOADING
- * =============================================================
- */
 
 function OwnerParkingsLoading() {
   return (
@@ -974,12 +879,6 @@ function OwnerParkingsLoading() {
     </main>
   );
 }
-
-/*
- * =============================================================
- * ERROR
- * =============================================================
- */
 
 function OwnerParkingsError({
   message,

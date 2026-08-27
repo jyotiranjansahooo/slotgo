@@ -1,4 +1,6 @@
 import Booking from "../models/Booking.js";
+import { Types } from "mongoose";
+import Parking from "../models/Parking.js";
 class BookingRepository {
     // CREATE
     async create(data, session) {
@@ -49,13 +51,28 @@ class BookingRepository {
             createdAt: -1,
         });
     }
-    // OWNER BOOKINGS
     async findByOwner(ownerId) {
-        return Booking.find({
-            ownerId,
-        }).sort({
-            createdAt: -1,
-        });
+        console.log("========== PARKING DEBUG ==========");
+        console.log("OWNER ID:", ownerId);
+        const allParkings = await Parking.find({}).lean();
+        console.log("TOTAL PARKINGS IN BACKEND DB:", allParkings.length);
+        for (const parking of allParkings) {
+            console.log({
+                id: String(parking._id),
+                name: parking.parkingName,
+                ownerId: parking.ownerId ? String(parking.ownerId) : null,
+                requestedOwnerId: ownerId,
+                isActive: parking.isActive,
+                status: parking.status,
+                images: parking.images?.length ?? 0,
+            });
+        }
+        console.log("===================================");
+        return Parking.find({
+            ownerId: new Types.ObjectId(ownerId),
+        })
+            .sort({ createdAt: -1 })
+            .lean();
     }
     // FIND OVERLAPPING VEHICLE BOOKING
     async findOverlappingBooking(vehicleId, startTime, endTime) {

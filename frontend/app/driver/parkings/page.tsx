@@ -6,15 +6,11 @@ import { useQuery } from "@tanstack/react-query";
 import Image from "next/image";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { getParkings } from "@/services/parking.service";
+import { getMyParkings } from "@/services/parking.service";
 import { getApiErrorMessage } from "@/lib/api-error";
 import { MapPinSearch, Search } from "lucide-react";
 
 import type { Parking } from "@/types/parking";
-
-/* ============================================================
-   TYPES
-   ============================================================ */
 
 type VehicleFilter =
   | "all"
@@ -49,40 +45,20 @@ export default function ParkingsPage() {
   );
 }
 
-/* ============================================================
-   PARKING LIST
-   ============================================================ */
-
 function ParkingList() {
   const router = useRouter();
 
-  /* ==========================================================
-     PARKING QUERY
-     ========================================================== */
-
   const parkingQuery = useQuery({
-    queryKey: ["parkings"],
-    queryFn: async () => {
-      const response = await getParkings();
-      return response.data;
-    },
-    staleTime: 60 * 1000,
-  });
-
-  /* ==========================================================
-     FILTER STATE
-     ========================================================== */
+  queryKey: ["parkings"],
+  queryFn: getMyParkings,
+  staleTime: 60 * 1000,
+});
 
   const [search, setSearch] = useState("");
   const [location, setLocation] = useState("");
   const [vehicleType, setVehicleType] = useState<VehicleFilter>("all");
 
-  /*
-   * Single sorting state.
-   *
-   * Price and rating are now combined into one
-   * "Sort by" option.
-   */
+
   const [sortBy, setSortBy] = useState<SortOption>("none");
 
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
@@ -1018,8 +994,6 @@ function NoParkingState({
     </div>
   );
 }
-
-
 
 function ParkingSkeletonPage() {
   return (

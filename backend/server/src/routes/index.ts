@@ -1,6 +1,5 @@
 import { Router } from "express";
 
-// import ApiResponse from "../utils/ApiResponse.js";
 import paymentRoutes from "./payment.routes.js";
 import authRoutes from "./auth.routes.js";
 import vehicleRoutes from "./vehicle.routes.js";
@@ -12,17 +11,32 @@ import parkingDiscoveryRoutes from "./parkingDiscovery.routes.js";
 import reviewRoutes from "./review.routes.js";
 import walletRoutes from "./wallet.routes.js";
 import adminRoutes from "./admin.routes.js";
+
 const router = Router();
 
 router.use("/vehicles", vehicleRoutes);
 router.use("/bookings", bookingRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/auth", authRoutes);
-router.use("/parkings", parkingDiscoveryRoutes);
-router.use("/parking-slots", parkingSlotRoutes);
+
+/*
+|--------------------------------------------------------------------------
+| OWNER PARKINGS
+|--------------------------------------------------------------------------
+*/
 router.use("/parkings", parkingRoutes);
+
+/*
+|--------------------------------------------------------------------------
+| PUBLIC PARKING DISCOVERY
+|--------------------------------------------------------------------------
+*/
+router.use("/parking-discovery", parkingDiscoveryRoutes);
+
+router.use("/parking-slots", parkingSlotRoutes);
 router.use("/wallet", walletRoutes);
 router.use("/reviews", reviewRoutes);
+
 router.use("/admin/parkings", adminParkingRoutes);
 router.use("/admin", adminRoutes);
 

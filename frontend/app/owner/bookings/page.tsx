@@ -17,6 +17,68 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getOwnerBookings } from "@/services/booking.service";
 import { getApiErrorMessage } from "@/lib/api-error";
 
+/* =========================================================
+   TYPES
+========================================================= */
+
+type Booking = {
+  _id: string;
+  bookingNumber?: string;
+
+  bookingStatus?: string | null;
+  paymentStatus?: string | null;
+  bookingMode?: string | null;
+
+  startTime?: string | null;
+  endTime?: string | null;
+
+  ownerReceives?: number | null;
+  driverPays?: number | null;
+
+  driverSnapshot?: {
+    name?: string | null;
+    phoneNumber?: string | null;
+  } | null;
+
+  parkingSnapshot?: {
+    parkingName?: string | null;
+    address?: string | null;
+  } | null;
+
+  vehicleSnapshot?: {
+    registrationNumber?: string | null;
+    brand?: string | null;
+    vehicleModel?: string | null;
+    vehicleType?: string | null;
+  } | null;
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function normalizeStatus(value?: string | null) {
+  return String(value ?? "")
+    .trim()
+    .toLowerCase();
+}
+
+function safeText(value?: string | null, fallback = "—") {
+  const text = String(value ?? "").trim();
+
+  return text || fallback;
+}
+
+function safeNumber(value?: number | null) {
+  const number = Number(value);
+
+  return Number.isFinite(number) ? number : 0;
+}
+
+/* =========================================================
+   PAGE
+========================================================= */
+
 export default function OwnerBookingsPage() {
   return (
     <ProtectedRoute allowedRoles={["parkingOwner"]}>
@@ -25,6 +87,10 @@ export default function OwnerBookingsPage() {
   );
 }
 
+/* =========================================================
+   OWNER BOOKINGS
+========================================================= */
+
 function OwnerBookings() {
   const bookingsQuery = useQuery({
     queryKey: ["owner", "bookings"],
@@ -32,18 +98,30 @@ function OwnerBookings() {
     staleTime: 30 * 1000,
   });
 
-  const bookings = bookingsQuery.data?.data ?? [];
+  /*
+   * Your getOwnerBookings service appears to return the
+   * bookings array directly.
+   */
+  const bookings: Booking[] = Array.isArray(bookingsQuery.data)
+    ? (bookingsQuery.data as Booking[])
+    : [];
 
   return (
     <main className="min-h-screen overflow-hidden bg-[#06544E] text-white">
+      {/* BACKGROUND */}
       <div className="pointer-events-none fixed inset-0">
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.025)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.025)_50%,rgba(255,255,255,0.025)_75%,transparent_75%)] bg-[length:90px_90px]" />
 
         <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-emerald-300/10 blur-[140px]" />
       </div>
-<OwnerNavbar/>
+
+      <OwnerNavbar />
+
       <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
-        {/* HEADER */}
+        {/* =====================================================
+            HEADER
+        ====================================================== */}
+
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-emerald-200/15 bg-emerald-300/10 px-3 py-1.5 text-xs font-medium text-emerald-100">
@@ -76,43 +154,58 @@ function OwnerBookings() {
           </button>
         </div>
 
-        {/* STATS */}
+        {/* =====================================================
+            STATS
+        ====================================================== */}
+
         {!bookingsQuery.isLoading && !bookingsQuery.isError && (
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {/* TOTAL */}
+
             <StatCard
               label="Total bookings"
               value={bookings.length}
               icon={CalendarDays}
             />
 
+            {/* CONFIRMED */}
+
             <StatCard
               label="Confirmed"
               value={
                 bookings.filter(
                   (booking) =>
-                    booking.bookingStatus.toLowerCase() === "confirmed",
+                    normalizeStatus(booking.bookingStatus) === "confirmed",
                 ).length
               }
               icon={CheckCircle2}
             />
 
+            {/* ACTIVE */}
+
             <StatCard
               label="Active"
               value={
-                bookings.filter((booking) =>
-                  ["checkedIn", "active"].includes(
-                    booking.bookingStatus.toLowerCase(),
-                  ),
-                ).length
+                bookings.filter((booking) => {
+                  const status = normalizeStatus(booking.bookingStatus);
+
+                  return (
+                    status === "checkedin" ||
+                    status === "checked_in" ||
+                    status === "active"
+                  );
+                }).length
               }
               icon={Clock3}
             />
+
+            {/* CANCELLED */}
 
             <StatCard
               label="Cancelled"
               value={
                 bookings.filter((booking) =>
-                  booking.bookingStatus.toLowerCase().includes("cancel"),
+                  normalizeStatus(booking.bookingStatus).includes("cancel"),
                 ).length
               }
               icon={XCircle}
@@ -120,7 +213,10 @@ function OwnerBookings() {
           </div>
         )}
 
-        {/* LOADING */}
+        {/* =====================================================
+            LOADING
+        ====================================================== */}
+
         {bookingsQuery.isLoading && (
           <div className="mt-8 space-y-4">
             {Array.from({ length: 4 }).map((_, index) => (
@@ -129,7 +225,10 @@ function OwnerBookings() {
           </div>
         )}
 
-        {/* ERROR */}
+        {/* =====================================================
+            ERROR
+        ====================================================== */}
+
         {bookingsQuery.isError && (
           <div className="mt-8 rounded-3xl border border-red-200/10 bg-red-950/20 p-8 text-center">
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/10">
@@ -154,7 +253,10 @@ function OwnerBookings() {
           </div>
         )}
 
-        {/* EMPTY */}
+        {/* =====================================================
+            EMPTY
+        ====================================================== */}
+
         {!bookingsQuery.isLoading &&
           !bookingsQuery.isError &&
           bookings.length === 0 && (
@@ -172,7 +274,10 @@ function OwnerBookings() {
             </div>
           )}
 
-        {/* BOOKINGS */}
+        {/* =====================================================
+            BOOKINGS
+        ====================================================== */}
+
         {!bookingsQuery.isLoading &&
           !bookingsQuery.isError &&
           bookings.length > 0 && (
@@ -186,6 +291,10 @@ function OwnerBookings() {
     </main>
   );
 }
+
+/* =========================================================
+   STAT CARD
+========================================================= */
 
 function StatCard({
   label,
@@ -211,82 +320,102 @@ function StatCard({
   );
 }
 
-function BookingCard({
-  booking,
-}: {
-  booking: {
-    _id: string;
-    bookingNumber: string;
-    bookingStatus: string;
-    paymentStatus: string;
-    bookingMode: string;
-    startTime: string;
-    endTime: string;
-    ownerReceives: number;
-    driverPays: number;
-    driverSnapshot: {
-      name: string;
-      phoneNumber: string;
-    };
-    parkingSnapshot: {
-      parkingName: string;
-      address: string;
-    };
-    vehicleSnapshot: {
-      registrationNumber: string;
-      brand: string;
-      vehicleModel: string;
-      vehicleType: string;
-    };
-  };
-}) {
+/* =========================================================
+   BOOKING CARD
+========================================================= */
+
+function BookingCard({ booking }: { booking: Booking }) {
+  const bookingStatus = safeText(booking.bookingStatus, "Unknown");
+
+  const paymentStatus = safeText(booking.paymentStatus, "Unknown");
+
+  const bookingMode = safeText(booking.bookingMode, "—");
+
+  const parkingName = safeText(
+    booking.parkingSnapshot?.parkingName,
+    "Parking location",
+  );
+
+  const parkingAddress = safeText(
+    booking.parkingSnapshot?.address,
+    "Address unavailable",
+  );
+
+  const driverName = safeText(
+    booking.driverSnapshot?.name,
+    "Driver unavailable",
+  );
+
+  const vehicleBrand = safeText(booking.vehicleSnapshot?.brand, "");
+
+  const vehicleModel = safeText(booking.vehicleSnapshot?.vehicleModel, "");
+
+  const vehicleName =
+    [vehicleBrand, vehicleModel]
+      .filter((value) => value && value !== "—")
+      .join(" ") || "Vehicle unavailable";
+
+  const registrationNumber = safeText(
+    booking.vehicleSnapshot?.registrationNumber,
+    "Registration unavailable",
+  );
+
+  const ownerReceives = safeNumber(booking.ownerReceives);
+
   return (
     <article className="group rounded-3xl border border-white/10 bg-black/10 p-5 backdrop-blur-xl transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200/20 hover:bg-white/[0.07] sm:p-6">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-        {/* LEFT */}
+        {/* =====================================================
+            LEFT
+        ====================================================== */}
+
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold">
-              #{booking.bookingNumber}
+              #{safeText(booking.bookingNumber, "N/A")}
             </span>
 
-            <BookingStatus status={booking.bookingStatus} />
+            <BookingStatus status={bookingStatus} />
 
-            <PaymentStatus status={booking.paymentStatus} />
+            <PaymentStatus status={paymentStatus} />
           </div>
 
-          <h2 className="mt-4 text-lg font-semibold">
-            {booking.parkingSnapshot.parkingName}
-          </h2>
+          <h2 className="mt-4 text-lg font-semibold">{parkingName}</h2>
 
           <div className="mt-2 flex items-start gap-2 text-sm text-white/45">
             <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-emerald-200/70" />
 
-            <span>{booking.parkingSnapshot.address}</span>
+            <span>{parkingAddress}</span>
           </div>
 
           {/* DRIVER */}
+
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <InfoItem
               icon={User}
               label="Driver"
-              value={booking.driverSnapshot.name}
+              value={driverName}
+              secondary={booking.driverSnapshot?.phoneNumber ?? undefined}
             />
 
             <InfoItem
               icon={CarFront}
               label="Vehicle"
-              value={`${booking.vehicleSnapshot.brand} ${booking.vehicleSnapshot.vehicleModel}`}
-              secondary={booking.vehicleSnapshot.registrationNumber}
+              value={vehicleName}
+              secondary={registrationNumber}
             />
           </div>
         </div>
 
-        {/* RIGHT */}
+        {/* =====================================================
+            RIGHT
+        ====================================================== */}
+
         <div className="shrink-0 lg:min-w-[260px] lg:border-l lg:border-white/10 lg:pl-6">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-white/40">Start</p>
+
               <p className="mt-1 text-sm font-medium">
                 {formatDate(booking.startTime)}
               </p>
@@ -294,6 +423,7 @@ function BookingCard({
 
             <div>
               <p className="text-xs text-white/40">End</p>
+
               <p className="mt-1 text-sm font-medium">
                 {formatDate(booking.endTime)}
               </p>
@@ -305,12 +435,12 @@ function BookingCard({
               <p className="text-xs text-white/40">Owner receives</p>
 
               <p className="mt-1 text-xl font-bold text-emerald-100">
-                ₹{booking.ownerReceives.toFixed(2)}
+                ₹{ownerReceives.toFixed(2)}
               </p>
             </div>
 
             <span className="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs capitalize text-white/50">
-              {booking.bookingMode}
+              {bookingMode}
             </span>
           </div>
         </div>
@@ -354,16 +484,19 @@ function InfoItem({
 }
 
 /* =========================================================
-   STATUS
+   BOOKING STATUS
 ========================================================= */
 
-function BookingStatus({ status }: { status: string }) {
-  const normalized = status.toLowerCase();
+function BookingStatus({ status }: { status?: string | null }) {
+  const displayStatus = safeText(status, "Unknown");
+
+  const normalized = normalizeStatus(status);
 
   const isPositive =
     normalized === "confirmed" ||
     normalized === "completed" ||
     normalized === "checkedin" ||
+    normalized === "checked_in" ||
     normalized === "active";
 
   const isCancelled = normalized.includes("cancel");
@@ -379,13 +512,19 @@ function BookingStatus({ status }: { status: string }) {
             : "border-amber-200/10 bg-amber-300/10 text-amber-100",
       ].join(" ")}
     >
-      {status}
+      {displayStatus}
     </span>
   );
 }
 
-function PaymentStatus({ status }: { status: string }) {
-  const normalized = status.toLowerCase();
+/* =========================================================
+   PAYMENT STATUS
+========================================================= */
+
+function PaymentStatus({ status }: { status?: string | null }) {
+  const displayStatus = safeText(status, "Unknown");
+
+  const normalized = normalizeStatus(status);
 
   return (
     <span
@@ -396,7 +535,7 @@ function PaymentStatus({ status }: { status: string }) {
           : "border-white/10 bg-white/5 text-white/45",
       ].join(" ")}
     >
-      Payment: {status}
+      Payment: {displayStatus}
     </span>
   );
 }
@@ -416,6 +555,7 @@ function BookingSkeleton() {
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         <div className="h-16 rounded-xl bg-white/5" />
+
         <div className="h-16 rounded-xl bg-white/5" />
       </div>
     </div>
@@ -426,7 +566,11 @@ function BookingSkeleton() {
    DATE FORMAT
 ========================================================= */
 
-function formatDate(value: string) {
+function formatDate(value?: string | null) {
+  if (!value) {
+    return "—";
+  }
+
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {

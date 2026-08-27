@@ -1,5 +1,9 @@
 import mongoose, { Types } from "mongoose";
 import { ParkingStatus } from "../constants/parking.js";
+export interface IParkingImage {
+    url: string;
+    publicId: string;
+}
 export interface IParking {
     ownerId: Types.ObjectId;
     parkingName: string;
@@ -48,10 +52,7 @@ export interface IParking {
             monthly?: number;
         };
     };
-    images: {
-        url: string;
-        publicId: string;
-    }[];
+    images: IParkingImage[];
     operatingHours: {
         open: string;
         close: string;
@@ -61,5 +62,6 @@ export interface IParking {
     status: ParkingStatus;
     isActive: boolean;
 }
+export declare const PARKING_FACILITIES: readonly ["CCTV", "Security Guard", "Covered Parking", "EV Charging", "Lighting", "Washroom", "Drinking Water", "Valet Parking", "Disabled Access", "Car Wash"];
 declare const Parking: mongoose.Model<any, {}, {}, {}, any, any, any>;
 export default Parking;

@@ -1,5 +1,41 @@
 import mongoose, { Schema } from "mongoose";
-import { PARKING_STATUS, PARKING_STATUS_VALUES, PARKING_TYPE_VALUES, PARKING_FACILITY_VALUES, } from "../constants/parking.js";
+import { PARKING_STATUS, PARKING_STATUS_VALUES, PARKING_TYPE_VALUES, } from "../constants/parking.js";
+/* ============================================================
+   FACILITIES
+   ============================================================ */
+/*
+ * IMPORTANT:
+ *
+ * Your frontend currently sends:
+ *
+ * "CCTV"
+ * "Security Guard"
+ * "Covered Parking"
+ * "EV Charging"
+ * "Lighting"
+ * "Washroom"
+ * "Drinking Water"
+ * "Valet Parking"
+ * "Disabled Access"
+ * "Car Wash"
+ *
+ * Therefore the MongoDB enum must accept these exact values.
+ */
+export const PARKING_FACILITIES = [
+    "CCTV",
+    "Security Guard",
+    "Covered Parking",
+    "EV Charging",
+    "Lighting",
+    "Washroom",
+    "Drinking Water",
+    "Valet Parking",
+    "Disabled Access",
+    "Car Wash",
+];
+/* ============================================================
+   IMAGE SCHEMA
+   ============================================================ */
 const imageSchema = new Schema({
     url: {
         type: String,
@@ -14,6 +50,9 @@ const imageSchema = new Schema({
 }, {
     _id: false,
 });
+/* ============================================================
+   LOCATION SCHEMA
+   ============================================================ */
 const locationSchema = new Schema({
     latitude: {
         type: Number,
@@ -30,6 +69,9 @@ const locationSchema = new Schema({
 }, {
     _id: false,
 });
+/* ============================================================
+   BOOKING MODES
+   ============================================================ */
 const bookingModeSchema = new Schema({
     hourly: {
         type: Boolean,
@@ -46,6 +88,9 @@ const bookingModeSchema = new Schema({
 }, {
     _id: false,
 });
+/* ============================================================
+   VEHICLE PRICING
+   ============================================================ */
 const vehiclePricingSchema = new Schema({
     hourly: {
         type: Number,
@@ -62,12 +107,16 @@ const vehiclePricingSchema = new Schema({
 }, {
     _id: false,
 });
+/* ============================================================
+   PRICING
+   ============================================================ */
 const pricingSchema = new Schema({
     currency: {
         type: String,
         default: "INR",
         trim: true,
         uppercase: true,
+        match: [/^[A-Z]{3}$/, "Currency must be a valid 3-letter code"],
     },
     twoWheeler: {
         type: vehiclePricingSchema,
@@ -88,6 +137,9 @@ const pricingSchema = new Schema({
 }, {
     _id: false,
 });
+/* ============================================================
+   OPERATING HOURS
+   ============================================================ */
 const operatingHoursSchema = new Schema({
     open: {
         type: String,
@@ -108,7 +160,13 @@ const operatingHoursSchema = new Schema({
 }, {
     _id: false,
 });
+/* ============================================================
+   PARKING SCHEMA
+   ============================================================ */
 const parkingSchema = new Schema({
+    /* ----------------------------------------------------------
+       OWNER
+    ---------------------------------------------------------- */
     ownerId: {
         type: Schema.Types.ObjectId,
         ref: "User",
@@ -116,6 +174,9 @@ const parkingSchema = new Schema({
         immutable: true,
         index: true,
     },
+    /* ----------------------------------------------------------
+       BASIC INFORMATION
+    ---------------------------------------------------------- */
     parkingName: {
         type: String,
         required: true,
@@ -126,13 +187,16 @@ const parkingSchema = new Schema({
         type: String,
         default: "",
         trim: true,
-        maxlength: 1000,
+        maxlength: 2000,
     },
     parkingType: {
         type: String,
         enum: PARKING_TYPE_VALUES,
         required: true,
     },
+    /* ----------------------------------------------------------
+       ADDRESS
+    ---------------------------------------------------------- */
     address: {
         type: String,
         required: true,
@@ -165,46 +229,111 @@ const parkingSchema = new Schema({
         match: [/^[1-9][0-9]{5}$/, "Invalid pincode"],
         index: true,
     },
-    // GPS LOCATION
+    /* ----------------------------------------------------------
+       LOCATION
+    ---------------------------------------------------------- */
     location: {
         type: locationSchema,
         required: true,
     },
-    facilities: [
-        {
-            type: String,
-            enum: PARKING_FACILITY_VALUES,
-        },
-    ],
-    rules: [
-        {
-            type: String,
-            trim: true,
-            maxlength: 300,
-        },
-    ],
+    /* ----------------------------------------------------------
+       OWNER CONTACT
+    ---------------------------------------------------------- */
+    ownerName: {
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
+    },
+    contactNumber: {
+        type: String,
+        required: true,
+        trim: true,
+        match: [/^[6-9][0-9]{9}$/, "Invalid contact number"],
+    },
+    /* ----------------------------------------------------------
+       PARKING AREA
+    ---------------------------------------------------------- */
+    parkingArea: {
+        type: Number,
+        required: true,
+        min: 0,
+    },
+    /* ----------------------------------------------------------
+       FACILITIES
+    ---------------------------------------------------------- */
+    facilities: {
+        type: [
+            {
+                type: String,
+                enum: PARKING_FACILITIES,
+            },
+        ],
+        default: [],
+    },
+    /* ----------------------------------------------------------
+       RULES
+    ---------------------------------------------------------- */
+    rules: {
+        type: [
+            {
+                type: String,
+                trim: true,
+                maxlength: 300,
+            },
+        ],
+        default: [],
+    },
+    /* ----------------------------------------------------------
+       ENTRY INSTRUCTIONS
+    ---------------------------------------------------------- */
     entryInstructions: {
         type: String,
         default: "",
         trim: true,
         maxlength: 1000,
     },
+    /* ----------------------------------------------------------
+       BOOKING MODES
+    ---------------------------------------------------------- */
     bookingModes: {
         type: bookingModeSchema,
         required: true,
     },
+    /* ----------------------------------------------------------
+       PRICING
+    ---------------------------------------------------------- */
     pricing: {
         type: pricingSchema,
         required: true,
     },
+    /* ----------------------------------------------------------
+       IMAGES
+    ---------------------------------------------------------- */
     images: {
         type: [imageSchema],
         default: [],
+        /*
+         * Do NOT put required: true here.
+         *
+         * Your service/controller should enforce:
+         * minimum 2 images
+         * maximum 5 images
+         *
+         * This gives you a much cleaner error:
+         * "At least 2 parking images are required."
+         */
     },
+    /* ----------------------------------------------------------
+       OPERATING HOURS
+    ---------------------------------------------------------- */
     operatingHours: {
         type: operatingHoursSchema,
         required: true,
     },
+    /* ----------------------------------------------------------
+       RATINGS
+    ---------------------------------------------------------- */
     averageRating: {
         type: Number,
         default: 0,
@@ -216,14 +345,18 @@ const parkingSchema = new Schema({
         default: 0,
         min: 0,
     },
-    // STATUS
+    /* ----------------------------------------------------------
+       STATUS
+    ---------------------------------------------------------- */
     status: {
         type: String,
         enum: PARKING_STATUS_VALUES,
         default: PARKING_STATUS.PENDING,
         index: true,
     },
-    // ACTIVE STATUS
+    /* ----------------------------------------------------------
+       ACTIVE
+    ---------------------------------------------------------- */
     isActive: {
         type: Boolean,
         default: true,
@@ -233,6 +366,9 @@ const parkingSchema = new Schema({
     timestamps: true,
     versionKey: false,
 });
+/* ============================================================
+   INDEXES
+   ============================================================ */
 parkingSchema.index({
     ownerId: 1,
     isActive: 1,
@@ -257,6 +393,9 @@ parkingSchema.index({
     isActive: 1,
     status: 1,
 });
+/* ============================================================
+   MODEL
+   ============================================================ */
 const Parking = mongoose.models.Parking || mongoose.model("Parking", parkingSchema);
 export default Parking;
 //# sourceMappingURL=Parking.js.map

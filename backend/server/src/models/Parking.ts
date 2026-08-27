@@ -95,46 +95,20 @@ export interface IParking {
   isActive: boolean;
 }
 
-/* ============================================================
-   FACILITIES
-   ============================================================ */
-
-/*
- * IMPORTANT:
- *
- * Your frontend currently sends:
- *
- * "CCTV"
- * "Security Guard"
- * "Covered Parking"
- * "EV Charging"
- * "Lighting"
- * "Washroom"
- * "Drinking Water"
- * "Valet Parking"
- * "Disabled Access"
- * "Car Wash"
- *
- * Therefore the MongoDB enum must accept these exact values.
- */
-
 export const PARKING_FACILITIES = [
-  "CCTV",
-  "Security Guard",
-  "Covered Parking",
-  "EV Charging",
-  "Lighting",
-  "Washroom",
-  "Drinking Water",
-  "Valet Parking",
-  "Disabled Access",
-  "Car Wash",
+  "cctv",
+  "security_guard",
+  "covered_parking",
+  "ev_charging",
+  "lighting",
+  "washroom",
+  "drinking_water",
+  "valet_parking",
+  "disabled_access",
+  "car_wash",
 ] as const;
-
-/* ============================================================
-   IMAGE SCHEMA
-   ============================================================ */
-
+export type ParkingFacility =
+  (typeof PARKING_FACILITIES)[number];
 const imageSchema = new Schema<IParkingImage>(
   {
     url: {
@@ -583,10 +557,6 @@ parkingSchema.index({
   isActive: 1,
   status: 1,
 });
-
-/* ============================================================
-   MODEL
-   ============================================================ */
 
 const Parking =
   mongoose.models.Parking || mongoose.model<IParking>("Parking", parkingSchema);
