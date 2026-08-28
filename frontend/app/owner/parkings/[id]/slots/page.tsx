@@ -21,7 +21,7 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
-
+import OwnerNavbar from "@/components/owner/OwnerNavbar";
 import { toast } from "react-hot-toast";
 
 import {
@@ -217,8 +217,10 @@ export default function ParkingSlotsPage() {
   }
 
   return (
-    <main
-      className="
+    <div className="">
+      <OwnerNavbar />
+      <main
+        className="
         min-h-screen
         bg-[#075e59]
         px-4 py-6
@@ -226,40 +228,17 @@ export default function ParkingSlotsPage() {
         md:px-6 md:py-8
         lg:px-8
       "
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 2px, transparent 2px, transparent 28px)",
-      }}
-    >
-      <div className="mx-auto max-w-7xl">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
-        <header className="mb-7">
-          <button
-            type="button"
-            onClick={() => router.push(`/owner/parkings/${parkingId}`)}
-            className="
-              mb-5
-              inline-flex
-              items-center
-              gap-2
-              text-sm
-              font-medium
-              text-white/70
-              transition
-              hover:text-white
-            "
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Parking
-          </button>
-
-          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div
-                className="
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 2px, transparent 2px, transparent 28px)",
+        }}
+      >
+        <div className="mx-auto max-w-7xl">
+          <header className="mb-7">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div
+                  className="
                   flex h-13 w-13 shrink-0 items-center justify-center
                   rounded-2xl
                   border border-white/15
@@ -267,24 +246,24 @@ export default function ParkingSlotsPage() {
                   shadow-lg
                   backdrop-blur-xl
                 "
-              >
-                <CircleParking className="h-7 w-7 text-white" />
+                >
+                  <CircleParking className="h-7 w-7 text-white" />
+                </div>
+
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+                    Manage Parking Slots
+                  </h1>
+
+                  <p className="mt-1 text-sm text-white/60">
+                    Create and manage individual parking spaces.
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-                  Manage Parking Slots
-                </h1>
-
-                <p className="mt-1 text-sm text-white/60">
-                  Create and manage individual parking spaces.
-                </p>
-              </div>
-            </div>
-
-            <a
-              href="#add-slot"
-              className="
+              <a
+                href="#add-slot"
+                className="
                 inline-flex
                 w-full
                 items-center
@@ -302,46 +281,46 @@ export default function ParkingSlotsPage() {
                 hover:bg-white/90
                 sm:w-auto
               "
-            >
-              <Plus className="h-4 w-4" />
-              Add Slot
-            </a>
-          </div>
-        </header>
+              >
+                <Plus className="h-4 w-4" />
+                Add Slot
+              </a>
+            </div>
+          </header>
 
-        {/* ======================================================
+          {/* ======================================================
             STATISTICS
         ====================================================== */}
 
-        <div className="mb-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <StatCard
-            label="Total Slots"
-            value={statistics.total}
-            icon={CircleParking}
-          />
+          <div className="mb-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard
+              label="Total Slots"
+              value={statistics.total}
+              icon={CircleParking}
+            />
 
-          <StatCard
-            label="Available"
-            value={statistics.available}
-            icon={CheckCircle2}
-          />
+            <StatCard
+              label="Available"
+              value={statistics.available}
+              icon={CheckCircle2}
+            />
 
-          <StatCard label="Occupied" value={statistics.occupied} icon={Car} />
+            <StatCard label="Occupied" value={statistics.occupied} icon={Car} />
 
-          <StatCard
-            label="Reserved"
-            value={statistics.reserved}
-            icon={Warehouse}
-          />
-        </div>
+            <StatCard
+              label="Reserved"
+              value={statistics.reserved}
+              icon={Warehouse}
+            />
+          </div>
 
-        {/* ======================================================
+          {/* ======================================================
             ADD SLOT
         ====================================================== */}
 
-        <section
-          id="add-slot"
-          className="
+          <section
+            id="add-slot"
+            className="
             mb-8
             overflow-hidden
             rounded-2xl
@@ -350,48 +329,48 @@ export default function ParkingSlotsPage() {
             shadow-xl
             backdrop-blur-xl
           "
-        >
-          {/* Form header */}
+          >
+            {/* Form header */}
 
-          <div
-            className="
+            <div
+              className="
               border-b border-white/10
               bg-black/20
               px-5 py-4
               sm:px-6
             "
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
-                <Plus className="h-5 w-5" />
-              </div>
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
+                  <Plus className="h-5 w-5" />
+                </div>
 
-              <div>
-                <h2 className="font-bold">Add Parking Slot</h2>
+                <div>
+                  <h2 className="font-bold">Add Parking Slot</h2>
 
-                <p className="text-xs text-white/55">
-                  Create a new parking space.
-                </p>
+                  <p className="text-xs text-white/55">
+                    Create a new parking space.
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
 
-          <form onSubmit={handleCreateSlot} className="p-5 sm:p-6">
-            <div className="grid gap-5 lg:grid-cols-12">
-              {/* Slot Number */}
+            <form onSubmit={handleCreateSlot} className="p-5 sm:p-6">
+              <div className="grid gap-5 lg:grid-cols-12">
+                {/* Slot Number */}
 
-              <div className="lg:col-span-3">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
-                  Slot Number
-                </label>
+                <div className="lg:col-span-3">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Slot Number
+                  </label>
 
-                <input
-                  type="text"
-                  value={slotNumber}
-                  onChange={(event) => setSlotNumber(event.target.value)}
-                  placeholder="A-01"
-                  maxLength={20}
-                  className="
+                  <input
+                    type="text"
+                    value={slotNumber}
+                    onChange={(event) => setSlotNumber(event.target.value)}
+                    placeholder="A-01"
+                    maxLength={20}
+                    className="
                     h-11
                     w-full
                     rounded-xl
@@ -408,23 +387,23 @@ export default function ParkingSlotsPage() {
                     focus:ring-2
                     focus:ring-white/10
                   "
-                />
-              </div>
+                  />
+                </div>
 
-              {/* Floor */}
+                {/* Floor */}
 
-              <div className="lg:col-span-3">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
-                  Floor
-                </label>
+                <div className="lg:col-span-3">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Floor
+                  </label>
 
-                <input
-                  type="text"
-                  value={floor}
-                  onChange={(event) => setFloor(event.target.value)}
-                  placeholder="Ground"
-                  maxLength={30}
-                  className="
+                  <input
+                    type="text"
+                    value={floor}
+                    onChange={(event) => setFloor(event.target.value)}
+                    placeholder="Ground"
+                    maxLength={30}
+                    className="
                     h-11
                     w-full
                     rounded-xl
@@ -441,24 +420,24 @@ export default function ParkingSlotsPage() {
                     focus:ring-2
                     focus:ring-white/10
                   "
-                />
-              </div>
+                  />
+                </div>
 
-              {/* Display Order */}
+                {/* Display Order */}
 
-              <div className="lg:col-span-2">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
-                  Order
-                </label>
+                <div className="lg:col-span-2">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Order
+                  </label>
 
-                <input
-                  type="number"
-                  min={0}
-                  value={displayOrder}
-                  onChange={(event) =>
-                    setDisplayOrder(Number(event.target.value))
-                  }
-                  className="
+                  <input
+                    type="number"
+                    min={0}
+                    value={displayOrder}
+                    onChange={(event) =>
+                      setDisplayOrder(Number(event.target.value))
+                    }
+                    className="
                     h-11
                     w-full
                     rounded-xl
@@ -474,23 +453,23 @@ export default function ParkingSlotsPage() {
                     focus:ring-2
                     focus:ring-white/10
                   "
-                />
-              </div>
+                  />
+                </div>
 
-              {/* Notes */}
+                {/* Notes */}
 
-              <div className="lg:col-span-4">
-                <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
-                  Notes
-                </label>
+                <div className="lg:col-span-4">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Notes
+                  </label>
 
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Optional notes..."
-                  maxLength={200}
-                  className="
+                  <input
+                    type="text"
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder="Optional notes..."
+                    maxLength={200}
+                    className="
                     h-11
                     w-full
                     rounded-xl
@@ -507,58 +486,63 @@ export default function ParkingSlotsPage() {
                     focus:ring-2
                     focus:ring-white/10
                   "
-                />
-              </div>
+                  />
+                </div>
 
-              {/* Vehicle Types */}
+                {/* Vehicle Types */}
 
-<div className="lg:col-span-9">
-  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
-    Supported Vehicles
-  </label>
+                <div className="lg:col-span-9">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Supported Vehicles
+                  </label>
 
-  {!parking ? (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          key={index}
-          className="h-11 animate-pulse rounded-xl border border-white/10 bg-white/5"
-        />
-      ))}
-    </div>
-  ) : allowedVehicleTypes.length === 0 ? (
-    <div className="rounded-xl border border-amber-300/20 bg-amber-400/10 px-4 py-3">
-      <p className="text-sm font-medium text-amber-100">
-        No vehicle types configured
-      </p>
+                  {!parking ? (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {Array.from({ length: 4 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className="h-11 animate-pulse rounded-xl border border-white/10 bg-white/5"
+                        />
+                      ))}
+                    </div>
+                  ) : allowedVehicleTypes.length === 0 ? (
+                    <div className="rounded-xl border border-amber-300/20 bg-amber-400/10 px-4 py-3">
+                      <p className="text-sm font-medium text-amber-100">
+                        No vehicle types configured
+                      </p>
 
-      <p className="mt-1 text-xs text-amber-100/60">
-        Edit this parking and select at least one supported vehicle type.
-      </p>
+                      <p className="mt-1 text-xs text-amber-100/60">
+                        Edit this parking and select at least one supported
+                        vehicle type.
+                      </p>
 
-      <button
-        type="button"
-        onClick={() => router.push(`/owner/parkings/${parkingId}/edit`)}
-        className="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#075e59] transition hover:bg-white/90"
-      >
-        Edit Parking
-      </button>
-    </div>
-  ) : (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {VEHICLE_TYPES.filter((vehicle) =>
-        allowedVehicleTypes.includes(vehicle.value),
-      ).map((vehicle) => {
-        const Icon = vehicle.icon;
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(`/owner/parkings/${parkingId}/edit`)
+                        }
+                        className="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#075e59] transition hover:bg-white/90"
+                      >
+                        Edit Parking
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {VEHICLE_TYPES.filter((vehicle) =>
+                        allowedVehicleTypes.includes(vehicle.value),
+                      ).map((vehicle) => {
+                        const Icon = vehicle.icon;
 
-        const selected = supportedVehicleTypes.includes(vehicle.value);
+                        const selected = supportedVehicleTypes.includes(
+                          vehicle.value,
+                        );
 
-        return (
-          <button
-            key={vehicle.value}
-            type="button"
-            onClick={() => toggleVehicleType(vehicle.value)}
-            className={`
+                        return (
+                          <button
+                            key={vehicle.value}
+                            type="button"
+                            onClick={() => toggleVehicleType(vehicle.value)}
+                            className={`
               flex
               h-11
               items-center
@@ -576,30 +560,28 @@ export default function ParkingSlotsPage() {
                   : "border-white/10 bg-black/10 text-white/75 hover:border-white/25 hover:bg-white/10"
               }
             `}
-          >
-            <Icon className="h-4 w-4 shrink-0" />
+                          >
+                            <Icon className="h-4 w-4 shrink-0" />
 
-            <span className="truncate">
-              {vehicle.label}
-            </span>
+                            <span className="truncate">{vehicle.label}</span>
 
-            {selected && (
-              <CheckCircle2 className="ml-auto h-4 w-4 shrink-0" />
-            )}
-          </button>
-        );
-      })}
-    </div>
-  )}
-</div>
+                            {selected && (
+                              <CheckCircle2 className="ml-auto h-4 w-4 shrink-0" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
 
-              {/* Submit */}
+                {/* Submit */}
 
-              <div className="lg:col-span-3 lg:self-end">
-                <button
-                  type="submit"
-                  disabled={creating}
-                  className="
+                <div className="lg:col-span-3 lg:self-end">
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="
                     flex
                     h-11
                     w-full
@@ -618,70 +600,71 @@ export default function ParkingSlotsPage() {
                     disabled:cursor-not-allowed
                     disabled:opacity-60
                   "
-                >
-                  {creating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Creating...
-                    </>
-                  ) : (
-                    <>
-                      <Plus className="h-4 w-4" />
-                      Create Slot
-                    </>
-                  )}
-                </button>
+                  >
+                    {creating ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="h-4 w-4" />
+                        Create Slot
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-            </div>
-          </form>
-        </section>
+            </form>
+          </section>
 
-        {/* ======================================================
+          {/* ======================================================
             SLOTS
         ====================================================== */}
 
-        <section>
-          <div className="mb-5 flex items-end justify-between">
-            <div>
-              <h2 className="text-xl font-bold">Your Slots</h2>
+          <section>
+            <div className="mb-5 flex items-end justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Your Slots</h2>
 
-              <p className="mt-1 text-sm text-white/55">
-                {slots.length === 0
-                  ? "No slots created yet."
-                  : `${slots.length} parking ${
-                      slots.length === 1 ? "slot" : "slots"
-                    } configured.`}
-              </p>
+                <p className="mt-1 text-sm text-white/55">
+                  {slots.length === 0
+                    ? "No slots created yet."
+                    : `${slots.length} parking ${
+                        slots.length === 1 ? "slot" : "slots"
+                      } configured.`}
+                </p>
+              </div>
+
+              {slots.length > 0 && (
+                <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
+                  {slots.length} total
+                </span>
+              )}
             </div>
 
-            {slots.length > 0 && (
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
-                {slots.length} total
-              </span>
+            {/* Loading */}
+
+            {loading ? (
+              <SlotsSkeleton />
+            ) : slots.length === 0 ? (
+              <EmptySlots />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                {slots.map((slot) => (
+                  <SlotCard
+                    key={slot._id}
+                    slot={slot}
+                    deleting={deletingSlotId === slot._id}
+                    onDelete={() => handleDeleteSlot(slot._id)}
+                  />
+                ))}
+              </div>
             )}
-          </div>
-
-          {/* Loading */}
-
-          {loading ? (
-            <SlotsSkeleton />
-          ) : slots.length === 0 ? (
-            <EmptySlots />
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-              {slots.map((slot) => (
-                <SlotCard
-                  key={slot._id}
-                  slot={slot}
-                  deleting={deletingSlotId === slot._id}
-                  onDelete={() => handleDeleteSlot(slot._id)}
-                />
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
-    </main>
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }
 

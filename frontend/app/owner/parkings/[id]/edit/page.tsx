@@ -369,6 +369,12 @@ function EditParkingForm({
     }
 
     if (form.supportedVehicleTypes.length === 0) {
+      window.alert("Select at least one supported vehicle type.");
+      return;
+    }
+
+    if (!hasSelectedBookingMode(form)) {
+      window.alert("Select at least one booking mode.");
       return;
     }
 
@@ -419,29 +425,49 @@ function EditParkingForm({
       pricing: {
         currency: form.currency.trim() || "INR",
 
-        twoWheeler: {
-          hourly: numberOrUndefined(form.twoWheelerHourly),
-          daily: numberOrUndefined(form.twoWheelerDaily),
-          monthly: numberOrUndefined(form.twoWheelerMonthly),
-        },
+        twoWheeler: form.supportedVehicleTypes.includes("twoWheeler")
+          ? buildVehiclePricing(
+              form.twoWheelerHourly,
+              form.twoWheelerDaily,
+              form.twoWheelerMonthly,
+              form.bookingHourly,
+              form.bookingDaily,
+              form.bookingMonthly,
+            )
+          : {},
 
-        fourWheeler: {
-          hourly: numberOrUndefined(form.fourWheelerHourly),
-          daily: numberOrUndefined(form.fourWheelerDaily),
-          monthly: numberOrUndefined(form.fourWheelerMonthly),
-        },
+        fourWheeler: form.supportedVehicleTypes.includes("fourWheeler")
+          ? buildVehiclePricing(
+              form.fourWheelerHourly,
+              form.fourWheelerDaily,
+              form.fourWheelerMonthly,
+              form.bookingHourly,
+              form.bookingDaily,
+              form.bookingMonthly,
+            )
+          : {},
 
-        vanMinibus: {
-          hourly: numberOrUndefined(form.vanHourly),
-          daily: numberOrUndefined(form.vanDaily),
-          monthly: numberOrUndefined(form.vanMonthly),
-        },
+        vanMinibus: form.supportedVehicleTypes.includes("vanMinibus")
+          ? buildVehiclePricing(
+              form.vanHourly,
+              form.vanDaily,
+              form.vanMonthly,
+              form.bookingHourly,
+              form.bookingDaily,
+              form.bookingMonthly,
+            )
+          : {},
 
-        heavyVehicle: {
-          hourly: numberOrUndefined(form.heavyHourly),
-          daily: numberOrUndefined(form.heavyDaily),
-          monthly: numberOrUndefined(form.heavyMonthly),
-        },
+        heavyVehicle: form.supportedVehicleTypes.includes("heavyVehicle")
+          ? buildVehiclePricing(
+              form.heavyHourly,
+              form.heavyDaily,
+              form.heavyMonthly,
+              form.bookingHourly,
+              form.bookingDaily,
+              form.bookingMonthly,
+            )
+          : {},
       },
 
       operatingHours: {
@@ -476,14 +502,6 @@ function EditParkingForm({
         {/* HEADER */}
 
         <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => router.push("/owner/parkings")}
-            className="mb-5 inline-flex items-center gap-2 text-sm text-white/50 transition hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to parkings
-          </button>
 
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
@@ -830,7 +848,7 @@ function EditParkingForm({
           <FormSection
             icon={<ShieldCheck className="h-5 w-5" />}
             title="Vehicle pricing"
-            description="Set separate prices for every vehicle type."
+            description="Pricing is shown only for the selected vehicle types and booking modes."
           >
             <InputField
               label="Currency"
@@ -839,49 +857,98 @@ function EditParkingForm({
               required
             />
 
-            <VehiclePricingSection
-              icon={<Car className="h-5 w-5" />}
-              title="Two wheeler"
-              hourly={form.twoWheelerHourly}
-              daily={form.twoWheelerDaily}
-              monthly={form.twoWheelerMonthly}
-              onHourly={(value) => updateField("twoWheelerHourly", value)}
-              onDaily={(value) => updateField("twoWheelerDaily", value)}
-              onMonthly={(value) => updateField("twoWheelerMonthly", value)}
-            />
+            {form.supportedVehicleTypes.length === 0 ? (
+              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5">
+                <p className="text-sm font-medium text-amber-100">
+                  Select at least one vehicle type first.
+                </p>
+                <p className="mt-1 text-xs text-amber-100/50">
+                  Pricing fields will appear after you select a supported
+                  vehicle.
+                </p>
+              </div>
+            ) : !hasSelectedBookingMode(form) ? (
+              <div className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5">
+                <p className="text-sm font-medium text-amber-100">
+                  Select at least one booking mode first.
+                </p>
+                <p className="mt-1 text-xs text-amber-100/50">
+                  Enable Hourly, Daily, or Monthly above to configure pricing.
+                </p>
+              </div>
+            ) : (
+              <>
+                {form.supportedVehicleTypes.includes("twoWheeler") && (
+                  <VehiclePricingSection
+                    icon={<Car className="h-5 w-5" />}
+                    title="Two wheeler"
+                    hourly={form.twoWheelerHourly}
+                    daily={form.twoWheelerDaily}
+                    monthly={form.twoWheelerMonthly}
+                    showHourly={form.bookingHourly}
+                    showDaily={form.bookingDaily}
+                    showMonthly={form.bookingMonthly}
+                    onHourly={(value) => updateField("twoWheelerHourly", value)}
+                    onDaily={(value) => updateField("twoWheelerDaily", value)}
+                    onMonthly={(value) =>
+                      updateField("twoWheelerMonthly", value)
+                    }
+                  />
+                )}
 
-            <VehiclePricingSection
-              icon={<Car className="h-5 w-5" />}
-              title="Four wheeler"
-              hourly={form.fourWheelerHourly}
-              daily={form.fourWheelerDaily}
-              monthly={form.fourWheelerMonthly}
-              onHourly={(value) => updateField("fourWheelerHourly", value)}
-              onDaily={(value) => updateField("fourWheelerDaily", value)}
-              onMonthly={(value) => updateField("fourWheelerMonthly", value)}
-            />
+                {form.supportedVehicleTypes.includes("fourWheeler") && (
+                  <VehiclePricingSection
+                    icon={<Car className="h-5 w-5" />}
+                    title="Four wheeler"
+                    hourly={form.fourWheelerHourly}
+                    daily={form.fourWheelerDaily}
+                    monthly={form.fourWheelerMonthly}
+                    showHourly={form.bookingHourly}
+                    showDaily={form.bookingDaily}
+                    showMonthly={form.bookingMonthly}
+                    onHourly={(value) =>
+                      updateField("fourWheelerHourly", value)
+                    }
+                    onDaily={(value) => updateField("fourWheelerDaily", value)}
+                    onMonthly={(value) =>
+                      updateField("fourWheelerMonthly", value)
+                    }
+                  />
+                )}
 
-            <VehiclePricingSection
-              icon={<Truck className="h-5 w-5" />}
-              title="Van / Minibus"
-              hourly={form.vanHourly}
-              daily={form.vanDaily}
-              monthly={form.vanMonthly}
-              onHourly={(value) => updateField("vanHourly", value)}
-              onDaily={(value) => updateField("vanDaily", value)}
-              onMonthly={(value) => updateField("vanMonthly", value)}
-            />
+                {form.supportedVehicleTypes.includes("vanMinibus") && (
+                  <VehiclePricingSection
+                    icon={<Truck className="h-5 w-5" />}
+                    title="Van / Minibus"
+                    hourly={form.vanHourly}
+                    daily={form.vanDaily}
+                    monthly={form.vanMonthly}
+                    showHourly={form.bookingHourly}
+                    showDaily={form.bookingDaily}
+                    showMonthly={form.bookingMonthly}
+                    onHourly={(value) => updateField("vanHourly", value)}
+                    onDaily={(value) => updateField("vanDaily", value)}
+                    onMonthly={(value) => updateField("vanMonthly", value)}
+                  />
+                )}
 
-            <VehiclePricingSection
-              icon={<Truck className="h-5 w-5" />}
-              title="Heavy vehicle"
-              hourly={form.heavyHourly}
-              daily={form.heavyDaily}
-              monthly={form.heavyMonthly}
-              onHourly={(value) => updateField("heavyHourly", value)}
-              onDaily={(value) => updateField("heavyDaily", value)}
-              onMonthly={(value) => updateField("heavyMonthly", value)}
-            />
+                {form.supportedVehicleTypes.includes("heavyVehicle") && (
+                  <VehiclePricingSection
+                    icon={<Truck className="h-5 w-5" />}
+                    title="Heavy vehicle"
+                    hourly={form.heavyHourly}
+                    daily={form.heavyDaily}
+                    monthly={form.heavyMonthly}
+                    showHourly={form.bookingHourly}
+                    showDaily={form.bookingDaily}
+                    showMonthly={form.bookingMonthly}
+                    onHourly={(value) => updateField("heavyHourly", value)}
+                    onDaily={(value) => updateField("heavyDaily", value)}
+                    onMonthly={(value) => updateField("heavyMonthly", value)}
+                  />
+                )}
+              </>
+            )}
           </FormSection>
 
           {/* OPERATING HOURS */}
@@ -1126,7 +1193,7 @@ function parkingToForm(parking: Parking): EditParkingFormState {
 
     supportedVehicleTypes: normalizeVehicleTypes(parking.supportedVehicleTypes),
 
-    bookingHourly: parking.bookingModes?.hourly ?? true,
+    bookingHourly: parking.bookingModes?.hourly ?? false,
 
     bookingDaily: parking.bookingModes?.daily ?? false,
 
@@ -1337,12 +1404,19 @@ function FacilitySelector({
 |--------------------------------------------------------------------------
 */
 
+function hasSelectedBookingMode(form: EditParkingFormState): boolean {
+  return form.bookingHourly || form.bookingDaily || form.bookingMonthly;
+}
+
 function VehiclePricingSection({
   icon,
   title,
   hourly,
   daily,
   monthly,
+  showHourly,
+  showDaily,
+  showMonthly,
   onHourly,
   onDaily,
   onMonthly,
@@ -1352,10 +1426,39 @@ function VehiclePricingSection({
   hourly: string;
   daily: string;
   monthly: string;
+  showHourly: boolean;
+  showDaily: boolean;
+  showMonthly: boolean;
   onHourly: (value: string) => void;
   onDaily: (value: string) => void;
   onMonthly: (value: string) => void;
 }) {
+  const fields = [
+    showHourly
+      ? { key: "hourly", label: "Hourly", value: hourly, onChange: onHourly }
+      : null,
+    showDaily
+      ? { key: "daily", label: "Daily", value: daily, onChange: onDaily }
+      : null,
+    showMonthly
+      ? {
+          key: "monthly",
+          label: "Monthly",
+          value: monthly,
+          onChange: onMonthly,
+        }
+      : null,
+  ].filter(
+    (
+      field,
+    ): field is {
+      key: string;
+      label: string;
+      value: string;
+      onChange: (value: string) => void;
+    } => field !== null,
+  );
+
   return (
     <div className="rounded-2xl border border-white/10 bg-black/10 p-5">
       <div className="mb-5 flex items-center gap-3">
@@ -1366,33 +1469,26 @@ function VehiclePricingSection({
         <h3 className="font-semibold">{title}</h3>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-3">
-        <InputField
-          label="Hourly"
-          type="number"
-          min="0"
-          step="any"
-          value={hourly}
-          onChange={onHourly}
-        />
-
-        <InputField
-          label="Daily"
-          type="number"
-          min="0"
-          step="any"
-          value={daily}
-          onChange={onDaily}
-        />
-
-        <InputField
-          label="Monthly"
-          type="number"
-          min="0"
-          step="any"
-          value={monthly}
-          onChange={onMonthly}
-        />
+      <div
+        className={`grid gap-5 ${
+          fields.length === 1
+            ? "sm:grid-cols-1"
+            : fields.length === 2
+              ? "sm:grid-cols-2"
+              : "sm:grid-cols-3"
+        }`}
+      >
+        {fields.map((field) => (
+          <InputField
+            key={field.key}
+            label={field.label}
+            type="number"
+            min="0"
+            step="any"
+            value={field.value}
+            onChange={field.onChange}
+          />
+        ))}
       </div>
     </div>
   );
@@ -1676,6 +1772,21 @@ function numberOrUndefined(value: string): number | undefined {
   const number = Number(value);
 
   return Number.isFinite(number) ? number : undefined;
+}
+
+function buildVehiclePricing(
+  hourly: string,
+  daily: string,
+  monthly: string,
+  bookingHourly: boolean,
+  bookingDaily: boolean,
+  bookingMonthly: boolean,
+) {
+  return {
+    ...(bookingHourly ? { hourly: numberOrUndefined(hourly) } : {}),
+    ...(bookingDaily ? { daily: numberOrUndefined(daily) } : {}),
+    ...(bookingMonthly ? { monthly: numberOrUndefined(monthly) } : {}),
+  };
 }
 
 /*

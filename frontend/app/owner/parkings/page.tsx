@@ -684,15 +684,6 @@ function ParkingOwnerCard({
 
           <ArrowRight className="h-4 w-4" />
         </button>
-
-        <button
-          type="button"
-          onClick={onView}
-          className="group/link mt-3 flex w-full items-center justify-between px-1 py-2 text-xs font-medium text-white/40 transition hover:text-white"
-        >
-          View parking details
-          <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/link:translate-x-1" />
-        </button>
       </div>
     </article>
   );
