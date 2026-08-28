@@ -97,6 +97,19 @@ const FACILITIES = [
 
 type FacilityValue = (typeof FACILITIES)[number]["value"];
 
+type VehicleType = "twoWheeler" | "fourWheeler" | "vanMinibus" | "heavyVehicle";
+
+const VEHICLE_TYPES: {
+  value: VehicleType;
+  label: string;
+  description: string;
+}[] = [
+  { value: "twoWheeler", label: "Two Wheeler", description: "Bike / Scooter" },
+  { value: "fourWheeler", label: "Four Wheeler", description: "Car / SUV" },
+  { value: "vanMinibus", label: "Van / Minibus", description: "Van / Minibus" },
+  { value: "heavyVehicle", label: "Heavy Vehicle", description: "Truck / Bus" },
+];
+
 /*
 |--------------------------------------------------------------------------
 | PAGE
@@ -355,18 +368,9 @@ function EditParkingForm({
       return;
     }
 
-    /*
-     * IMPORTANT:
-     * form.facilities already contains backend enum values.
-     *
-     * Example:
-     *
-     * ["cctv", "security_guard", "lighting"]
-     *
-     * NOT:
-     *
-     * ["CCTV", "Security Guard", "Lighting"]
-     */
+    if (form.supportedVehicleTypes.length === 0) {
+      return;
+    }
 
     const facilities = form.facilities.filter(isValidFacility);
 
@@ -403,6 +407,8 @@ function EditParkingForm({
       rules: parseCommaSeparated(form.rules),
 
       entryInstructions: form.entryInstructions.trim() || undefined,
+
+      supportedVehicleTypes: form.supportedVehicleTypes,
 
       bookingModes: {
         hourly: form.bookingHourly,
@@ -732,6 +738,65 @@ function EditParkingForm({
             />
           </FormSection>
 
+          {/* SUPPORTED VEHICLE TYPES */}
+
+          <FormSection
+            icon={<Car className="h-5 w-5" />}
+            title="Supported vehicle types"
+            description="Select the vehicle types allowed at this parking location."
+          >
+            <div className="grid gap-3 sm:grid-cols-2">
+              {VEHICLE_TYPES.map((vehicle) => {
+                const selected = form.supportedVehicleTypes.includes(
+                  vehicle.value,
+                );
+
+                return (
+                  <button
+                    key={vehicle.value}
+                    type="button"
+                    onClick={() => {
+                      setForm((previous) => ({
+                        ...previous,
+                        supportedVehicleTypes: selected
+                          ? previous.supportedVehicleTypes.filter(
+                              (item) => item !== vehicle.value,
+                            )
+                          : [...previous.supportedVehicleTypes, vehicle.value],
+                      }));
+                    }}
+                    aria-pressed={selected}
+                    className={`flex items-center gap-3 rounded-xl border p-4 text-left transition ${selected ? "border-emerald-300/30 bg-emerald-300/10" : "border-white/10 bg-white/[0.04] hover:bg-white/[0.07]"}`}
+                  >
+                    <span
+                      className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${selected ? "bg-emerald-300 text-[#06544E]" : "bg-white/10 text-white/60"}`}
+                    >
+                      <Car className="h-5 w-5" />
+                    </span>
+                    <span className="flex-1">
+                      <span className="block text-sm font-semibold text-white">
+                        {vehicle.label}
+                      </span>
+                      <span className="mt-0.5 block text-xs text-white/40">
+                        {vehicle.description}
+                      </span>
+                    </span>
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center rounded-full border ${selected ? "border-emerald-300 bg-emerald-300 text-[#06544E]" : "border-white/20"}`}
+                    >
+                      {selected && <Check className="h-3.5 w-3.5" />}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {form.supportedVehicleTypes.length === 0 && (
+              <p className="text-xs text-amber-200/70">
+                Select at least one supported vehicle type.
+              </p>
+            )}
+          </FormSection>
+
           {/* BOOKING MODES */}
 
           <FormSection
@@ -966,12 +1031,6 @@ function EditParkingForm({
   );
 }
 
-/*
-|--------------------------------------------------------------------------
-| FORM STATE
-|--------------------------------------------------------------------------
-*/
-
 type EditParkingFormState = {
   parkingName: string;
   description: string;
@@ -995,6 +1054,8 @@ type EditParkingFormState = {
 
   rules: string;
   entryInstructions: string;
+
+  supportedVehicleTypes: VehicleType[];
 
   bookingHourly: boolean;
   bookingDaily: boolean;
@@ -1021,12 +1082,6 @@ type EditParkingFormState = {
   open: string;
   close: string;
 };
-
-/*
-|--------------------------------------------------------------------------
-| PARKING -> FORM
-|--------------------------------------------------------------------------
-*/
 
 function parkingToForm(parking: Parking): EditParkingFormState {
   return {
@@ -1063,17 +1118,13 @@ function parkingToForm(parking: Parking): EditParkingFormState {
     parkingArea:
       parking.parkingArea !== undefined ? String(parking.parkingArea) : "",
 
-    /*
-     * Normalize facilities coming from the API.
-     *
-     * This also protects you if old database records
-     * contain labels such as "CCTV" instead of "cctv".
-     */
     facilities: normalizeFacilities(parking.facilities),
 
     rules: Array.isArray(parking.rules) ? parking.rules.join(", ") : "",
 
     entryInstructions: parking.entryInstructions ?? "",
+
+    supportedVehicleTypes: normalizeVehicleTypes(parking.supportedVehicleTypes),
 
     bookingHourly: parking.bookingModes?.hourly ?? true,
 
@@ -1111,6 +1162,22 @@ function parkingToForm(parking: Parking): EditParkingFormState {
 
     close: parking.operatingHours?.close ?? "",
   };
+}
+
+function normalizeVehicleTypes(value: unknown): VehicleType[] {
+  if (!Array.isArray(value)) return [];
+
+  const allowed: VehicleType[] = [
+    "twoWheeler",
+    "fourWheeler",
+    "vanMinibus",
+    "heavyVehicle",
+  ];
+
+  return value.filter(
+    (item): item is VehicleType =>
+      typeof item === "string" && allowed.includes(item as VehicleType),
+  );
 }
 
 /*

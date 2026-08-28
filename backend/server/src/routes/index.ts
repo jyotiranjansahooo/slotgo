@@ -19,21 +19,11 @@ router.use("/bookings", bookingRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/auth", authRoutes);
 
-/*
-|--------------------------------------------------------------------------
-| OWNER PARKINGS
-|--------------------------------------------------------------------------
-*/
 router.use("/parkings", parkingRoutes);
 
-/*
-|--------------------------------------------------------------------------
-| PUBLIC PARKING DISCOVERY
-|--------------------------------------------------------------------------
-*/
 router.use("/parking-discovery", parkingDiscoveryRoutes);
 
-router.use("/parking-slots", parkingSlotRoutes);
+router.use("/parkings/:parkingId/slots", parkingSlotRoutes);
 router.use("/wallet", walletRoutes);
 router.use("/reviews", reviewRoutes);
 

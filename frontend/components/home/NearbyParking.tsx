@@ -83,16 +83,12 @@ export default function NearbyParking() {
     staleTime: 60 * 1000,
   });
 
-  const parkings = parkingQuery.data?.data ?? [];
-
+const parkings = parkingQuery.data ?? [];
   return (
     <section
       id="nearby-parking"
       className="relative isolate overflow-hidden bg-[#075e57] px-4 py-20 text-white sm:px-6 lg:px-8"
     >
-      {/* ======================================================
-          BACKGROUND
-         ====================================================== */}
 
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         {/* Vertical stripes */}

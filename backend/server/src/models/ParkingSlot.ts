@@ -49,13 +49,19 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
       trim: true,
     },
 
-    supportedVehicleTypes: [
-      {
-        type: String,
-        enum: VEHICLE_TYPE_VALUES,
-        required: true,
-      },
-    ],
+   supportedVehicleTypes: {
+  type: [
+    {
+      type: String,
+      enum: VEHICLE_TYPE_VALUES,
+    },
+  ],
+  required: true,
+  validate: {
+    validator: (value: string[]) => value.length > 0,
+    message: "At least one vehicle type is required.",
+  },
+},
 
     status: {
       type: String,

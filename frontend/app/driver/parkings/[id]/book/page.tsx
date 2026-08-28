@@ -87,7 +87,7 @@ function BookingForm() {
     enabled: parkingId.length > 0,
   });
 
-  const parking: Parking | undefined = parkingQuery.data?.data;
+  const parking: Parking | undefined = parkingQuery.data;
 
   const vehiclesQuery = useQuery({
     queryKey: ["vehicles"],

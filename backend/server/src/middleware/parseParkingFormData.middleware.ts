@@ -1,18 +1,26 @@
 import { Request, Response, NextFunction } from "express";
 
-const parseParkingFormData = (
+export default function parseParkingFormData(
   req: Request,
-  _res: Response,
+  res: Response,
   next: NextFunction,
-) => {
+): void {
   try {
+    /*
+     * ============================================================
+     * JSON FIELDS
+     * ============================================================
+     */
+
     const jsonFields = [
       "location",
+      "supportedVehicleTypes",
       "facilities",
       "rules",
       "bookingModes",
       "pricing",
       "operatingHours",
+      "removeImagePublicIds",
     ];
 
     for (const field of jsonFields) {
@@ -22,28 +30,96 @@ const parseParkingFormData = (
         try {
           req.body[field] = JSON.parse(value);
         } catch {
-          // Leave invalid JSON unchanged.
-          // Zod will report the validation error.
+          res.status(400).json({
+            success: false,
+            statusCode: 400,
+            message: `Invalid JSON in field: ${field}`,
+            data: [],
+          });
+
+          return;
         }
       }
     }
 
-    // FormData sends numeric values as strings.
-    if (
-      typeof req.body.parkingArea === "string" &&
-      req.body.parkingArea.trim() !== ""
-    ) {
-      const value = Number(req.body.parkingArea);
+    /*
+     * ============================================================
+     * NUMBER FIELDS
+     * ============================================================
+     *
+     * FormData always sends these as strings.
+     *
+     * Example:
+     *
+     * parkingArea = "846545"
+     *
+     * Convert it to:
+     *
+     * parkingArea = 846545
+     */
 
-      if (Number.isFinite(value)) {
-        req.body.parkingArea = value;
+    const numberFields = [
+      "parkingArea",
+    ];
+
+    for (const field of numberFields) {
+      const value = req.body[field];
+
+      if (typeof value === "string" && value.trim() !== "") {
+        const numberValue = Number(value);
+
+        if (!Number.isFinite(numberValue)) {
+          res.status(400).json({
+            success: false,
+            statusCode: 400,
+            message: `${field} must be a valid number.`,
+            data: [],
+          });
+
+          return;
+        }
+
+        req.body[field] = numberValue;
       }
     }
 
+    /*
+     * ============================================================
+     * DEBUG
+     * ============================================================
+     */
+
+    console.log("\n========== PARKING FORM DATA ==========");
+
+    console.dir(req.body, {
+      depth: null,
+    });
+
+    console.log(
+      "parkingArea:",
+      req.body.parkingArea,
+      "type:",
+      typeof req.body.parkingArea,
+    );
+
+    console.log(
+      "supportedVehicleTypes:",
+      req.body.supportedVehicleTypes,
+      "isArray:",
+      Array.isArray(req.body.supportedVehicleTypes),
+    );
+
+    console.log("=======================================\n");
+
     next();
   } catch (error) {
-    next(error);
-  }
-};
+    console.error("parseParkingFormData ERROR:", error);
 
-export default parseParkingFormData;
+    res.status(400).json({
+      success: false,
+      statusCode: 400,
+      message: "Unable to parse parking form data.",
+      data: [],
+    });
+  }
+}

@@ -86,8 +86,7 @@ function ParkingDetails() {
     );
   }
 
-const parking =
-  parkingQuery.data?.data
+  const parking = parkingQuery.data;
   if (!parking) {
     return (
       <ErrorState
@@ -96,7 +95,6 @@ const parking =
       />
     );
   }
-
 
   const images = parking.images ?? [];
 

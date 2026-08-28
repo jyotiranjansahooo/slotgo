@@ -15,33 +15,33 @@ import {
 
 import { createParkingSlotSchema } from "../validations/parkingslot/create.validation.js";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 router.use(authMiddleware);
 
-// DELETE SLOT
+/* GET ALL SLOTS */
+
+router.get("/", getParkingSlots);
+
+/* GET AVAILABLE SLOTS */
+
+router.get("/available", getAvailableSlots);
+
+/* CREATE SLOT */
+
+router.post(
+  "/",
+  requireRole(USER_ROLES.PARKING_OWNER),
+  validate(createParkingSlotSchema),
+  createSlot,
+);
+
+/* DELETE SLOT */
 
 router.delete(
   "/slot/:slotId",
   requireRole(USER_ROLES.PARKING_OWNER),
   deleteSlot,
-);
-
-// GET AVAILABLE SLOTS
-
-router.get("/:parkingId/available", getAvailableSlots);
-
-// GET ALL SLOTS
-
-router.get("/:parkingId", getParkingSlots);
-
-// CREATE SLOT
-
-router.post(
-  "/:parkingId",
-  requireRole(USER_ROLES.PARKING_OWNER),
-  validate(createParkingSlotSchema),
-  createSlot,
 );
 
 export default router;

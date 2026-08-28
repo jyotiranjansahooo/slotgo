@@ -1,5 +1,5 @@
 import { z } from "zod";
-
+import { VEHICLE_TYPE_VALUES } from "../../constants/vehicle.js";
 import {
   PARKING_TYPE_VALUES,
   PARKING_FACILITY_VALUES,
@@ -24,47 +24,22 @@ const pricingSchema = z.object({
 });
 
 export const updateParkingSchema = z.object({
-  parkingName: z
-    .string()
-    .trim()
-    .min(2)
-    .max(100)
-    .optional(),
+  parkingName: z.string().trim().min(2).max(100).optional(),
 
-  description: z
-    .string()
-    .trim()
-    .max(1000)
-    .optional(),
+  description: z.string().trim().max(1000).optional(),
 
-  parkingType: z
-    .enum(
-      PARKING_TYPE_VALUES as [string, ...string[]],
-    )
+  parkingType: z.enum(PARKING_TYPE_VALUES as [string, ...string[]]).optional(),
+  supportedVehicleTypes: z
+    .array(z.enum(VEHICLE_TYPE_VALUES))
+    .min(1, "At least one vehicle type is required.")
     .optional(),
+  address: z.string().trim().min(5).optional(),
 
-  address: z
-    .string()
-    .trim()
-    .min(5)
-    .optional(),
+  landmark: z.string().trim().optional(),
 
-  landmark: z
-    .string()
-    .trim()
-    .optional(),
+  city: z.string().trim().min(2).optional(),
 
-  city: z
-    .string()
-    .trim()
-    .min(2)
-    .optional(),
-
-  state: z
-    .string()
-    .trim()
-    .min(2)
-    .optional(),
+  state: z.string().trim().min(2).optional(),
 
   pincode: z
     .string()
@@ -80,25 +55,12 @@ export const updateParkingSchema = z.object({
     .optional(),
 
   facilities: z
-    .array(
-      z.enum(
-        PARKING_FACILITY_VALUES as [
-          string,
-          ...string[],
-        ],
-      ),
-    )
+    .array(z.enum(PARKING_FACILITY_VALUES as [string, ...string[]]))
     .optional(),
 
-  rules: z
-    .array(z.string().trim().min(1))
-    .optional(),
+  rules: z.array(z.string().trim().min(1)).optional(),
 
-  entryInstructions: z
-    .string()
-    .trim()
-    .max(1000)
-    .optional(),
+  entryInstructions: z.string().trim().max(1000).optional(),
 
   bookingModes: z
     .object({
@@ -118,5 +80,4 @@ export const updateParkingSchema = z.object({
     .optional(),
 });
 
-export type UpdateParkingInput =
-  z.infer<typeof updateParkingSchema>;
+export type UpdateParkingInput = z.infer<typeof updateParkingSchema>;

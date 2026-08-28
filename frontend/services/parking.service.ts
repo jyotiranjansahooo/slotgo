@@ -35,6 +35,14 @@ export interface CreateParkingPayload {
 
   parkingArea: number;
 
+  /**
+   * Vehicle types supported by this parking.
+   *
+   * Example:
+   * ["twoWheeler", "fourWheeler"]
+   */
+  supportedVehicleTypes: string[];
+
   facilities: string[];
   rules: string[];
   entryInstructions?: string;
@@ -47,6 +55,7 @@ export interface CreateParkingPayload {
 
   pricing: {
     currency: string;
+
     twoWheeler: VehiclePricing;
     fourWheeler: VehiclePricing;
     vanMinibus: VehiclePricing;
@@ -65,21 +74,19 @@ export interface UpdateParkingPayload extends CreateParkingPayload {
 
 /*
 |--------------------------------------------------------------------------
-| GET OWNER PARKINGS
+| GET ALL PARKINGS
 |--------------------------------------------------------------------------
 */
 
-export async function getMyParkings(): Promise<Parking[]> {
+export async function getParkings(): Promise<Parking[]> {
   const response = await api.get<ApiResponse<Parking[]>>("/parkings");
 
   return response.data.data;
 }
 
-/*
-|--------------------------------------------------------------------------
-| GET SINGLE PARKING
-|--------------------------------------------------------------------------
-*/
+export async function getMyParkings(): Promise<Parking[]> {
+  return getParkings();
+}
 
 export async function getParking(parkingId: string): Promise<Parking> {
   const response = await api.get<ApiResponse<Parking>>(
@@ -89,12 +96,6 @@ export async function getParking(parkingId: string): Promise<Parking> {
   return response.data.data;
 }
 
-/*
-|--------------------------------------------------------------------------
-| CREATE PARKING
-|--------------------------------------------------------------------------
-*/
-
 export async function createParking(
   payload: CreateParkingPayload,
   images: File[],
@@ -103,70 +104,6 @@ export async function createParking(
 
   formData.append("parkingName", payload.parkingName);
 
-  if (payload.description) {
-    formData.append("description", payload.description);
-  }
-
-  formData.append("parkingType", payload.parkingType);
-  formData.append("address", payload.address);
-
-  if (payload.landmark) {
-    formData.append("landmark", payload.landmark);
-  }
-
-  formData.append("city", payload.city);
-  formData.append("state", payload.state);
-  formData.append("pincode", payload.pincode);
-
-  formData.append("location", JSON.stringify(payload.location));
-
-  formData.append("ownerName", payload.ownerName);
-  formData.append("contactNumber", payload.contactNumber);
-
-  formData.append("parkingArea", String(payload.parkingArea));
-
-  formData.append("facilities", JSON.stringify(payload.facilities));
-  formData.append("rules", JSON.stringify(payload.rules));
-
-  if (payload.entryInstructions) {
-    formData.append("entryInstructions", payload.entryInstructions);
-  }
-
-  formData.append("bookingModes", JSON.stringify(payload.bookingModes));
-
-  formData.append("pricing", JSON.stringify(payload.pricing));
-
-  formData.append(
-    "operatingHours",
-    JSON.stringify(payload.operatingHours),
-  );
-
-  images.forEach((file) => {
-    formData.append("images", file, file.name);
-  });
-
-  const response = await api.post<ApiResponse<Parking>>(
-    "/parkings",
-    formData,
-  );
-
-  return response.data.data;
-}
-
-/*
-|--------------------------------------------------------------------------
-| UPDATE PARKING
-|--------------------------------------------------------------------------
-*/
-
-export async function updateParking(
-  parkingId: string,
-  payload: UpdateParkingPayload,
-  images: File[] = [],
-): Promise<Parking> {
-  const formData = new FormData();
-
-  formData.append("parkingName", payload.parkingName);
   formData.append("description", payload.description ?? "");
 
   formData.append("parkingType", payload.parkingType);
@@ -176,46 +113,98 @@ export async function updateParking(
   formData.append("landmark", payload.landmark ?? "");
 
   formData.append("city", payload.city);
+
   formData.append("state", payload.state);
+
   formData.append("pincode", payload.pincode);
 
   formData.append("location", JSON.stringify(payload.location));
 
   formData.append("ownerName", payload.ownerName);
+
   formData.append("contactNumber", payload.contactNumber);
 
   formData.append("parkingArea", String(payload.parkingArea));
 
+  formData.append(
+    "supportedVehicleTypes",
+    JSON.stringify(payload.supportedVehicleTypes),
+  );
+
   formData.append("facilities", JSON.stringify(payload.facilities));
+
   formData.append("rules", JSON.stringify(payload.rules));
 
-  formData.append(
-    "entryInstructions",
-    payload.entryInstructions ?? "",
-  );
+  formData.append("entryInstructions", payload.entryInstructions ?? "");
+
+  formData.append("bookingModes", JSON.stringify(payload.bookingModes));
+
+  formData.append("pricing", JSON.stringify(payload.pricing));
+
+  formData.append("operatingHours", JSON.stringify(payload.operatingHours));
+
+  images.forEach((file) => {
+    formData.append("images", file, file.name);
+  });
+
+  const response = await api.post<ApiResponse<Parking>>("/parkings", formData);
+
+  return response.data.data;
+}
+
+export async function updateParking(
+  parkingId: string,
+  payload: UpdateParkingPayload,
+  images: File[] = [],
+): Promise<Parking> {
+  const formData = new FormData();
+
+  formData.append("parkingName", payload.parkingName);
+
+  formData.append("description", payload.description ?? "");
+
+  formData.append("parkingType", payload.parkingType);
+
+  formData.append("address", payload.address);
+
+  formData.append("landmark", payload.landmark ?? "");
+
+  formData.append("city", payload.city);
+
+  formData.append("state", payload.state);
+
+  formData.append("pincode", payload.pincode);
+
+  formData.append("location", JSON.stringify(payload.location));
+
+  formData.append("ownerName", payload.ownerName);
+
+  formData.append("contactNumber", payload.contactNumber);
+
+  formData.append("parkingArea", String(payload.parkingArea));
 
   formData.append(
-    "bookingModes",
-    JSON.stringify(payload.bookingModes),
+    "supportedVehicleTypes",
+    JSON.stringify(payload.supportedVehicleTypes),
   );
 
-  formData.append(
-    "pricing",
-    JSON.stringify(payload.pricing),
-  );
+  formData.append("facilities", JSON.stringify(payload.facilities));
 
-  formData.append(
-    "operatingHours",
-    JSON.stringify(payload.operatingHours),
-  );
+  formData.append("rules", JSON.stringify(payload.rules));
+
+  formData.append("entryInstructions", payload.entryInstructions ?? "");
+
+  formData.append("bookingModes", JSON.stringify(payload.bookingModes));
+
+  formData.append("pricing", JSON.stringify(payload.pricing));
+
+  formData.append("operatingHours", JSON.stringify(payload.operatingHours));
 
   /*
-   * Images to remove.
+   * Removed Cloudinary images
    */
-  if (
-    payload.removeImagePublicIds &&
-    payload.removeImagePublicIds.length > 0
-  ) {
+
+  if (payload.removeImagePublicIds && payload.removeImagePublicIds.length > 0) {
     formData.append(
       "removeImagePublicIds",
       JSON.stringify(payload.removeImagePublicIds),
@@ -223,8 +212,9 @@ export async function updateParking(
   }
 
   /*
-   * New images.
+   * New images
    */
+
   images.forEach((file) => {
     formData.append("images", file, file.name);
   });
@@ -236,12 +226,6 @@ export async function updateParking(
 
   return response.data.data;
 }
-
-/*
-|--------------------------------------------------------------------------
-| DELETE PARKING
-|--------------------------------------------------------------------------
-*/
 
 export async function deleteParking(parkingId: string): Promise<void> {
   await api.delete(`/parkings/${parkingId}`);

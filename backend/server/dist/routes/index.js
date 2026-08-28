@@ -1,5 +1,5 @@
 import { Router } from "express";
-// import ApiResponse from "../utils/ApiResponse.js";
+
 import paymentRoutes from "./payment.routes.js";
 import authRoutes from "./auth.routes.js";
 import vehicleRoutes from "./vehicle.routes.js";
@@ -17,11 +17,10 @@ router.use("/bookings", bookingRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/auth", authRoutes);
 router.use("/parkings", parkingDiscoveryRoutes);
-router.use("/parking-slots", parkingSlotRoutes);
+router.use("/parking-slots/:parkingId", parkingSlotRoutes);
 router.use("/parkings", parkingRoutes);
 router.use("/wallet", walletRoutes);
 router.use("/reviews", reviewRoutes);
 router.use("/admin/parkings", adminParkingRoutes);
 router.use("/admin", adminRoutes);
 export default router;
-//# sourceMappingURL=index.js.map

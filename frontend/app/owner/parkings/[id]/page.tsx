@@ -147,49 +147,49 @@ function OwnerParkingView() {
 
         {/* BASIC INFO */}
 
-       <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-  <DetailCard
-    icon={<ParkingSquare className="h-5 w-5" />}
-    label="Parking type"
-    value={formatParkingType(parking.parkingType)}
-  />
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <DetailCard
+            icon={<ParkingSquare className="h-5 w-5" />}
+            label="Parking type"
+            value={formatParkingType(parking.parkingType)}
+          />
 
-  <DetailCard
-    icon={<MapPin className="h-5 w-5" />}
-    label="City"
-    value={`${parking.city ?? "Unknown"}, ${parking.state ?? "Unknown"}`}
-  />
+          <DetailCard
+            icon={<MapPin className="h-5 w-5" />}
+            label="City"
+            value={`${parking.city ?? "Unknown"}, ${parking.state ?? "Unknown"}`}
+          />
 
-  <DetailCard
-    icon={<ParkingSquare className="h-5 w-5" />}
-    label="Parking area"
-    value={
-      typeof parking.parkingArea === "number"
-        ? `${parking.parkingArea}`
-        : "Not provided"
-    }
-  />
+          <DetailCard
+            icon={<ParkingSquare className="h-5 w-5" />}
+            label="Parking area"
+            value={
+              typeof parking.parkingArea === "number"
+                ? `${parking.parkingArea}`
+                : "Not provided"
+            }
+          />
 
-  <DetailCard
-    icon={<User className="h-5 w-5" />}
-    label="Owner"
-    value={parking.ownerName ?? "Not provided"}
-  />
+          <DetailCard
+            icon={<User className="h-5 w-5" />}
+            label="Owner"
+            value={parking.ownerName ?? "Not provided"}
+          />
 
-  <DetailCard
-    icon={<CarFront className="h-5 w-5" />}
-    label="Contact"
-    value={parking.contactNumber ?? "Not provided"}
-  />
+          <DetailCard
+            icon={<CarFront className="h-5 w-5" />}
+            label="Contact"
+            value={parking.contactNumber ?? "Not provided"}
+          />
 
-  <DetailCard
-    icon={<Clock3 className="h-5 w-5" />}
-    label="Operating hours"
-    value={`${parking.operatingHours?.open ?? "--"} - ${
-      parking.operatingHours?.close ?? "--"
-    }`}
-  />
-</section>
+          <DetailCard
+            icon={<Clock3 className="h-5 w-5" />}
+            label="Operating hours"
+            value={`${parking.operatingHours?.open ?? "--"} - ${
+              parking.operatingHours?.close ?? "--"
+            }`}
+          />
+        </section>
 
         {/* DESCRIPTION */}
 
@@ -212,7 +212,7 @@ function OwnerParkingView() {
 
           <div className="mt-4 flex flex-wrap gap-2">
             {parking.facilities?.length ? (
-              parking.facilities.map((facility) => (
+              parking.facilities.map((facility:string) => (
                 <span
                   key={facility}
                   className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs text-white/65"
@@ -237,7 +237,7 @@ function OwnerParkingView() {
 
           <ul className="mt-4 space-y-2">
             {parking.rules?.length ? (
-              parking.rules.map((rule) => (
+              parking.rules.map((rule:string) => (
                 <li
                   key={rule}
                   className="rounded-xl border border-white/5 bg-white/[0.03] px-4 py-3 text-sm text-white/60"

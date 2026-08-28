@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VEHICLE_TYPE_VALUES } from "../../constants/vehicle.js";
 
 const vehiclePricingSchema = z.object({
   hourly: z.number().min(0).optional(),
@@ -11,14 +12,10 @@ export const createParkingSchema = z.object({
 
   description: z.string().trim().max(1000).default(""),
 
-  parkingType: z.enum([
-    "open",
-    "covered",
-    "basement",
-    "multiLevel",
-    "street",
-  ]),
-
+  parkingType: z.enum(["open", "covered", "basement", "multiLevel", "street"]),
+  supportedVehicleTypes: z
+    .array(z.enum(VEHICLE_TYPE_VALUES))
+    .min(1, "Select at least one vehicle type."),
   address: z.string().trim().min(5, "Parking address is required.").max(250),
 
   landmark: z.string().trim().max(150).optional(),
@@ -36,13 +33,9 @@ export const createParkingSchema = z.object({
 
   ownerName: z.string().trim().min(2, "Owner name is required.").max(100),
 
-  contactNumber: z
-    .string()
-    .regex(/^[6-9]\d{9}$/, "Invalid contact number."),
+  contactNumber: z.string().regex(/^[6-9]\d{9}$/, "Invalid contact number."),
 
-  parkingArea: z
-    .number()
-    .positive("Parking area must be greater than 0."),
+  parkingArea: z.number().positive("Parking area must be greater than 0."),
 
   facilities: z.array(z.string()).default([]),
 
@@ -56,12 +49,9 @@ export const createParkingSchema = z.object({
       daily: z.boolean(),
       monthly: z.boolean(),
     })
-    .refine(
-      (value) => value.hourly || value.daily || value.monthly,
-      {
-        message: "At least one booking mode must be selected.",
-      },
-    ),
+    .refine((value) => value.hourly || value.daily || value.monthly, {
+      message: "At least one booking mode must be selected.",
+    }),
 
   pricing: z.object({
     currency: z.string().trim().min(1).max(10).default("INR"),
@@ -78,17 +68,11 @@ export const createParkingSchema = z.object({
   operatingHours: z.object({
     open: z
       .string()
-      .regex(
-        /^([01]\d|2[0-3]):[0-5]\d$/,
-        "Invalid opening time.",
-      ),
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid opening time."),
 
     close: z
       .string()
-      .regex(
-        /^([01]\d|2[0-3]):[0-5]\d$/,
-        "Invalid closing time.",
-      ),
+      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Invalid closing time."),
   }),
 });
 

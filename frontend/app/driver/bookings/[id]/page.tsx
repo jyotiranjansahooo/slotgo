@@ -476,11 +476,6 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-/*
- * ============================================================
- * INFO ITEM
- * ============================================================
- */
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (

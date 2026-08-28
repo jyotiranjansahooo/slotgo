@@ -1,15 +1,12 @@
 import mongoose, { Schema, Types } from "mongoose";
-
+import { FACILITY_VALUES } from "../constants/facilities.js";
 import {
   PARKING_STATUS,
   PARKING_STATUS_VALUES,
   PARKING_TYPE_VALUES,
   ParkingStatus,
 } from "../constants/parking.js";
-
-/* ============================================================
-   TYPES
-   ============================================================ */
+import { VEHICLE_TYPE_VALUES, VehicleType } from "../constants/vehicle.js";
 
 export interface IParkingImage {
   url: string;
@@ -45,6 +42,7 @@ export interface IParking {
   rules: string[];
 
   entryInstructions: string;
+  supportedVehicleTypes: VehicleType[];
 
   bookingModes: {
     hourly: boolean;
@@ -107,8 +105,7 @@ export const PARKING_FACILITIES = [
   "disabled_access",
   "car_wash",
 ] as const;
-export type ParkingFacility =
-  (typeof PARKING_FACILITIES)[number];
+export type ParkingFacility = (typeof PARKING_FACILITIES)[number];
 const imageSchema = new Schema<IParkingImage>(
   {
     url: {
@@ -273,16 +270,8 @@ const operatingHoursSchema = new Schema(
   },
 );
 
-/* ============================================================
-   PARKING SCHEMA
-   ============================================================ */
-
 const parkingSchema = new Schema<IParking>(
   {
-    /* ----------------------------------------------------------
-       OWNER
-    ---------------------------------------------------------- */
-
     ownerId: {
       type: Schema.Types.ObjectId,
       ref: "User",
@@ -290,10 +279,6 @@ const parkingSchema = new Schema<IParking>(
       immutable: true,
       index: true,
     },
-
-    /* ----------------------------------------------------------
-       BASIC INFORMATION
-    ---------------------------------------------------------- */
 
     parkingName: {
       type: String,
@@ -314,10 +299,6 @@ const parkingSchema = new Schema<IParking>(
       enum: PARKING_TYPE_VALUES,
       required: true,
     },
-
-    /* ----------------------------------------------------------
-       ADDRESS
-    ---------------------------------------------------------- */
 
     address: {
       type: String,
@@ -356,18 +337,10 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
-    /* ----------------------------------------------------------
-       LOCATION
-    ---------------------------------------------------------- */
-
     location: {
       type: locationSchema,
       required: true,
     },
-
-    /* ----------------------------------------------------------
-       OWNER CONTACT
-    ---------------------------------------------------------- */
 
     ownerName: {
       type: String,
@@ -383,19 +356,11 @@ const parkingSchema = new Schema<IParking>(
       match: [/^[6-9][0-9]{9}$/, "Invalid contact number"],
     },
 
-    /* ----------------------------------------------------------
-       PARKING AREA
-    ---------------------------------------------------------- */
-
     parkingArea: {
       type: Number,
       required: true,
       min: 0,
     },
-
-    /* ----------------------------------------------------------
-       FACILITIES
-    ---------------------------------------------------------- */
 
     facilities: {
       type: [
@@ -406,10 +371,6 @@ const parkingSchema = new Schema<IParking>(
       ],
       default: [],
     },
-
-    /* ----------------------------------------------------------
-       RULES
-    ---------------------------------------------------------- */
 
     rules: {
       type: [
@@ -422,10 +383,6 @@ const parkingSchema = new Schema<IParking>(
       default: [],
     },
 
-    /* ----------------------------------------------------------
-       ENTRY INSTRUCTIONS
-    ---------------------------------------------------------- */
-
     entryInstructions: {
       type: String,
       default: "",
@@ -433,18 +390,23 @@ const parkingSchema = new Schema<IParking>(
       maxlength: 1000,
     },
 
-    /* ----------------------------------------------------------
-       BOOKING MODES
-    ---------------------------------------------------------- */
-
+    supportedVehicleTypes: {
+      type: [
+        {
+          type: String,
+          enum: VEHICLE_TYPE_VALUES,
+        },
+      ],
+      required: true,
+      validate: {
+        validator: (value: string[]) => value.length > 0,
+        message: "At least one vehicle type is required.",
+      },
+    },
     bookingModes: {
       type: bookingModeSchema,
       required: true,
     },
-
-    /* ----------------------------------------------------------
-       PRICING
-    ---------------------------------------------------------- */
 
     pricing: {
       type: pricingSchema,

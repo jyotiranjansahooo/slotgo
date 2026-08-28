@@ -51,7 +51,12 @@ export interface Parking {
   description: string;
 
   parkingType: ParkingType;
-
+supportedVehicleTypes: (
+  | "twoWheeler"
+  | "fourWheeler"
+  | "vanMinibus"
+  | "heavyVehicle"
+)[];
   address: string;
   landmark?: string;
   city: string;

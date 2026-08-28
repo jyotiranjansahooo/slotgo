@@ -3,6 +3,7 @@
 import {
   type ChangeEvent,
   type DragEvent,
+  type ElementType,
   type FormEvent,
   type ReactNode,
   useEffect,
@@ -14,7 +15,12 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import {
+  AlertCircle,
+  Bike,
+  Bus,
+  Car,
   Check,
+  CheckCircle2,
   ChevronDown,
   Clock3,
   ImagePlus,
@@ -26,14 +32,9 @@ import {
   Plus,
   ShieldCheck,
   Trash2,
+  Truck,
   User,
   X,
-  Car,
-  Bike,
-  Bus,
-  Truck,
-  AlertCircle,
-  CheckCircle2,
 } from "lucide-react";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -50,7 +51,7 @@ import type { ParkingType } from "@/types/parking";
 
 /* ============================================================
    CONSTANTS
-   ============================================================ */
+============================================================ */
 
 const MAX_IMAGES = 5;
 const MIN_IMAGES = 2;
@@ -83,17 +84,47 @@ const PARKING_TYPES: {
 ];
 
 const FACILITIES = [
-  "CCTV",
-  "Security Guard",
-  "Covered Parking",
-  "EV Charging",
-  "Lighting",
-  "Washroom",
-  "Drinking Water",
-  "Valet Parking",
-  "Disabled Access",
-  "Car Wash",
-];
+  {
+    value: "cctv",
+    label: "CCTV",
+  },
+  {
+    value: "securityGuard",
+    label: "Security Guard",
+  },
+  {
+    value: "coveredParking",
+    label: "Covered Parking",
+  },
+  {
+    value: "evCharging",
+    label: "EV Charging",
+  },
+  {
+    value: "lighting",
+    label: "Lighting",
+  },
+  {
+    value: "washroom",
+    label: "Washroom",
+  },
+  {
+    value: "drinkingWater",
+    label: "Drinking Water",
+  },
+  {
+    value: "valetParking",
+    label: "Valet Parking",
+  },
+  {
+    value: "disabledAccess",
+    label: "Disabled Access",
+  },
+  {
+    value: "carWash",
+    label: "Car Wash",
+  },
+] as const;
 
 const DEFAULT_RULES = [
   "Valid parking booking is required.",
@@ -101,43 +132,47 @@ const DEFAULT_RULES = [
   "Park only in the assigned slot.",
 ];
 
+/* ============================================================
+   VEHICLE TYPES
+============================================================ */
+
 type VehicleType = "twoWheeler" | "fourWheeler" | "vanMinibus" | "heavyVehicle";
 
 const VEHICLE_TYPES: {
   value: VehicleType;
   label: string;
   description: string;
-  icon: ReactNode;
+  icon: ElementType;
 }[] = [
   {
     value: "twoWheeler",
     label: "Two Wheeler",
     description: "Bike / Scooter",
-    icon: <Bike className="h-5 w-5" />,
+    icon: Bike,
   },
   {
     value: "fourWheeler",
     label: "Four Wheeler",
     description: "Car / SUV",
-    icon: <Car className="h-5 w-5" />,
+    icon: Car,
   },
   {
     value: "vanMinibus",
     label: "Van / Minibus",
     description: "Van / Minibus",
-    icon: <Bus className="h-5 w-5" />,
+    icon: Bus,
   },
   {
     value: "heavyVehicle",
     label: "Heavy Vehicle",
     description: "Truck / Bus",
-    icon: <Truck className="h-5 w-5" />,
+    icon: Truck,
   },
 ];
 
 /* ============================================================
-   FORM TYPE
-   ============================================================ */
+   FORM STATE
+============================================================ */
 
 interface FormState {
   parkingName: string;
@@ -161,6 +196,7 @@ interface FormState {
 
   facilities: string[];
   rules: string[];
+
   entryInstructions: string;
 
   vehicleTypes: VehicleType[];
@@ -193,7 +229,7 @@ interface FormState {
 
 /* ============================================================
    IMAGE TYPE
-   ============================================================ */
+============================================================ */
 
 interface ImageFile {
   file: File;
@@ -202,7 +238,7 @@ interface ImageFile {
 
 /* ============================================================
    TOAST
-   ============================================================ */
+============================================================ */
 
 type ToastType = "error" | "success";
 
@@ -213,7 +249,7 @@ interface ToastState {
 
 /* ============================================================
    INITIAL FORM
-   ============================================================ */
+============================================================ */
 
 const initialForm: FormState = {
   parkingName: "",
@@ -270,7 +306,7 @@ const initialForm: FormState = {
 
 /* ============================================================
    PAGE
-   ============================================================ */
+============================================================ */
 
 export default function OwnerAddParkingPage() {
   return (
@@ -279,10 +315,6 @@ export default function OwnerAddParkingPage() {
     </ProtectedRoute>
   );
 }
-
-/* ============================================================
-   MAIN PAGE
-   ============================================================ */
 
 function OwnerAddParking() {
   const router = useRouter();
@@ -303,9 +335,29 @@ function OwnerAddParking() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  /*
+   * Keep the latest image list available for unmount cleanup.
+   *
+   * This avoids revoking existing object URLs every time
+   * imageFiles changes.
+   */
+  const imageFilesRef = useRef<ImageFile[]>([]);
+
+  useEffect(() => {
+    imageFilesRef.current = imageFiles;
+  }, [imageFiles]);
+
+  useEffect(() => {
+    return () => {
+      imageFilesRef.current.forEach((image) => {
+        URL.revokeObjectURL(image.preview);
+      });
+    };
+  }, []);
+
   /* ==========================================================
      TOAST
-     ========================================================== */
+  ========================================================== */
 
   function showToast(type: ToastType, message: string) {
     setToast({
@@ -333,20 +385,8 @@ function OwnerAddParking() {
   }, [toast]);
 
   /* ==========================================================
-     CLEANUP IMAGE PREVIEWS
-     ========================================================== */
-
-  useEffect(() => {
-    return () => {
-      imageFiles.forEach((image) => {
-        URL.revokeObjectURL(image.preview);
-      });
-    };
-  }, [imageFiles]);
-
-  /* ==========================================================
-     UPDATE FORM FIELD
-     ========================================================== */
+     UPDATE FIELD
+  ========================================================== */
 
   function updateField<K extends keyof FormState>(
     field: K,
@@ -359,8 +399,8 @@ function OwnerAddParking() {
   }
 
   /* ==========================================================
-     VEHICLE TYPE
-     ========================================================== */
+     VEHICLE TYPES
+  ========================================================== */
 
   function toggleVehicleType(vehicleType: VehicleType) {
     setForm((previous) => {
@@ -368,7 +408,6 @@ function OwnerAddParking() {
 
       return {
         ...previous,
-
         vehicleTypes: exists
           ? previous.vehicleTypes.filter((item) => item !== vehicleType)
           : [...previous.vehicleTypes, vehicleType],
@@ -381,8 +420,8 @@ function OwnerAddParking() {
   }
 
   /* ==========================================================
-     BOOKING MODE
-     ========================================================== */
+     BOOKING MODES
+  ========================================================== */
 
   function toggleBookingMode(
     mode: "hourlyBooking" | "dailyBooking" | "monthlyBooking",
@@ -390,15 +429,28 @@ function OwnerAddParking() {
     setForm((previous) => {
       const nextValue = !previous[mode];
 
-      const next = {
+      const next: FormState = {
         ...previous,
         [mode]: nextValue,
       };
 
       /*
-       * If monthly booking is disabled,
-       * automatically remove monthly prices.
+       * Clear pricing when its booking mode is disabled.
        */
+
+      if (mode === "hourlyBooking" && !nextValue) {
+        next.twoWheelerHourly = "";
+        next.fourWheelerHourly = "";
+        next.vanHourly = "";
+        next.heavyHourly = "";
+      }
+
+      if (mode === "dailyBooking" && !nextValue) {
+        next.twoWheelerDaily = "";
+        next.fourWheelerDaily = "";
+        next.vanDaily = "";
+        next.heavyDaily = "";
+      }
 
       if (mode === "monthlyBooking" && !nextValue) {
         next.twoWheelerMonthly = "";
@@ -407,18 +459,9 @@ function OwnerAddParking() {
         next.heavyMonthly = "";
       }
 
-      /*
-       * Never allow all booking modes to become false
-       * without the validation warning.
-       */
-
       return next;
     });
   }
-
-  /* ==========================================================
-     FACILITIES
-     ========================================================== */
 
   function toggleFacility(facility: string) {
     setForm((previous) => {
@@ -426,7 +469,6 @@ function OwnerAddParking() {
 
       return {
         ...previous,
-
         facilities: exists
           ? previous.facilities.filter((item) => item !== facility)
           : [...previous.facilities, facility],
@@ -436,12 +478,17 @@ function OwnerAddParking() {
 
   /* ==========================================================
      RULES
-     ========================================================== */
+  ========================================================== */
 
   function addRule() {
     const rule = newRule.trim();
 
     if (!rule) {
+      return;
+    }
+
+    if (rule.length > 300) {
+      showToast("error", "Parking rule cannot exceed 300 characters.");
       return;
     }
 
@@ -467,7 +514,7 @@ function OwnerAddParking() {
 
   /* ==========================================================
      LIVE LOCATION
-     ========================================================== */
+  ========================================================== */
 
   function getLiveLocation() {
     hideToast();
@@ -528,7 +575,7 @@ function OwnerAddParking() {
 
   /* ==========================================================
      IMAGE PICKER
-     ========================================================== */
+  ========================================================== */
 
   function addImage() {
     if (imageFiles.length >= MAX_IMAGES) {
@@ -567,10 +614,6 @@ function OwnerAddParking() {
 
     const filesToAdd = files.slice(0, remainingSlots);
 
-    /* ----------------------------------------------------------
-       FILE TYPE
-       ---------------------------------------------------------- */
-
     const invalidFile = filesToAdd.find(
       (file) => !file.type.startsWith("image/"),
     );
@@ -579,10 +622,6 @@ function OwnerAddParking() {
       showToast("error", `"${invalidFile.name}" is not a valid image file.`);
       return;
     }
-
-    /* ----------------------------------------------------------
-       FILE SIZE
-       ---------------------------------------------------------- */
 
     const oversizedFile = filesToAdd.find((file) => file.size > MAX_IMAGE_SIZE);
 
@@ -593,10 +632,6 @@ function OwnerAddParking() {
       );
       return;
     }
-
-    /* ----------------------------------------------------------
-       DUPLICATES
-       ---------------------------------------------------------- */
 
     const uniqueFiles = filesToAdd.filter((newFile) => {
       return !imageFiles.some(
@@ -611,12 +646,6 @@ function OwnerAddParking() {
       showToast("error", "Those images have already been added.");
       return;
     }
-
-    /*
-     * IMPORTANT:
-     * Create the object URL when the File is accepted,
-     * not inside render.
-     */
 
     const newImages: ImageFile[] = uniqueFiles.map((file) => ({
       file,
@@ -641,10 +670,6 @@ function OwnerAddParking() {
     const files = Array.from(event.target.files ?? []);
 
     addFiles(files);
-
-    /*
-     * Allows selecting the same file again after removing it.
-     */
 
     event.target.value = "";
   }
@@ -683,60 +708,82 @@ function OwnerAddParking() {
 
   /* ==========================================================
      VALIDATION
-     ========================================================== */
+  ========================================================== */
 
   function getValidationErrors(): string[] {
     const errors: string[] = [];
 
-    /* Parking name */
+    /* ----------------------------------------------------------
+       BASIC INFORMATION
+    ---------------------------------------------------------- */
 
     if (form.parkingName.trim().length < 2) {
       errors.push("Parking name is required.");
     }
 
-    /* Description */
+    if (form.parkingName.trim().length > 100) {
+      errors.push("Parking name cannot exceed 100 characters.");
+    }
 
     if (form.description.trim().length > 2000) {
       errors.push("Description cannot exceed 2000 characters.");
     }
 
-    /* Address */
+    /* ----------------------------------------------------------
+       LOCATION
+    ---------------------------------------------------------- */
 
     if (form.address.trim().length < 5) {
       errors.push("Parking address is required.");
     }
 
-    /* City */
+    if (form.address.trim().length > 250) {
+      errors.push("Parking address cannot exceed 250 characters.");
+    }
+
+    if (form.landmark.trim().length > 150) {
+      errors.push("Landmark cannot exceed 150 characters.");
+    }
 
     if (form.city.trim().length < 2) {
       errors.push("City is required.");
     }
 
-    /* State */
+    if (form.city.trim().length > 100) {
+      errors.push("City cannot exceed 100 characters.");
+    }
 
     if (form.state.trim().length < 2) {
       errors.push("State is required.");
     }
 
-    /* Pincode */
+    if (form.state.trim().length > 100) {
+      errors.push("State cannot exceed 100 characters.");
+    }
 
-    if (!/^\d{6}$/.test(form.pincode.trim())) {
+    if (!/^[1-9]\d{5}$/.test(form.pincode.trim())) {
       errors.push("Enter a valid 6-digit pincode.");
     }
 
-    /* Owner */
+    /* ----------------------------------------------------------
+       OWNER
+    ---------------------------------------------------------- */
 
     if (form.ownerName.trim().length < 2) {
       errors.push("Owner name is required.");
     }
 
-    /* Contact */
+    if (form.ownerName.trim().length > 100) {
+      errors.push("Owner name cannot exceed 100 characters.");
+    }
 
     if (!/^[6-9]\d{9}$/.test(form.contactNumber.trim())) {
       errors.push("Enter a valid 10-digit mobile number.");
     }
 
-    /* Parking area */
+    /* ----------------------------------------------------------
+       PARKING AREA
+    ---------------------------------------------------------- */
 
     const area = Number(form.parkingArea);
 
@@ -744,7 +791,9 @@ function OwnerAddParking() {
       errors.push("Parking area must be greater than 0.");
     }
 
-    /* Latitude */
+    /* ----------------------------------------------------------
+       LOCATION COORDINATES
+    ---------------------------------------------------------- */
 
     const latitude = Number(form.latitude);
 
@@ -752,15 +801,15 @@ function OwnerAddParking() {
       errors.push("Valid latitude is required.");
     }
 
-    /* Longitude */
-
     const longitude = Number(form.longitude);
 
     if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
       errors.push("Valid longitude is required.");
     }
 
-    /* Images */
+    /* ----------------------------------------------------------
+       IMAGES
+    ---------------------------------------------------------- */
 
     if (imageFiles.length < MIN_IMAGES) {
       errors.push(`At least ${MIN_IMAGES} parking images are required.`);
@@ -770,49 +819,120 @@ function OwnerAddParking() {
       errors.push(`Maximum ${MAX_IMAGES} parking images are allowed.`);
     }
 
-    /* Vehicle types */
+    /* ----------------------------------------------------------
+       VEHICLES
+    ---------------------------------------------------------- */
 
     if (form.vehicleTypes.length === 0) {
       errors.push("Select at least one vehicle type.");
     }
 
-    /* Operating hours */
+    /* ----------------------------------------------------------
+       OPERATING HOURS
+    ---------------------------------------------------------- */
 
     if (!form.openingTime || !form.closingTime) {
       errors.push("Opening and closing time are required.");
     }
 
-    /* Booking modes */
+    const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+    if (!timeRegex.test(form.openingTime)) {
+      errors.push("Invalid opening time.");
+    }
+
+    if (!timeRegex.test(form.closingTime)) {
+      errors.push("Invalid closing time.");
+    }
+
+    /* ----------------------------------------------------------
+       BOOKING MODES
+    ---------------------------------------------------------- */
 
     if (!form.hourlyBooking && !form.dailyBooking && !form.monthlyBooking) {
       errors.push("Select at least one booking mode.");
     }
 
-    /* Currency */
+    /* ----------------------------------------------------------
+       CURRENCY
+    ---------------------------------------------------------- */
 
     if (!/^[A-Z]{3}$/.test(form.currency.trim().toUpperCase())) {
       errors.push("Currency must be a valid 3-letter code such as INR.");
     }
 
-    /* Pricing */
+    /* ----------------------------------------------------------
+       PRICING
+    ---------------------------------------------------------- */
 
-    const pricingValues = [
-      form.twoWheelerHourly,
-      form.twoWheelerDaily,
-      form.twoWheelerMonthly,
+    const pricingValues: string[] = [];
 
-      form.fourWheelerHourly,
-      form.fourWheelerDaily,
-      form.fourWheelerMonthly,
+    if (isVehicleSelected("twoWheeler")) {
+      if (form.hourlyBooking) {
+        pricingValues.push(form.twoWheelerHourly);
+      }
 
-      form.vanHourly,
-      form.vanDaily,
-      form.vanMonthly,
+      if (form.dailyBooking) {
+        pricingValues.push(form.twoWheelerDaily);
+      }
 
-      form.heavyHourly,
-      form.heavyDaily,
-      form.heavyMonthly,
-    ];
+      if (form.monthlyBooking) {
+        pricingValues.push(form.twoWheelerMonthly);
+      }
+    }
+
+    if (isVehicleSelected("fourWheeler")) {
+      if (form.hourlyBooking) {
+        pricingValues.push(form.fourWheelerHourly);
+      }
+
+      if (form.dailyBooking) {
+        pricingValues.push(form.fourWheelerDaily);
+      }
+
+      if (form.monthlyBooking) {
+        pricingValues.push(form.fourWheelerMonthly);
+      }
+    }
+
+    if (isVehicleSelected("vanMinibus")) {
+      if (form.hourlyBooking) {
+        pricingValues.push(form.vanHourly);
+      }
+
+      if (form.dailyBooking) {
+        pricingValues.push(form.vanDaily);
+      }
+
+      if (form.monthlyBooking) {
+        pricingValues.push(form.vanMonthly);
+      }
+    }
+
+    if (isVehicleSelected("heavyVehicle")) {
+      if (form.hourlyBooking) {
+        pricingValues.push(form.heavyHourly);
+      }
+
+      if (form.dailyBooking) {
+        pricingValues.push(form.heavyDaily);
+      }
+
+      if (form.monthlyBooking) {
+        pricingValues.push(form.heavyMonthly);
+      }
+    }
+
+    /*
+     * Every enabled vehicle + booking mode must have a price.
+     */
+    const missingPricing = pricingValues.some((value) => !value.trim());
+
+    if (missingPricing) {
+      errors.push(
+        "Enter pricing for every selected vehicle and enabled booking mode.",
+      );
+    }
 
     const invalidPricing = pricingValues.some((value) => {
       if (!value.trim()) {
@@ -833,10 +953,14 @@ function OwnerAddParking() {
 
   /* ==========================================================
      SUBMIT
-     ========================================================== */
+  ========================================================== */
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
 
     hideToast();
 
@@ -849,17 +973,7 @@ function OwnerAddParking() {
 
     try {
       setSubmitting(true);
-
-      /*
-       * Only selected vehicle types are sent.
-       *
-       * `vehicleTypes` assumes your backend parking schema
-       * accepts this field.
-       */
-
-      const payload: CreateParkingPayload & {
-        vehicleTypes: VehicleType[];
-      } = {
+      const payload: CreateParkingPayload = {
         parkingName: form.parkingName.trim(),
 
         description: form.description.trim() || undefined,
@@ -893,15 +1007,7 @@ function OwnerAddParking() {
 
         entryInstructions: form.entryInstructions.trim() || undefined,
 
-        /*
-         * VEHICLE TYPES
-         */
-
-        vehicleTypes: form.vehicleTypes,
-
-        /*
-         * BOOKING MODES
-         */
+        supportedVehicleTypes: form.vehicleTypes,
 
         bookingModes: {
           hourly: form.hourlyBooking,
@@ -909,23 +1015,23 @@ function OwnerAddParking() {
           monthly: form.monthlyBooking,
         },
 
-        /*
-         * PRICING
-         *
-         * Unselected vehicle types get undefined values.
-         */
-
         pricing: {
           currency: form.currency.trim().toUpperCase(),
 
-          twoWheeler: {
-            hourly: isVehicleSelected("twoWheeler")
-              ? optionalNumber(form.twoWheelerHourly)
-              : undefined,
+          /* --------------------------------------------------
+             TWO WHEELER
+          -------------------------------------------------- */
 
-            daily: isVehicleSelected("twoWheeler")
-              ? optionalNumber(form.twoWheelerDaily)
-              : undefined,
+          twoWheeler: {
+            hourly:
+              isVehicleSelected("twoWheeler") && form.hourlyBooking
+                ? optionalNumber(form.twoWheelerHourly)
+                : undefined,
+
+            daily:
+              isVehicleSelected("twoWheeler") && form.dailyBooking
+                ? optionalNumber(form.twoWheelerDaily)
+                : undefined,
 
             monthly:
               isVehicleSelected("twoWheeler") && form.monthlyBooking
@@ -933,14 +1039,20 @@ function OwnerAddParking() {
                 : undefined,
           },
 
-          fourWheeler: {
-            hourly: isVehicleSelected("fourWheeler")
-              ? optionalNumber(form.fourWheelerHourly)
-              : undefined,
+          /* --------------------------------------------------
+             FOUR WHEELER
+          -------------------------------------------------- */
 
-            daily: isVehicleSelected("fourWheeler")
-              ? optionalNumber(form.fourWheelerDaily)
-              : undefined,
+          fourWheeler: {
+            hourly:
+              isVehicleSelected("fourWheeler") && form.hourlyBooking
+                ? optionalNumber(form.fourWheelerHourly)
+                : undefined,
+
+            daily:
+              isVehicleSelected("fourWheeler") && form.dailyBooking
+                ? optionalNumber(form.fourWheelerDaily)
+                : undefined,
 
             monthly:
               isVehicleSelected("fourWheeler") && form.monthlyBooking
@@ -948,14 +1060,20 @@ function OwnerAddParking() {
                 : undefined,
           },
 
-          vanMinibus: {
-            hourly: isVehicleSelected("vanMinibus")
-              ? optionalNumber(form.vanHourly)
-              : undefined,
+          /* --------------------------------------------------
+             VAN / MINIBUS
+          -------------------------------------------------- */
 
-            daily: isVehicleSelected("vanMinibus")
-              ? optionalNumber(form.vanDaily)
-              : undefined,
+          vanMinibus: {
+            hourly:
+              isVehicleSelected("vanMinibus") && form.hourlyBooking
+                ? optionalNumber(form.vanHourly)
+                : undefined,
+
+            daily:
+              isVehicleSelected("vanMinibus") && form.dailyBooking
+                ? optionalNumber(form.vanDaily)
+                : undefined,
 
             monthly:
               isVehicleSelected("vanMinibus") && form.monthlyBooking
@@ -963,14 +1081,20 @@ function OwnerAddParking() {
                 : undefined,
           },
 
-          heavyVehicle: {
-            hourly: isVehicleSelected("heavyVehicle")
-              ? optionalNumber(form.heavyHourly)
-              : undefined,
+          /* --------------------------------------------------
+             HEAVY VEHICLE
+          -------------------------------------------------- */
 
-            daily: isVehicleSelected("heavyVehicle")
-              ? optionalNumber(form.heavyDaily)
-              : undefined,
+          heavyVehicle: {
+            hourly:
+              isVehicleSelected("heavyVehicle") && form.hourlyBooking
+                ? optionalNumber(form.heavyHourly)
+                : undefined,
+
+            daily:
+              isVehicleSelected("heavyVehicle") && form.dailyBooking
+                ? optionalNumber(form.heavyDaily)
+                : undefined,
 
             monthly:
               isVehicleSelected("heavyVehicle") && form.monthlyBooking
@@ -979,10 +1103,6 @@ function OwnerAddParking() {
           },
         },
 
-        /*
-         * OPERATING HOURS
-         */
-
         operatingHours: {
           open: form.openingTime,
           close: form.closingTime,
@@ -990,23 +1110,23 @@ function OwnerAddParking() {
       };
 
       /*
-       * IMPORTANT:
-       *
-       * imageFiles contains:
-       *
-       * {
-       *   file: File,
-       *   preview: string
-       * }
-       *
-       * Backend needs actual File[].
+       * Files are uploaded separately by createParking().
        */
-
       const filesForUpload = imageFiles.map((image) => image.file);
 
       await createParking(payload, filesForUpload);
 
       showToast("success", "Parking created successfully.");
+
+      /*
+       * Prevent object URL cleanup from trying to
+       * work on files after navigation.
+       */
+      imageFilesRef.current.forEach((image) => {
+        URL.revokeObjectURL(image.preview);
+      });
+
+      imageFilesRef.current = [];
 
       window.setTimeout(() => {
         router.push("/owner/parkings");
@@ -1015,15 +1135,13 @@ function OwnerAddParking() {
     } catch (requestError) {
       const message = getApiErrorMessage(requestError);
 
-      /*
-       * JWT / authentication error
-       */
+      const normalizedMessage = message.toLowerCase();
 
       if (
-        message.toLowerCase().includes("jwt") ||
-        message.toLowerCase().includes("token") ||
-        message.toLowerCase().includes("authentication") ||
-        message.toLowerCase().includes("unauthorized")
+        normalizedMessage.includes("jwt") ||
+        normalizedMessage.includes("token") ||
+        normalizedMessage.includes("authentication") ||
+        normalizedMessage.includes("unauthorized")
       ) {
         showToast(
           "error",
@@ -1039,15 +1157,11 @@ function OwnerAddParking() {
 
   /* ==========================================================
      RENDER
-     ========================================================== */
+  ========================================================== */
 
   return (
     <main className="min-h-screen bg-[#06544E] text-white">
       <OwnerNavbar />
-
-      {/* ======================================================
-          TOP RIGHT TOAST
-          ====================================================== */}
 
       {toast && (
         <Toast type={toast.type} message={toast.message} onClose={hideToast} />
@@ -1246,10 +1360,6 @@ function OwnerAddParking() {
             </button>
           </FormSection>
 
-          {/* ==================================================
-              PARKING AREA
-          ================================================== */}
-
           <FormSection
             icon={<ParkingSquare className="h-5 w-5" />}
             title="Parking area"
@@ -1283,6 +1393,8 @@ function OwnerAddParking() {
           >
             <div className="grid gap-3 sm:grid-cols-2">
               {VEHICLE_TYPES.map((vehicle) => {
+                const Icon = vehicle.icon;
+
                 const selected = form.vehicleTypes.includes(vehicle.value);
 
                 return (
@@ -1305,7 +1417,7 @@ function OwnerAddParking() {
                             : "flex h-10 w-10 items-center justify-center rounded-xl bg-white/10"
                         }
                       >
-                        {vehicle.icon}
+                        <Icon className="h-5 w-5" />
                       </span>
 
                       <span>
@@ -1340,7 +1452,8 @@ function OwnerAddParking() {
             </div>
 
             <p className="text-xs text-white/35">
-              Pricing will only be shown for the vehicle types you select.
+              Only selected vehicle types can later be used when creating
+              parking slots.
             </p>
           </FormSection>
 
@@ -1428,13 +1541,13 @@ function OwnerAddParking() {
           >
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {FACILITIES.map((facility) => {
-                const selected = form.facilities.includes(facility);
+                const selected = form.facilities.includes(facility.value);
 
                 return (
                   <button
-                    key={facility}
+                    key={facility.value}
                     type="button"
-                    onClick={() => toggleFacility(facility)}
+                    onClick={() => toggleFacility(facility.value)}
                     aria-pressed={selected}
                     className={
                       selected
@@ -1452,16 +1565,12 @@ function OwnerAddParking() {
                       {selected && <Check className="h-3.5 w-3.5" />}
                     </span>
 
-                    {facility}
+                    {facility.label}
                   </button>
                 );
               })}
             </div>
           </FormSection>
-
-          {/* ==================================================
-              RULES
-          ================================================== */}
 
           <FormSection
             icon={<ShieldCheck className="h-5 w-5" />}
@@ -1479,6 +1588,7 @@ function OwnerAddParking() {
                   }
                 }}
                 placeholder="Enter a parking rule"
+                maxLength={300}
                 className="min-w-0 flex-1 rounded-xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white outline-none placeholder:text-white/25 focus:border-white/30"
               />
 
@@ -1630,8 +1740,6 @@ function OwnerAddParking() {
               </div>
             ) : (
               <div className="space-y-5">
-                {/* TWO WHEELER */}
-
                 {isVehicleSelected("twoWheeler") && (
                   <PricingRow
                     title="Two Wheeler"
@@ -1648,8 +1756,6 @@ function OwnerAddParking() {
                     }
                   />
                 )}
-
-                {/* FOUR WHEELER */}
 
                 {isVehicleSelected("fourWheeler") && (
                   <PricingRow
@@ -1670,8 +1776,6 @@ function OwnerAddParking() {
                   />
                 )}
 
-                {/* VAN */}
-
                 {isVehicleSelected("vanMinibus") && (
                   <PricingRow
                     title="Van / Minibus"
@@ -1686,8 +1790,6 @@ function OwnerAddParking() {
                     onMonthly={(value) => updateField("vanMonthly", value)}
                   />
                 )}
-
-                {/* HEAVY VEHICLE */}
 
                 {isVehicleSelected("heavyVehicle") && (
                   <PricingRow
@@ -1747,7 +1849,7 @@ function OwnerAddParking() {
 
 /* ============================================================
    IMAGE PREVIEW
-   ============================================================ */
+============================================================ */
 
 function ImagePreview({
   image,
@@ -1788,8 +1890,8 @@ function ImagePreview({
 }
 
 /* ============================================================
-   TOAST COMPONENT
-   ============================================================ */
+   TOAST
+============================================================ */
 
 function Toast({
   type,
@@ -1845,7 +1947,7 @@ function Toast({
 
 /* ============================================================
    FORM SECTION
-   ============================================================ */
+============================================================ */
 
 function FormSection({
   icon,
@@ -1879,7 +1981,7 @@ function FormSection({
 
 /* ============================================================
    INPUT
-   ============================================================ */
+============================================================ */
 
 function Input({
   label,
@@ -1926,6 +2028,7 @@ function Input({
           placeholder={placeholder}
           inputMode={inputMode}
           min={min}
+          disabled={false}
           className={`h-12 w-full rounded-xl border border-white/10 bg-white/[0.05] text-sm text-white outline-none transition placeholder:text-white/20 focus:border-white/30 focus:bg-white/[0.07] ${
             icon ? "pl-11" : "px-4"
           } ${suffix ? "pr-20" : ""}`}
@@ -1943,7 +2046,7 @@ function Input({
 
 /* ============================================================
    TEXT AREA
-   ============================================================ */
+============================================================ */
 
 function TextArea({
   label,
@@ -1979,7 +2082,7 @@ function TextArea({
 
 /* ============================================================
    SELECT
-   ============================================================ */
+============================================================ */
 
 function Select({
   label,
@@ -2026,7 +2129,7 @@ function Select({
 
 /* ============================================================
    TOGGLE
-   ============================================================ */
+============================================================ */
 
 function Toggle({
   label,
@@ -2065,7 +2168,7 @@ function Toggle({
 
 /* ============================================================
    PRICING ROW
-   ============================================================ */
+============================================================ */
 
 function PricingRow({
   title,
@@ -2165,7 +2268,7 @@ function PricingRow({
 
 /* ============================================================
    HELPERS
-   ============================================================ */
+============================================================ */
 
 function optionalNumber(value: string): number | undefined {
   if (!value.trim()) {
