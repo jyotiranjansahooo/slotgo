@@ -3,43 +3,55 @@ import { Request, Response } from "express";
 import asyncHandler from "../utils/asyncHandler.js";
 import ApiResponse from "../utils/ApiResponse.js";
 import ApiError from "../utils/ApiError.js";
-
+// import { updateUserRoleSchema } from "../validations/admin/updateUserRole.validation.js";
 import adminService from "../services/admin/admin.service.js";
 
-// USERS
+export const getUsers = asyncHandler(async (_req: Request, res: Response) => {
+  const users = await adminService.getUsers();
 
-export const getUsers = asyncHandler(
-  async (_req: Request, res: Response) => {
-    const users = await adminService.getUsers();
+  return res
+    .status(200)
+    .json(new ApiResponse(200, users, "Users fetched successfully."));
+});
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        users,
-        "Users fetched successfully.",
-      ),
-    );
-  },
-);
+export const getUserById = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.id as string;
 
-export const getUserById = asyncHandler(
+  const user = await adminService.getUserById(userId);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, user, "User fetched successfully."));
+});
+export const updateUserRole = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.params.id as string;
 
-    const user = await adminService.getUserById(
+    const { role } = req.body;
+
+    const allowedRoles = ["driver", "parkingOwner", "admin"];
+
+    if (!allowedRoles.includes(role)) {
+      throw new ApiError(400, "Invalid user role.");
+    }
+
+    if (!req.user) {
+      throw new ApiError(401, "Authentication required.");
+    }
+
+    const currentAdminId = req.user._id.toString();
+
+    const user = await adminService.updateUserRole(
       userId,
+      role,
+      currentAdminId,
     );
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        user,
-        "User fetched successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "User role updated successfully."));
   },
 );
-
 export const updateUserStatus = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.params.id as string;
@@ -47,25 +59,14 @@ export const updateUserStatus = asyncHandler(
     const { isActive } = req.body;
 
     if (typeof isActive !== "boolean") {
-      throw new ApiError(
-        400,
-        "isActive must be a boolean.",
-      );
+      throw new ApiError(400, "isActive must be a boolean.");
     }
 
-    const user =
-      await adminService.updateUserStatus(
-        userId,
-        isActive,
-      );
+    const user = await adminService.updateUserStatus(userId, isActive);
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        user,
-        "User status updated successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, user, "User status updated successfully."));
   },
 );
 
@@ -73,56 +74,35 @@ export const updateUserStatus = asyncHandler(
 
 export const getParkings = asyncHandler(
   async (_req: Request, res: Response) => {
-    const parkings =
-      await adminService.getParkings();
+    const parkings = await adminService.getParkings();
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        parkings,
-        "Parkings fetched successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, parkings, "Parkings fetched successfully."));
   },
 );
 
 export const approveParking = asyncHandler(
   async (req: Request, res: Response) => {
-    const parkingId =
-      req.params.id as string;
+    const parkingId = req.params.id as string;
 
-    const parking =
-      await adminService.approveParking(
-        parkingId,
-      );
+    const parking = await adminService.approveParking(parkingId);
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        parking,
-        "Parking approved successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, parking, "Parking approved successfully."));
   },
 );
 
 export const rejectParking = asyncHandler(
   async (req: Request, res: Response) => {
-    const parkingId =
-      req.params.id as string;
+    const parkingId = req.params.id as string;
 
-    const parking =
-      await adminService.rejectParking(
-        parkingId,
-      );
+    const parking = await adminService.rejectParking(parkingId);
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        parking,
-        "Parking rejected successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, parking, "Parking rejected successfully."));
   },
 );
 
@@ -130,129 +110,83 @@ export const rejectParking = asyncHandler(
 
 export const getBookings = asyncHandler(
   async (_req: Request, res: Response) => {
-    const bookings =
-      await adminService.getBookings();
+    const bookings = await adminService.getBookings();
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        bookings,
-        "Bookings fetched successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, bookings, "Bookings fetched successfully."));
   },
 );
 
 export const getBookingById = asyncHandler(
   async (req: Request, res: Response) => {
-    const bookingId =
-      req.params.id as string;
+    const bookingId = req.params.id as string;
 
-    const booking =
-      await adminService.getBookingById(
-        bookingId,
-      );
+    const booking = await adminService.getBookingById(bookingId);
 
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        booking,
-        "Booking fetched successfully.",
-      ),
-    );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, booking, "Booking fetched successfully."));
   },
 );
 
-export const getParkingBookings =
-  asyncHandler(
-    async (
-      req: Request,
-      res: Response,
-    ) => {
-      const parkingId =
-        req.params.parkingId as string;
+export const getParkingBookings = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parkingId = req.params.parkingId as string;
 
-      const bookings =
-        await adminService.getParkingBookings(
-          parkingId,
-        );
+    const bookings = await adminService.getParkingBookings(parkingId);
 
-      return res.status(200).json(
+    return res
+      .status(200)
+      .json(
         new ApiResponse(
           200,
           bookings,
           "Parking bookings fetched successfully.",
         ),
       );
-    },
-  );
+  },
+);
 // ADMIN DASHBOARD
 
-export const getDashboardStats =
-  asyncHandler(
-    async (
-      _req: Request,
-      res: Response,
-    ) => {
-      const stats =
-        await adminService.getDashboardStats();
+export const getDashboardStats = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const stats = await adminService.getDashboardStats();
 
-      return res.status(200).json(
+    return res
+      .status(200)
+      .json(
         new ApiResponse(
           200,
           stats,
           "Dashboard statistics fetched successfully.",
         ),
       );
-    },
-  );
-  
+  },
+);
+
 // PAYMENTS
 
-export const getPaymentById =
-  asyncHandler(
-    async (
-      req: Request,
-      res: Response,
-    ) => {
-      const paymentId =
-        req.params.id as string;
+export const getPaymentById = asyncHandler(
+  async (req: Request, res: Response) => {
+    const paymentId = req.params.id as string;
 
-      const payment =
-        await adminService.getPaymentById(
-          paymentId,
-        );
+    const payment = await adminService.getPaymentById(paymentId);
 
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          payment,
-          "Payment fetched successfully.",
-        ),
-      );
-    },
-  );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, payment, "Payment fetched successfully."));
+  },
+);
 
-export const getPaymentByBooking =
-  asyncHandler(
-    async (
-      req: Request,
-      res: Response,
-    ) => {
-      const bookingId =
-        req.params.bookingId as string;
+export const getPaymentByBooking = asyncHandler(
+  async (req: Request, res: Response) => {
+    const bookingId = req.params.bookingId as string;
 
-      const payment =
-        await adminService.getPaymentByBooking(
-          bookingId,
-        );
+    const payment = await adminService.getPaymentByBooking(bookingId);
 
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          payment,
-          "Payment fetched successfully.",
-        ),
-      );
-    },
-  );
+    return res
+      .status(200)
+      .json(new ApiResponse(200, payment, "Payment fetched successfully."));
+  },
+);

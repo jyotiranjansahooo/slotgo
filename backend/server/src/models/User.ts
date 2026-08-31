@@ -6,6 +6,8 @@ import { USER_ROLES, USER_ROLE_VALUES, UserRole } from "../constants/roles.js";
 
 export type AuthProvider = "local" | "google";
 
+export type ParkingAction = "temporary-close" | "delete";
+
 export interface IUser {
   _id: Types.ObjectId;
 
@@ -42,6 +44,16 @@ export interface IUser {
   verificationOtpExpiresAt?: Date;
 
   verificationOtpAttempts: number;
+
+  actionVerificationOtpHash?: string;
+
+  actionVerificationOtpExpiresAt?: Date;
+
+  actionVerificationOtpAttempts: number;
+
+  actionVerificationType?: ParkingAction;
+
+  actionVerificationLastSentAt?: Date;
 
   isActive: boolean;
 
@@ -80,27 +92,45 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       },
     },
 
+    /*
+     * EMAIL
+     */
+
     email: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
       trim: true,
+
       match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
+
+    /*
+     * PHONE
+     */
 
     phoneNumber: {
       type: String,
       sparse: true,
       trim: true,
+
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
+
+    /*
+     * PASSWORD
+     */
 
     password: {
       type: String,
       minlength: 8,
       select: false,
     },
+
+    /*
+     * AUTH PROVIDER
+     */
 
     authProvider: {
       type: String,
@@ -109,17 +139,32 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       required: true,
     },
 
+    /*
+     * GOOGLE ID
+     */
+
     googleId: {
       type: String,
       default: undefined,
     },
 
+    /*
+     * ROLE
+     */
+
     role: {
       type: String,
+
       enum: USER_ROLE_VALUES,
+
       default: USER_ROLES.DRIVER,
+
       required: true,
     },
+
+    /*
+     * AVATAR
+     */
 
     avatar: {
       url: {
@@ -133,11 +178,19 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       },
     },
 
+    /*
+     * REFRESH TOKEN
+     */
+
     refreshToken: {
       type: String,
       default: "",
       select: false,
     },
+
+    /*
+     * ACCOUNT VERIFICATION
+     */
 
     isVerified: {
       type: Boolean,
@@ -167,6 +220,40 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       select: false,
     },
 
+    actionVerificationOtpHash: {
+      type: String,
+      default: "",
+      select: false,
+    },
+
+    actionVerificationOtpExpiresAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
+
+    actionVerificationOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
+    actionVerificationType: {
+      type: String,
+
+      enum: ["temporary-close", "delete"],
+
+      default: undefined,
+
+      select: false,
+    },
+
+    actionVerificationLastSentAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -176,6 +263,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       type: Date,
       default: null,
     },
+
+    /*
+     * LOGIN INFORMATION
+     */
 
     lastLogin: {
       type: Date,
@@ -187,34 +278,59 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: 0,
     },
   },
+
   {
     timestamps: true,
     versionKey: false,
   },
 );
 
-userSchema.index({ role: 1 });
+userSchema.index({
+  role: 1,
+});
 
 userSchema.index(
-  { googleId: 1 },
+  {
+    googleId: 1,
+  },
   {
     unique: true,
     sparse: true,
   },
 );
 
+/*
+ * Phone numbers.
+ */
+
 userSchema.index(
-  { phoneNumber: 1 },
+  {
+    phoneNumber: 1,
+  },
   {
     unique: true,
     sparse: true,
   },
 );
+
+/*
+|--------------------------------------------------------------------------
+| PASSWORD HASHING
+|--------------------------------------------------------------------------
+*/
 
 userSchema.pre("save", async function (): Promise<void> {
+  /*
+   * Only hash password when it has changed.
+   */
+
   if (!this.isModified("password")) {
     return;
   }
+
+  /*
+   * Google users may not have a password.
+   */
 
   if (!this.password) {
     return;
@@ -222,6 +338,12 @@ userSchema.pre("save", async function (): Promise<void> {
 
   this.password = await bcrypt.hash(this.password, 12);
 });
+
+/*
+|--------------------------------------------------------------------------
+| COMPARE PASSWORD
+|--------------------------------------------------------------------------
+*/
 
 userSchema.method(
   "comparePassword",

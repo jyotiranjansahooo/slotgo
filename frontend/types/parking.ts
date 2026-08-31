@@ -51,12 +51,12 @@ export interface Parking {
   description: string;
 
   parkingType: ParkingType;
-supportedVehicleTypes: (
-  | "twoWheeler"
-  | "fourWheeler"
-  | "vanMinibus"
-  | "heavyVehicle"
-)[];
+  supportedVehicleTypes: (
+    | "twoWheeler"
+    | "fourWheeler"
+    | "vanMinibus"
+    | "heavyVehicle"
+  )[];
   address: string;
   landmark?: string;
   city: string;
@@ -96,6 +96,9 @@ supportedVehicleTypes: (
 
   isActive: boolean;
 
+  isTemporarilyClosed: boolean;
+
+  temporaryClosedReason?: string;
   createdAt: string;
   updatedAt: string;
 }

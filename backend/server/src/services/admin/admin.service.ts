@@ -1,13 +1,12 @@
 import ApiError from "../../utils/ApiError.js";
-
+import User from "../../models/User.js";
+import { USER_ROLES } from "../../constants/roles.js";
 import userRepository from "../../repositories/user.repository.js";
 import parkingRepository from "../../repositories/parking.repository.js";
 import bookingRepository from "../../repositories/booking.repository.js";
 import paymentRepository from "../../repositories/payment.repository.js";
 
-class AdminService {
-    // USERS
-  
+class AdminService {  
   async getUsers() {
     return userRepository.findAll();
   }
@@ -38,8 +37,77 @@ class AdminService {
     return updatedUser;
   }
 
-    // PARKINGS
-  
+async updateUserRole(
+  targetUserId: string,
+  newRole: "driver" | "parkingOwner" | "admin",
+  currentAdminId: string,
+) {
+  const targetUser = await User.findById(targetUserId);
+
+  if (!targetUser) {
+    throw new ApiError(404, "User not found.");
+  }
+
+  /*
+   * Prevent an admin from changing their own role.
+   */
+  if (targetUser._id.toString() === currentAdminId) {
+    throw new ApiError(
+      400,
+      "You cannot change your own administrator role.",
+    );
+  }
+
+  /*
+   * If removing admin privileges, make sure
+   * at least one administrator remains.
+   */
+  if (
+    targetUser.role === USER_ROLES.ADMIN &&
+    newRole !== USER_ROLES.ADMIN
+  ) {
+    const adminCount = await User.countDocuments({
+      role: USER_ROLES.ADMIN,
+      isActive: true,
+    });
+
+    if (adminCount <= 1) {
+      throw new ApiError(
+        400,
+        "Cannot remove the last administrator.",
+      );
+    }
+  }
+
+  /*
+   * Nothing to change.
+   */
+  if (targetUser.role === newRole) {
+    throw new ApiError(
+      400,
+      `User is already a ${newRole}.`,
+    );
+  }
+
+  targetUser.role = newRole;
+
+  /*
+   * Clear refresh token so the user must authenticate again.
+   */
+  targetUser.refreshToken = "";
+
+  await targetUser.save();
+
+  return {
+    id: targetUser._id.toString(),
+    name: targetUser.name,
+    email: targetUser.email,
+    phoneNumber: targetUser.phoneNumber,
+    role: targetUser.role,
+    isActive: targetUser.isActive,
+    isVerified: targetUser.isVerified,
+  };
+}  
   async getParkings() {
     return parkingRepository.findAll();
   }

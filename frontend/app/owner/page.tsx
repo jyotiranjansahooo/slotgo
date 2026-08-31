@@ -348,10 +348,6 @@ function OwnerDashboard() {
           <DashboardSkeleton />
         ) : (
           <>
-            {/* ==================================================
-                OVERVIEW STATS
-            ================================================== */}
-
             <section className="mt-8">
               <div className="mb-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-200/45">

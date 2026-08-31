@@ -1,18 +1,11 @@
 import { Types } from "mongoose";
+
 import Parking, { IParking } from "../models/Parking.js";
 
 class ParkingRepository {
-  // =========================================================
-  // CREATE
-  // =========================================================
-
   async create(data: Partial<IParking>) {
     return Parking.create(data);
   }
-
-  // =========================================================
-  // FIND BY ID
-  // =========================================================
 
   async findById(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -21,10 +14,6 @@ class ParkingRepository {
 
     return Parking.findById(id).lean();
   }
-
-  // =========================================================
-  // FIND APPROVED PARKING BY ID
-  // =========================================================
 
   async findApprovedById(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -35,19 +24,26 @@ class ParkingRepository {
       _id: new Types.ObjectId(id),
       status: "approved",
       isActive: true,
+      isTemporarilyClosed: false,
     }).lean();
   }
 
-async findByOwner(ownerId: string) {
-  console.log("🔥🔥🔥 FIND BY OWNER WAS CALLED 🔥🔥🔥");
-  console.log("OWNER ID =", ownerId);
+  // FIND PARKINGS BY OWNER
 
-  const parkings = await Parking.find({});
+  async findByOwner(ownerId: string) {
+    if (!Types.ObjectId.isValid(ownerId)) {
+      return [];
+    }
 
-  console.log("🔥 TOTAL PARKINGS =", parkings.length);
-
-  return parkings;
-}
+    return Parking.find({
+      ownerId: new Types.ObjectId(ownerId),
+      isActive: true,
+    })
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
+  }
 
   async findAll() {
     return Parking.find()
@@ -57,31 +53,18 @@ async findByOwner(ownerId: string) {
       .lean();
   }
 
-  // =========================================================
-  // UPDATE
-  // =========================================================
-
-  async update(
-    id: string,
-    data: Partial<IParking>,
-  ) {
+  async update(id: string, data: Partial<IParking>) {
     if (!Types.ObjectId.isValid(id)) {
       return null;
     }
 
-    return Parking.findByIdAndUpdate(
-      id,
-      data,
-      {
-        new: true,
-        runValidators: true,
-      },
-    ).lean();
+    return Parking.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
+    }).lean();
   }
 
-  // =========================================================
-  // DEACTIVATE
-  // =========================================================
+  // DEACTIVATE / SOFT DELETE
 
   async deactivate(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -92,6 +75,9 @@ async findByOwner(ownerId: string) {
       id,
       {
         isActive: false,
+        deletedAt: new Date(),
+        isTemporarilyClosed: false,
+        temporaryClosedReason: "",
       },
       {
         new: true,
@@ -100,9 +86,12 @@ async findByOwner(ownerId: string) {
     ).lean();
   }
 
-  // =========================================================
-  // DELETE
-  // =========================================================
+  // HARD DELETE
+  //
+  // Keep this method available, but owner deletion should use
+  // deactivate() so existing bookings/reviews/history are not
+  // destroyed.
+  //
 
   async delete(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -112,9 +101,45 @@ async findByOwner(ownerId: string) {
     return Parking.findByIdAndDelete(id);
   }
 
-  // =========================================================
-  // APPROVE
-  // =========================================================
+  // TEMPORARILY CLOSE
+
+  async temporarilyClose(id: string, reason: string = "") {
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
+    }
+
+    return Parking.findByIdAndUpdate(
+      id,
+      {
+        isTemporarilyClosed: true,
+        temporaryClosedReason: reason.trim(),
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).lean();
+  }
+
+  // REOPEN
+
+  async reopen(id: string) {
+    if (!Types.ObjectId.isValid(id)) {
+      return null;
+    }
+
+    return Parking.findByIdAndUpdate(
+      id,
+      {
+        isTemporarilyClosed: false,
+        temporaryClosedReason: "",
+      },
+      {
+        new: true,
+        runValidators: true,
+      },
+    ).lean();
+  }
 
   async approve(id: string) {
     if (!Types.ObjectId.isValid(id)) {
@@ -133,10 +158,6 @@ async findByOwner(ownerId: string) {
     ).lean();
   }
 
-  // =========================================================
-  // REJECT
-  // =========================================================
-
   async reject(id: string) {
     if (!Types.ObjectId.isValid(id)) {
       return null;
@@ -154,14 +175,11 @@ async findByOwner(ownerId: string) {
     ).lean();
   }
 
-  // =========================================================
-  // APPROVED PARKINGS
-  // =========================================================
-
   async findApprovedParkings() {
     return Parking.find({
       status: "approved",
       isActive: true,
+      isTemporarilyClosed: false,
     })
       .sort({
         createdAt: -1,
@@ -169,17 +187,13 @@ async findByOwner(ownerId: string) {
       .lean();
   }
 
-  // =========================================================
-  // SEARCH
-  // =========================================================
+  // SEARCH PARKINGS
 
-  async searchParkings(filters: {
-    city?: string;
-    parkingType?: string;
-  }) {
+  async searchParkings(filters: { city?: string; parkingType?: string }) {
     const query: Record<string, unknown> = {
       status: "approved",
       isActive: true,
+      isTemporarilyClosed: false,
     };
 
     if (filters.city?.trim()) {

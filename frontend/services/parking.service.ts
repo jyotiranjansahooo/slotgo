@@ -95,7 +95,51 @@ export async function getParking(parkingId: string): Promise<Parking> {
 
   return response.data.data;
 }
+export type ParkingAction = "temporary-close" | "delete";
 
+export interface ParkingActionVerificationResponse {
+  message: string;
+}
+
+export async function requestParkingActionVerification(
+  parkingId: string,
+  action: ParkingAction,
+): Promise<ParkingActionVerificationResponse> {
+  const response = await api.post<
+    ApiResponse<ParkingActionVerificationResponse>
+  >(`/parkings/${parkingId}/action-verification`, {
+    action,
+  });
+
+  return response.data.data;
+}
+
+export async function updateParkingAvailability(
+  parkingId: string,
+  data: {
+    isTemporarilyClosed: boolean;
+    reason?: string;
+    otp: string;
+  },
+): Promise<Parking> {
+  const response = await api.patch<ApiResponse<Parking>>(
+    `/parkings/${parkingId}/availability`,
+    data,
+  );
+
+  return response.data.data;
+}
+
+export async function deleteOwnerParking(
+  parkingId: string,
+  otp: string,
+): Promise<void> {
+  await api.delete(`/parkings/${parkingId}`, {
+    data: {
+      otp,
+    },
+  });
+}
 export async function createParking(
   payload: CreateParkingPayload,
   images: File[],
@@ -200,20 +244,12 @@ export async function updateParking(
 
   formData.append("operatingHours", JSON.stringify(payload.operatingHours));
 
-  /*
-   * Removed Cloudinary images
-   */
-
   if (payload.removeImagePublicIds && payload.removeImagePublicIds.length > 0) {
     formData.append(
       "removeImagePublicIds",
       JSON.stringify(payload.removeImagePublicIds),
     );
   }
-
-  /*
-   * New images
-   */
 
   images.forEach((file) => {
     formData.append("images", file, file.name);

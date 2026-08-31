@@ -13,14 +13,8 @@ const router = Router();
 router.use(authMiddleware);
 router.use(adminMiddleware);
 
-router.patch(
-  "/:id/approve",
-  approveParking,
-);
+router.patch("/:id/approve", approveParking);
 
-router.patch(
-  "/:id/reject",
-  rejectParking,
-);
+router.patch("/:id/reject", rejectParking);
 
 export default router;

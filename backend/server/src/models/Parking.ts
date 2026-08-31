@@ -1,17 +1,30 @@
 import mongoose, { Schema, Types } from "mongoose";
-import { FACILITY_VALUES } from "../constants/facilities.js";
+
 import {
   PARKING_STATUS,
   PARKING_STATUS_VALUES,
   PARKING_TYPE_VALUES,
   ParkingStatus,
 } from "../constants/parking.js";
+
 import { VEHICLE_TYPE_VALUES, VehicleType } from "../constants/vehicle.js";
+
+/*
+|--------------------------------------------------------------------------
+| PARKING IMAGE
+|--------------------------------------------------------------------------
+*/
 
 export interface IParkingImage {
   url: string;
   publicId: string;
 }
+
+/*
+|--------------------------------------------------------------------------
+| PARKING INTERFACE
+|--------------------------------------------------------------------------
+*/
 
 export interface IParking {
   ownerId: Types.ObjectId;
@@ -42,6 +55,7 @@ export interface IParking {
   rules: string[];
 
   entryInstructions: string;
+
   supportedVehicleTypes: VehicleType[];
 
   bookingModes: {
@@ -91,6 +105,11 @@ export interface IParking {
   status: ParkingStatus;
 
   isActive: boolean;
+
+  isTemporarilyClosed: boolean;
+  temporaryClosedReason?: string;
+
+  deletedAt?: Date | null;
 }
 
 export const PARKING_FACILITIES = [
@@ -105,7 +124,9 @@ export const PARKING_FACILITIES = [
   "disabled_access",
   "car_wash",
 ] as const;
+
 export type ParkingFacility = (typeof PARKING_FACILITIES)[number];
+
 const imageSchema = new Schema<IParkingImage>(
   {
     url: {
@@ -124,10 +145,6 @@ const imageSchema = new Schema<IParkingImage>(
     _id: false,
   },
 );
-
-/* ============================================================
-   LOCATION SCHEMA
-   ============================================================ */
 
 const locationSchema = new Schema(
   {
@@ -149,10 +166,6 @@ const locationSchema = new Schema(
     _id: false,
   },
 );
-
-/* ============================================================
-   BOOKING MODES
-   ============================================================ */
 
 const bookingModeSchema = new Schema(
   {
@@ -176,10 +189,6 @@ const bookingModeSchema = new Schema(
   },
 );
 
-/* ============================================================
-   VEHICLE PRICING
-   ============================================================ */
-
 const vehiclePricingSchema = new Schema(
   {
     hourly: {
@@ -201,10 +210,6 @@ const vehiclePricingSchema = new Schema(
     _id: false,
   },
 );
-
-/* ============================================================
-   PRICING
-   ============================================================ */
 
 const pricingSchema = new Schema(
   {
@@ -241,10 +246,6 @@ const pricingSchema = new Schema(
   },
 );
 
-/* ============================================================
-   OPERATING HOURS
-   ============================================================ */
-
 const operatingHoursSchema = new Schema(
   {
     open: {
@@ -280,6 +281,10 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
+    /*
+     * BASIC INFORMATION
+     */
+
     parkingName: {
       type: String,
       required: true,
@@ -299,6 +304,10 @@ const parkingSchema = new Schema<IParking>(
       enum: PARKING_TYPE_VALUES,
       required: true,
     },
+
+    /*
+     * ADDRESS
+     */
 
     address: {
       type: String,
@@ -337,10 +346,18 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
+    /*
+     * LOCATION
+     */
+
     location: {
       type: locationSchema,
       required: true,
     },
+
+    /*
+     * OWNER CONTACT
+     */
 
     ownerName: {
       type: String,
@@ -356,11 +373,19 @@ const parkingSchema = new Schema<IParking>(
       match: [/^[6-9][0-9]{9}$/, "Invalid contact number"],
     },
 
+    /*
+     * PARKING AREA
+     */
+
     parkingArea: {
       type: Number,
       required: true,
       min: 0,
     },
+
+    /*
+     * FACILITIES
+     */
 
     facilities: {
       type: [
@@ -371,6 +396,10 @@ const parkingSchema = new Schema<IParking>(
       ],
       default: [],
     },
+
+    /*
+     * RULES
+     */
 
     rules: {
       type: [
@@ -383,12 +412,20 @@ const parkingSchema = new Schema<IParking>(
       default: [],
     },
 
+    /*
+     * ENTRY INSTRUCTIONS
+     */
+
     entryInstructions: {
       type: String,
       default: "",
       trim: true,
       maxlength: 1000,
     },
+
+    /*
+     * SUPPORTED VEHICLE TYPES
+     */
 
     supportedVehicleTypes: {
       type: [
@@ -397,54 +434,46 @@ const parkingSchema = new Schema<IParking>(
           enum: VEHICLE_TYPE_VALUES,
         },
       ],
+
       required: true,
+
       validate: {
         validator: (value: string[]) => value.length > 0,
         message: "At least one vehicle type is required.",
       },
     },
+
+    /*
+     * BOOKING MODES
+     */
+
     bookingModes: {
       type: bookingModeSchema,
       required: true,
     },
+
+    /*
+     * PRICING
+     */
 
     pricing: {
       type: pricingSchema,
       required: true,
     },
 
-    /* ----------------------------------------------------------
-       IMAGES
-    ---------------------------------------------------------- */
-
     images: {
       type: [imageSchema],
       default: [],
-
-      /*
-       * Do NOT put required: true here.
-       *
-       * Your service/controller should enforce:
-       * minimum 2 images
-       * maximum 5 images
-       *
-       * This gives you a much cleaner error:
-       * "At least 2 parking images are required."
-       */
     },
-
-    /* ----------------------------------------------------------
-       OPERATING HOURS
-    ---------------------------------------------------------- */
 
     operatingHours: {
       type: operatingHoursSchema,
       required: true,
     },
 
-    /* ----------------------------------------------------------
-       RATINGS
-    ---------------------------------------------------------- */
+    /*
+     * RATINGS
+     */
 
     averageRating: {
       type: Number,
@@ -459,9 +488,9 @@ const parkingSchema = new Schema<IParking>(
       min: 0,
     },
 
-    /* ----------------------------------------------------------
-       STATUS
-    ---------------------------------------------------------- */
+    /*
+     * ADMIN APPROVAL STATUS
+     */
 
     status: {
       type: String,
@@ -470,14 +499,36 @@ const parkingSchema = new Schema<IParking>(
       index: true,
     },
 
-    /* ----------------------------------------------------------
-       ACTIVE
-    ---------------------------------------------------------- */
+    /*
+     * ACTIVE / DELETED
+     */
 
     isActive: {
       type: Boolean,
       default: true,
       index: true,
+    },
+
+    isTemporarilyClosed: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+
+    temporaryClosedReason: {
+      type: String,
+      trim: true,
+      default: "",
+      maxlength: 500,
+    },
+
+    /*
+     * SOFT DELETE
+     */
+
+    deletedAt: {
+      type: Date,
+      default: null,
     },
   },
 
@@ -486,10 +537,6 @@ const parkingSchema = new Schema<IParking>(
     versionKey: false,
   },
 );
-
-/* ============================================================
-   INDEXES
-   ============================================================ */
 
 parkingSchema.index({
   ownerId: 1,

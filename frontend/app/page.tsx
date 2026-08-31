@@ -16,10 +16,14 @@ import { useAuth } from "@/providers/AuthProvider";
 
 export default function HomePage() {
   const router = useRouter();
+
   const { user, isLoading } = useAuth();
 
   const [minimumLoadingDone, setMinimumLoadingDone] = useState(false);
 
+  /*
+   * Keep the loader visible for at least 1 second.
+   */
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingDone(true);
@@ -28,18 +32,54 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
+  /*
+   * Redirect authenticated users to their
+   * appropriate dashboard.
+   */
   useEffect(() => {
-    if (isLoading || !minimumLoadingDone) return;
+    if (isLoading || !minimumLoadingDone || !user) {
+      return;
+    }
 
-    if (user?.role === "parkingOwner") {
-      router.replace("/owner");
+    switch (user.role) {
+      case "admin":
+        router.replace("/admin");
+        break;
+
+      case "parkingOwner":
+        router.replace("/owner");
+        break;
+
+      case "driver":
+        // Drivers use the normal homepage.
+        break;
+
+      default:
+        break;
     }
   }, [user, isLoading, minimumLoadingDone, router]);
 
-  if (isLoading || !minimumLoadingDone || user?.role === "parkingOwner") {
+  /*
+   * Show loader while:
+   *
+   * 1. Auth state is loading
+   * 2. Minimum loader duration hasn't finished
+   * 3. Admin is being redirected
+   * 4. Parking owner is being redirected
+   */
+  if (
+    isLoading ||
+    !minimumLoadingDone ||
+    user?.role === "admin" ||
+    user?.role === "parkingOwner"
+  ) {
     return <ParkingLoader />;
   }
 
+  /*
+   * Driver / unauthenticated user
+   * gets the normal homepage.
+   */
   return (
     <main className="min-h-screen bg-[#080b18]">
       <Navbar />

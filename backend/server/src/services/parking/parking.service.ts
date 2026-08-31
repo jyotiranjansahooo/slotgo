@@ -1,13 +1,29 @@
 import ApiError from "../../utils/ApiError.js";
+
 import { IParking } from "../../models/Parking.js";
+
 import parkingRepository from "../../repositories/parking.repository.js";
+
 import { Types } from "mongoose";
+
 import { PARKING_STATUS } from "../../constants/parking.js";
+
 import { UpdateParkingInput } from "../../validations/parking/update.validation.js";
+
 import { CreateParkingInput } from "../../validations/parking/create.validation.js";
+
 import { uploadToCloudinary } from "../../utils/cloudinary.js";
 
+import {
+  verifyParkingActionVerification,
+  type ParkingAction,
+} from "./parkingActionVerification.service.js";
+
 class ParkingService {
+  /*
+  | CREATE PARKING
+  */
+
   async createParking(
     ownerId: string,
     data: CreateParkingInput,
@@ -60,14 +76,60 @@ class ParkingService {
       status: PARKING_STATUS.PENDING,
 
       isActive: true,
+
+      isTemporarilyClosed: false,
+
+      temporaryClosedReason: "",
+
+      deletedAt: null,
     });
 
     return parking;
   }
 
+  /*
+  | GET OWNER PARKINGS
+  */
+
   async getMyParkings(ownerId: string) {
     return parkingRepository.findByOwner(ownerId);
   }
+
+  async getParkingById(id: string) {
+    const parking = await parkingRepository.findById(id);
+
+    if (!parking) {
+      throw new ApiError(404, "Parking not found.");
+    }
+
+    return parking;
+  }
+
+  async getParkingForOwner(ownerId: string, parkingId: string) {
+    if (!Types.ObjectId.isValid(ownerId)) {
+      throw new ApiError(400, "Invalid owner ID.");
+    }
+
+    if (!Types.ObjectId.isValid(parkingId)) {
+      throw new ApiError(400, "Invalid parking ID.");
+    }
+
+    const parking = await parkingRepository.findById(parkingId);
+
+    if (!parking) {
+      throw new ApiError(404, "Parking not found.");
+    }
+
+    if (parking.ownerId.toString() !== ownerId) {
+      throw new ApiError(403, "You are not authorized to access this parking.");
+    }
+
+    return parking;
+  }
+
+  /*
+  | APPROVE PARKING
+  */
 
   async approveParking(parkingId: string) {
     const parking = await parkingRepository.findById(parkingId);
@@ -87,6 +149,10 @@ class ParkingService {
     return parkingRepository.approve(parkingId);
   }
 
+  /*
+  | REJECT PARKING
+  */
+
   async rejectParking(parkingId: string) {
     const parking = await parkingRepository.findById(parkingId);
 
@@ -105,15 +171,9 @@ class ParkingService {
     return parkingRepository.reject(parkingId);
   }
 
-  async getParkingById(id: string) {
-    const parking = await parkingRepository.findById(id);
-
-    if (!parking) {
-      throw new ApiError(404, "Parking not found.");
-    }
-
-    return parking;
-  }
+  /*
+  | UPDATE PARKING
+  */
 
   async updateParking(
     ownerId: string,
@@ -184,22 +244,126 @@ class ParkingService {
     return updatedParking;
   }
 
-  async deactivateParking(ownerId: string, parkingId: string) {
-    const parking = await parkingRepository.findById(parkingId);
+  async updateParkingAvailability(
+    ownerId: string,
+    parkingId: string,
+    data: {
+      isTemporarilyClosed: boolean;
+      reason?: string;
+      otp?: string;
+    },
+  ) {
+    const parking = await this.getParkingForOwner(ownerId, parkingId);
 
-    if (!parking) {
-      throw new ApiError(404, "Parking not found.");
+    if (!parking.isActive) {
+      throw new ApiError(400, "Parking is inactive.");
     }
 
-    if (parking.ownerId.toString() !== ownerId) {
-      throw new ApiError(403, "You are not authorized to modify this parking.");
+    if (data.isTemporarilyClosed === false) {
+      if (!parking.isTemporarilyClosed) {
+        throw new ApiError(400, "Parking is already open.");
+      }
+
+      const updatedParking = await parkingRepository.update(parkingId, {
+        isTemporarilyClosed: false,
+
+        temporaryClosedReason: "",
+      });
+
+      if (!updatedParking) {
+        throw new ApiError(500, "Unable to reopen parking.");
+      }
+
+      return updatedParking;
     }
+
+    /*
+     * TEMPORARY CLOSE
+     */
+
+    if (parking.isTemporarilyClosed) {
+      throw new ApiError(400, "Parking is already temporarily closed.");
+    }
+
+    /*
+     * OTP is mandatory for closing.
+     */
+
+    if (!data.otp || !/^\d{6}$/.test(data.otp)) {
+      throw new ApiError(400, "A valid 6-digit verification code is required.");
+    }
+
+    /*
+     * Verify OTP.
+     */
+
+    await verifyParkingActionVerification({
+      ownerId,
+
+      action: "temporary-close" as ParkingAction,
+
+      otp: data.otp,
+    });
+
+    /*
+     * Update parking.
+     */
+
+    const updatedParking = await parkingRepository.update(parkingId, {
+      isTemporarilyClosed: true,
+
+      temporaryClosedReason: data.reason?.trim() ?? "",
+    });
+
+    if (!updatedParking) {
+      throw new ApiError(500, "Unable to temporarily close parking.");
+    }
+
+    return updatedParking;
+  }
+
+  /*
+  | DELETE / DEACTIVATE PARKING
+  |
+  | This remains a soft delete.
+  |
+  | The parking is not physically removed from
+  | MongoDB.
+  |
+  | OTP is required.
+  |
+  */
+
+  async deactivateParking(ownerId: string, parkingId: string, otp: string) {
+    const parking = await this.getParkingForOwner(ownerId, parkingId);
 
     if (!parking.isActive) {
       throw new ApiError(400, "Parking is already inactive.");
     }
 
-    return parkingRepository.deactivate(parkingId);
+    if (!otp || !/^\d{6}$/.test(otp)) {
+      throw new ApiError(400, "A valid 6-digit verification code is required.");
+    }
+
+    /*
+     * Verify delete OTP.
+     */
+
+    await verifyParkingActionVerification({
+      ownerId,
+
+      action: "delete" as ParkingAction,
+
+      otp,
+    });
+
+    const deletedParking = await parkingRepository.deactivate(parkingId);
+
+    if (!deletedParking) {
+      throw new ApiError(500, "Unable to delete parking.");
+    }
+
+    return deletedParking;
   }
 }
 

@@ -1,6 +1,6 @@
 import Booking, { IBooking } from "../models/Booking.js";
 import { ClientSession } from "mongoose";
-import { Types } from "mongoose";
+// import { Types } from "mongoose";
 import Parking from "../models/Parking.js";
 class BookingRepository {
   // CREATE
