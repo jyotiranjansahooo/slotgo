@@ -20,13 +20,19 @@ const parkingSlotSchema = new Schema({
         default: "Ground",
         trim: true,
     },
-    supportedVehicleTypes: [
-        {
-            type: String,
-            enum: VEHICLE_TYPE_VALUES,
-            required: true,
+    supportedVehicleTypes: {
+        type: [
+            {
+                type: String,
+                enum: VEHICLE_TYPE_VALUES,
+            },
+        ],
+        required: true,
+        validate: {
+            validator: (value) => value.length > 0,
+            message: "At least one vehicle type is required.",
         },
-    ],
+    },
     status: {
         type: String,
         enum: SLOT_STATUS_VALUES,

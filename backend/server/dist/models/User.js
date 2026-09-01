@@ -91,6 +91,57 @@ const userSchema = new Schema({
         default: 0,
         select: false,
     },
+    passwordResetOtpHash: {
+        type: String,
+        default: "",
+        select: false,
+    },
+    passwordResetOtpLastSentAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
+    passwordResetOtpExpiresAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
+    passwordResetOtpAttempts: {
+        type: Number,
+        default: 0,
+        select: false,
+    },
+    passwordResetVerifiedAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
+    actionVerificationOtpHash: {
+        type: String,
+        default: "",
+        select: false,
+    },
+    actionVerificationOtpExpiresAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
+    actionVerificationOtpAttempts: {
+        type: Number,
+        default: 0,
+        select: false,
+    },
+    actionVerificationType: {
+        type: String,
+        enum: ["temporary-close", "delete"],
+        default: undefined,
+        select: false,
+    },
+    actionVerificationLastSentAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
     isActive: {
         type: Boolean,
         default: true,
@@ -99,6 +150,9 @@ const userSchema = new Schema({
         type: Date,
         default: null,
     },
+    /*
+     * LOGIN INFORMATION
+     */
     lastLogin: {
         type: Date,
         default: undefined,
@@ -111,12 +165,21 @@ const userSchema = new Schema({
     timestamps: true,
     versionKey: false,
 });
-userSchema.index({ role: 1 });
-userSchema.index({ googleId: 1 }, {
+userSchema.index({
+    role: 1,
+});
+userSchema.index({
+    googleId: 1,
+}, {
     unique: true,
     sparse: true,
 });
-userSchema.index({ phoneNumber: 1 }, {
+/*
+ * Phone numbers.
+ */
+userSchema.index({
+    phoneNumber: 1,
+}, {
     unique: true,
     sparse: true,
 });

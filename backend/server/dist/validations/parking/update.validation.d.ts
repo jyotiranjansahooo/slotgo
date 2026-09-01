@@ -5,6 +5,12 @@ export declare const updateParkingSchema: z.ZodObject<{
     parkingType: z.ZodOptional<z.ZodEnum<{
         [x: string]: string;
     }>>;
+    supportedVehicleTypes: z.ZodOptional<z.ZodArray<z.ZodEnum<{
+        fourWheeler: "fourWheeler";
+        heavyVehicle: "heavyVehicle";
+        twoWheeler: "twoWheeler";
+        vanMinibus: "vanMinibus";
+    }>>>;
     address: z.ZodOptional<z.ZodString>;
     landmark: z.ZodOptional<z.ZodString>;
     city: z.ZodOptional<z.ZodString>;

@@ -1,7 +1,10 @@
 import api from "@/lib/api";
 import type { ApiResponse } from "@/types/api";
 
-export type UserRole = "driver" | "parkingOwner" | "admin";
+export type UserRole =
+  | "driver"
+  | "parkingOwner"
+  | "admin";
 
 export interface AuthUser {
   id: string;
@@ -42,6 +45,37 @@ export interface RegisterResponse {
   message: string;
 }
 
+export interface ForgotPasswordData {
+  email: string;
+}
+
+export interface ForgotPasswordResponse {
+  email: string;
+  message: string;
+}
+
+export interface VerifyPasswordResetOtpData {
+  email: string;
+  otp: string;
+}
+
+export interface VerifyPasswordResetOtpResponse {
+  email: string;
+  verified: boolean;
+  message: string;
+}
+
+export interface ResetPasswordData {
+  email: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ResetPasswordResponse {
+  email: string;
+  message: string;
+}
+
 export const loginUser = async (
   data: LoginData,
 ): Promise<ApiResponse<AuthResponseData>> => {
@@ -67,6 +101,7 @@ export const googleLoginUser = async (
 
   return response.data;
 };
+
 export const verifyOtp = async (
   data: VerifyOtpData,
 ): Promise<ApiResponse<AuthResponseData>> => {
@@ -83,6 +118,41 @@ export const registerUser = async (
 ): Promise<ApiResponse<RegisterResponse>> => {
   const response = await api.post<ApiResponse<RegisterResponse>>(
     "/auth/register",
+    data,
+  );
+
+  return response.data;
+};
+
+export const forgotPassword = async (
+  data: ForgotPasswordData,
+): Promise<ApiResponse<ForgotPasswordResponse>> => {
+  const response = await api.post<ApiResponse<ForgotPasswordResponse>>(
+    "/auth/forgot-password",
+    data,
+  );
+
+  return response.data;
+};
+
+export const verifyPasswordResetOtp = async (
+  data: VerifyPasswordResetOtpData,
+): Promise<ApiResponse<VerifyPasswordResetOtpResponse>> => {
+  const response = await api.post<
+    ApiResponse<VerifyPasswordResetOtpResponse>
+  >(
+    "/auth/forgot-password/verify",
+    data,
+  );
+
+  return response.data;
+};
+
+export const resetPassword = async (
+  data: ResetPasswordData,
+): Promise<ApiResponse<ResetPasswordResponse>> => {
+  const response = await api.post<ApiResponse<ResetPasswordResponse>>(
+    "/auth/reset-password",
     data,
   );
 

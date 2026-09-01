@@ -1,6 +1,7 @@
 import { HydratedDocument, Model, Types } from "mongoose";
 import { UserRole } from "../constants/roles.js";
 export type AuthProvider = "local" | "google";
+export type ParkingAction = "temporary-close" | "delete";
 export interface IUser {
     _id: Types.ObjectId;
     name: {
@@ -23,6 +24,16 @@ export interface IUser {
     verificationOtpHash?: string;
     verificationOtpExpiresAt?: Date;
     verificationOtpAttempts: number;
+    passwordResetOtpHash?: string;
+    passwordResetOtpExpiresAt?: Date;
+    passwordResetOtpAttempts: number;
+    passwordResetVerifiedAt?: Date;
+    actionVerificationOtpHash?: string;
+    actionVerificationOtpExpiresAt?: Date;
+    actionVerificationOtpAttempts: number;
+    actionVerificationType?: ParkingAction;
+    actionVerificationLastSentAt?: Date;
+    passwordResetOtpLastSentAt?: Date;
     isActive: boolean;
     deletedAt?: Date | null;
     lastLogin?: Date;

@@ -20,6 +20,18 @@ declare class AdminService {
     }, "comparePassword" | "id"> & import("mongoose").HydratedDocumentOverrides<import("../../models/User.js").IUserMethods & {
         id: string;
     }>>;
+    updateUserRole(targetUserId: string, newRole: "driver" | "parkingOwner" | "admin", currentAdminId: string): Promise<{
+        id: string;
+        name: {
+            first: string;
+            last: string;
+        };
+        email: string;
+        phoneNumber: string | undefined;
+        role: import("../../constants/roles.js").UserRole;
+        isActive: boolean;
+        isVerified: boolean;
+    }>;
     getParkings(): Promise<any[]>;
     approveParking(parkingId: string): Promise<any>;
     rejectParking(parkingId: string): Promise<any>;

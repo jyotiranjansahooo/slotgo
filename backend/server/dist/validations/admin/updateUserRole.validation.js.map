@@ -1,0 +1,1 @@
+{"version":3,"file":"updateUserRole.validation.js","sourceRoot":"","sources":["../../../src/validations/admin/updateUserRole.validation.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,CAAC,EAAE,MAAM,KAAK,CAAC;AAExB,MAAM,CAAC,MAAM,oBAAoB,GAAG,CAAC,CAAC,MAAM,CAAC;IAC3C,IAAI,EAAE,CAAC,CAAC,IAAI,CAAC,CAAC,QAAQ,EAAE,cAAc,EAAE,OAAO,CAAC,CAAC;CAClD,CAAC,CAAC"}

@@ -44,7 +44,15 @@ export interface IUser {
   verificationOtpExpiresAt?: Date;
 
   verificationOtpAttempts: number;
+  passwordResetOtpHash?: string;
 
+  passwordResetOtpExpiresAt?: Date;
+
+  passwordResetOtpAttempts: number;
+
+  passwordResetVerifiedAt?: Date;
+  passwordResetTokenHash?: string;
+  passwordResetTokenExpiresAt?: Date;
   actionVerificationOtpHash?: string;
 
   actionVerificationOtpExpiresAt?: Date;
@@ -54,7 +62,7 @@ export interface IUser {
   actionVerificationType?: ParkingAction;
 
   actionVerificationLastSentAt?: Date;
-
+  passwordResetOtpLastSentAt?: Date;
   isActive: boolean;
 
   deletedAt?: Date | null;
@@ -92,10 +100,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       },
     },
 
-    /*
-     * EMAIL
-     */
-
     email: {
       type: String,
       required: true,
@@ -106,10 +110,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
 
-    /*
-     * PHONE
-     */
-
     phoneNumber: {
       type: String,
       sparse: true,
@@ -118,19 +118,11 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
 
-    /*
-     * PASSWORD
-     */
-
     password: {
       type: String,
       minlength: 8,
       select: false,
     },
-
-    /*
-     * AUTH PROVIDER
-     */
 
     authProvider: {
       type: String,
@@ -138,19 +130,10 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: "local",
       required: true,
     },
-
-    /*
-     * GOOGLE ID
-     */
-
     googleId: {
       type: String,
       default: undefined,
     },
-
-    /*
-     * ROLE
-     */
 
     role: {
       type: String,
@@ -161,10 +144,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
 
       required: true,
     },
-
-    /*
-     * AVATAR
-     */
 
     avatar: {
       url: {
@@ -178,19 +157,11 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       },
     },
 
-    /*
-     * REFRESH TOKEN
-     */
-
     refreshToken: {
       type: String,
       default: "",
       select: false,
     },
-
-    /*
-     * ACCOUNT VERIFICATION
-     */
 
     isVerified: {
       type: Boolean,
@@ -219,7 +190,44 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: 0,
       select: false,
     },
+    passwordResetOtpHash: {
+      type: String,
+      default: "",
+      select: false,
+    },
+    passwordResetOtpLastSentAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
+    passwordResetOtpExpiresAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
 
+    passwordResetOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+
+    passwordResetVerifiedAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
+    passwordResetTokenHash: {
+      type: String,
+      default: "",
+      select: false,
+    },
+
+    passwordResetTokenExpiresAt: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
     actionVerificationOtpHash: {
       type: String,
       default: "",
@@ -313,24 +321,10 @@ userSchema.index(
   },
 );
 
-/*
-|--------------------------------------------------------------------------
-| PASSWORD HASHING
-|--------------------------------------------------------------------------
-*/
-
 userSchema.pre("save", async function (): Promise<void> {
-  /*
-   * Only hash password when it has changed.
-   */
-
   if (!this.isModified("password")) {
     return;
   }
-
-  /*
-   * Google users may not have a password.
-   */
 
   if (!this.password) {
     return;
@@ -338,12 +332,6 @@ userSchema.pre("save", async function (): Promise<void> {
 
   this.password = await bcrypt.hash(this.password, 12);
 });
-
-/*
-|--------------------------------------------------------------------------
-| COMPARE PASSWORD
-|--------------------------------------------------------------------------
-*/
 
 userSchema.method(
   "comparePassword",

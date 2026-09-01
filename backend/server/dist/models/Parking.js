@@ -1,405 +1,369 @@
 import mongoose, { Schema } from "mongoose";
-import {
-  PARKING_STATUS,
-  PARKING_STATUS_VALUES,
-  PARKING_TYPE_VALUES,
-} from "../constants/parking.js";
-
+import { PARKING_STATUS, PARKING_STATUS_VALUES, PARKING_TYPE_VALUES, } from "../constants/parking.js";
+import { VEHICLE_TYPE_VALUES } from "../constants/vehicle.js";
 export const PARKING_FACILITIES = [
-  "CCTV",
-  "Security Guard",
-  "Covered Parking",
-  "EV Charging",
-  "Lighting",
-  "Washroom",
-  "Drinking Water",
-  "Valet Parking",
-  "Disabled Access",
-  "Car Wash",
+    "cctv",
+    "security_guard",
+    "covered_parking",
+    "ev_charging",
+    "lighting",
+    "washroom",
+    "drinking_water",
+    "valet_parking",
+    "disabled_access",
+    "car_wash",
 ];
-
-const imageSchema = new Schema(
-  {
+const imageSchema = new Schema({
     url: {
-      type: String,
-      required: true,
-      trim: true,
+        type: String,
+        required: true,
+        trim: true,
     },
     publicId: {
-      type: String,
-      required: true,
-      trim: true,
+        type: String,
+        required: true,
+        trim: true,
     },
-  },
-  {
+}, {
     _id: false,
-  },
-);
-/* ============================================================
-   LOCATION SCHEMA
-   ============================================================ */
-const locationSchema = new Schema(
-  {
+});
+const locationSchema = new Schema({
     latitude: {
-      type: Number,
-      required: true,
-      min: -90,
-      max: 90,
+        type: Number,
+        required: true,
+        min: -90,
+        max: 90,
     },
     longitude: {
-      type: Number,
-      required: true,
-      min: -180,
-      max: 180,
+        type: Number,
+        required: true,
+        min: -180,
+        max: 180,
     },
-  },
-  {
+}, {
     _id: false,
-  },
-);
-/* ============================================================
-   BOOKING MODES
-   ============================================================ */
-const bookingModeSchema = new Schema(
-  {
+});
+const bookingModeSchema = new Schema({
     hourly: {
-      type: Boolean,
-      default: true,
+        type: Boolean,
+        default: true,
     },
     daily: {
-      type: Boolean,
-      default: true,
+        type: Boolean,
+        default: true,
     },
     monthly: {
-      type: Boolean,
-      default: false,
+        type: Boolean,
+        default: false,
     },
-  },
-  {
+}, {
     _id: false,
-  },
-);
-/* ============================================================
-   VEHICLE PRICING
-   ============================================================ */
-const vehiclePricingSchema = new Schema(
-  {
+});
+const vehiclePricingSchema = new Schema({
     hourly: {
-      type: Number,
-      min: 0,
+        type: Number,
+        min: 0,
     },
     daily: {
-      type: Number,
-      min: 0,
+        type: Number,
+        min: 0,
     },
     monthly: {
-      type: Number,
-      min: 0,
+        type: Number,
+        min: 0,
     },
-  },
-  {
+}, {
     _id: false,
-  },
-);
-/* ============================================================
-   PRICING
-   ============================================================ */
-const pricingSchema = new Schema(
-  {
+});
+const pricingSchema = new Schema({
     currency: {
-      type: String,
-      default: "INR",
-      trim: true,
-      uppercase: true,
-      match: [/^[A-Z]{3}$/, "Currency must be a valid 3-letter code"],
+        type: String,
+        default: "INR",
+        trim: true,
+        uppercase: true,
+        match: [/^[A-Z]{3}$/, "Currency must be a valid 3-letter code"],
     },
     twoWheeler: {
-      type: vehiclePricingSchema,
-      default: {},
+        type: vehiclePricingSchema,
+        default: {},
     },
     fourWheeler: {
-      type: vehiclePricingSchema,
-      default: {},
+        type: vehiclePricingSchema,
+        default: {},
     },
     vanMinibus: {
-      type: vehiclePricingSchema,
-      default: {},
+        type: vehiclePricingSchema,
+        default: {},
     },
     heavyVehicle: {
-      type: vehiclePricingSchema,
-      default: {},
+        type: vehiclePricingSchema,
+        default: {},
     },
-  },
-  {
+}, {
     _id: false,
-  },
-);
-/* ============================================================
-   OPERATING HOURS
-   ============================================================ */
-const operatingHoursSchema = new Schema(
-  {
+});
+const operatingHoursSchema = new Schema({
     open: {
-      type: String,
-      required: true,
-      match: [
-        /^([01]\d|2[0-3]):[0-5]\d$/,
-        "Invalid opening time. Use HH:mm format",
-      ],
+        type: String,
+        required: true,
+        match: [
+            /^([01]\d|2[0-3]):[0-5]\d$/,
+            "Invalid opening time. Use HH:mm format",
+        ],
     },
     close: {
-      type: String,
-      required: true,
-      match: [
-        /^([01]\d|2[0-3]):[0-5]\d$/,
-        "Invalid closing time. Use HH:mm format",
-      ],
+        type: String,
+        required: true,
+        match: [
+            /^([01]\d|2[0-3]):[0-5]\d$/,
+            "Invalid closing time. Use HH:mm format",
+        ],
     },
-  },
-  {
+}, {
     _id: false,
-  },
-);
-/* ============================================================
-   PARKING SCHEMA
-   ============================================================ */
-const parkingSchema = new Schema(
-  {
-    /* ----------------------------------------------------------
-       OWNER
-    ---------------------------------------------------------- */
+});
+const parkingSchema = new Schema({
     ownerId: {
-      type: Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-      immutable: true,
-      index: true,
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+        immutable: true,
+        index: true,
     },
-    /* ----------------------------------------------------------
-       BASIC INFORMATION
-    ---------------------------------------------------------- */
+    /*
+     * BASIC INFORMATION
+     */
     parkingName: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
     },
     description: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: 2000,
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: 2000,
     },
     parkingType: {
-      type: String,
-      enum: PARKING_TYPE_VALUES,
-      required: true,
+        type: String,
+        enum: PARKING_TYPE_VALUES,
+        required: true,
     },
-    /* ----------------------------------------------------------
-       ADDRESS
-    ---------------------------------------------------------- */
+    /*
+     * ADDRESS
+     */
     address: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 250,
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 250,
     },
     landmark: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: 150,
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: 150,
     },
     city: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
-      index: true,
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
+        index: true,
     },
     state: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
     },
     pincode: {
-      type: String,
-      required: true,
-      trim: true,
-      match: [/^[1-9][0-9]{5}$/, "Invalid pincode"],
-      index: true,
+        type: String,
+        required: true,
+        trim: true,
+        match: [/^[1-9][0-9]{5}$/, "Invalid pincode"],
+        index: true,
     },
-    /* ----------------------------------------------------------
-       LOCATION
-    ---------------------------------------------------------- */
+    /*
+     * LOCATION
+     */
     location: {
-      type: locationSchema,
-      required: true,
+        type: locationSchema,
+        required: true,
     },
-    /* ----------------------------------------------------------
-       OWNER CONTACT
-    ---------------------------------------------------------- */
+    /*
+     * OWNER CONTACT
+     */
     ownerName: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: 100,
+        type: String,
+        required: true,
+        trim: true,
+        maxlength: 100,
     },
     contactNumber: {
-      type: String,
-      required: true,
-      trim: true,
-      match: [/^[6-9][0-9]{9}$/, "Invalid contact number"],
+        type: String,
+        required: true,
+        trim: true,
+        match: [/^[6-9][0-9]{9}$/, "Invalid contact number"],
     },
-    /* ----------------------------------------------------------
-       PARKING AREA
-    ---------------------------------------------------------- */
+    /*
+     * PARKING AREA
+     */
     parkingArea: {
-      type: Number,
-      required: true,
-      min: 0,
+        type: Number,
+        required: true,
+        min: 0,
     },
-    /* ----------------------------------------------------------
-       FACILITIES
-    ---------------------------------------------------------- */
+    /*
+     * FACILITIES
+     */
     facilities: {
-      type: [
-        {
-          type: String,
-          enum: PARKING_FACILITIES,
-        },
-      ],
-      default: [],
+        type: [
+            {
+                type: String,
+                enum: PARKING_FACILITIES,
+            },
+        ],
+        default: [],
     },
-    /* ----------------------------------------------------------
-       RULES
-    ---------------------------------------------------------- */
+    /*
+     * RULES
+     */
     rules: {
-      type: [
-        {
-          type: String,
-          trim: true,
-          maxlength: 300,
-        },
-      ],
-      default: [],
+        type: [
+            {
+                type: String,
+                trim: true,
+                maxlength: 300,
+            },
+        ],
+        default: [],
     },
-    /* ----------------------------------------------------------
-       ENTRY INSTRUCTIONS
-    ---------------------------------------------------------- */
+    /*
+     * ENTRY INSTRUCTIONS
+     */
     entryInstructions: {
-      type: String,
-      default: "",
-      trim: true,
-      maxlength: 1000,
+        type: String,
+        default: "",
+        trim: true,
+        maxlength: 1000,
     },
-    /* ----------------------------------------------------------
-       BOOKING MODES
-    ---------------------------------------------------------- */
+    /*
+     * SUPPORTED VEHICLE TYPES
+     */
+    supportedVehicleTypes: {
+        type: [
+            {
+                type: String,
+                enum: VEHICLE_TYPE_VALUES,
+            },
+        ],
+        required: true,
+        validate: {
+            validator: (value) => value.length > 0,
+            message: "At least one vehicle type is required.",
+        },
+    },
+    /*
+     * BOOKING MODES
+     */
     bookingModes: {
-      type: bookingModeSchema,
-      required: true,
+        type: bookingModeSchema,
+        required: true,
     },
-    /* ----------------------------------------------------------
-       PRICING
-    ---------------------------------------------------------- */
+    /*
+     * PRICING
+     */
     pricing: {
-      type: pricingSchema,
-      required: true,
+        type: pricingSchema,
+        required: true,
     },
-    /* ----------------------------------------------------------
-       IMAGES
-    ---------------------------------------------------------- */
     images: {
-      type: [imageSchema],
-      default: [],
-      /*
-       * Do NOT put required: true here.
-       *
-       * Your service/controller should enforce:
-       * minimum 2 images
-       * maximum 5 images
-       *
-       * This gives you a much cleaner error:
-       * "At least 2 parking images are required."
-       */
+        type: [imageSchema],
+        default: [],
     },
-    /* ----------------------------------------------------------
-       OPERATING HOURS
-    ---------------------------------------------------------- */
     operatingHours: {
-      type: operatingHoursSchema,
-      required: true,
+        type: operatingHoursSchema,
+        required: true,
     },
-    /* ----------------------------------------------------------
-       RATINGS
-    ---------------------------------------------------------- */
+    /*
+     * RATINGS
+     */
     averageRating: {
-      type: Number,
-      default: 0,
-      min: 0,
-      max: 5,
+        type: Number,
+        default: 0,
+        min: 0,
+        max: 5,
     },
     totalReviews: {
-      type: Number,
-      default: 0,
-      min: 0,
+        type: Number,
+        default: 0,
+        min: 0,
     },
-    /* ----------------------------------------------------------
-       STATUS
-    ---------------------------------------------------------- */
+    /*
+     * ADMIN APPROVAL STATUS
+     */
     status: {
-      type: String,
-      enum: PARKING_STATUS_VALUES,
-      default: PARKING_STATUS.PENDING,
-      index: true,
+        type: String,
+        enum: PARKING_STATUS_VALUES,
+        default: PARKING_STATUS.PENDING,
+        index: true,
     },
-    /* ----------------------------------------------------------
-       ACTIVE
-    ---------------------------------------------------------- */
+    /*
+     * ACTIVE / DELETED
+     */
     isActive: {
-      type: Boolean,
-      default: true,
-      index: true,
+        type: Boolean,
+        default: true,
+        index: true,
     },
-  },
-  {
+    isTemporarilyClosed: {
+        type: Boolean,
+        default: false,
+        index: true,
+    },
+    temporaryClosedReason: {
+        type: String,
+        trim: true,
+        default: "",
+        maxlength: 500,
+    },
+    /*
+     * SOFT DELETE
+     */
+    deletedAt: {
+        type: Date,
+        default: null,
+    },
+}, {
     timestamps: true,
     versionKey: false,
-  },
-);
-/* ============================================================
-   INDEXES
-   ============================================================ */
-parkingSchema.index({
-  ownerId: 1,
-  isActive: 1,
 });
 parkingSchema.index({
-  city: 1,
-  isActive: 1,
-  status: 1,
+    ownerId: 1,
+    isActive: 1,
 });
 parkingSchema.index({
-  pincode: 1,
-  isActive: 1,
-  status: 1,
+    city: 1,
+    isActive: 1,
+    status: 1,
 });
 parkingSchema.index({
-  parkingType: 1,
-  isActive: 1,
-  status: 1,
+    pincode: 1,
+    isActive: 1,
+    status: 1,
 });
 parkingSchema.index({
-  averageRating: -1,
-  isActive: 1,
-  status: 1,
+    parkingType: 1,
+    isActive: 1,
+    status: 1,
 });
-/* ============================================================
-   MODEL
-   ============================================================ */
-const Parking =
-  mongoose.models.Parking || mongoose.model("Parking", parkingSchema);
+parkingSchema.index({
+    averageRating: -1,
+    isActive: 1,
+    status: 1,
+});
+const Parking = mongoose.models.Parking || mongoose.model("Parking", parkingSchema);
 export default Parking;
 //# sourceMappingURL=Parking.js.map

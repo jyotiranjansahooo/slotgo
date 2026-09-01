@@ -4,10 +4,10 @@ export const AUTH = {
         MAX_LENGTH: 32,
     },
     ACCESS_TOKEN: {
-        EXPIRES_IN: "1d",
+        EXPIRES_IN: "15d",
     },
     REFRESH_TOKEN: {
-        EXPIRES_IN: "7d",
+        EXPIRES_IN: "15d",
     },
 };
 //# sourceMappingURL=auth.js.map

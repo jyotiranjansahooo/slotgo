@@ -1,5 +1,6 @@
 import mongoose, { Types } from "mongoose";
 import { ParkingStatus } from "../constants/parking.js";
+import { VehicleType } from "../constants/vehicle.js";
 export interface IParkingImage {
     url: string;
     publicId: string;
@@ -24,6 +25,7 @@ export interface IParking {
     facilities: string[];
     rules: string[];
     entryInstructions: string;
+    supportedVehicleTypes: VehicleType[];
     bookingModes: {
         hourly: boolean;
         daily: boolean;
@@ -61,7 +63,11 @@ export interface IParking {
     totalReviews: number;
     status: ParkingStatus;
     isActive: boolean;
+    isTemporarilyClosed: boolean;
+    temporaryClosedReason?: string;
+    deletedAt?: Date | null;
 }
-export declare const PARKING_FACILITIES: readonly ["CCTV", "Security Guard", "Covered Parking", "EV Charging", "Lighting", "Washroom", "Drinking Water", "Valet Parking", "Disabled Access", "Car Wash"];
+export declare const PARKING_FACILITIES: readonly ["cctv", "security_guard", "covered_parking", "ev_charging", "lighting", "washroom", "drinking_water", "valet_parking", "disabled_access", "car_wash"];
+export type ParkingFacility = (typeof PARKING_FACILITIES)[number];
 declare const Parking: mongoose.Model<any, {}, {}, {}, any, any, any>;
 export default Parking;

@@ -16,11 +16,7 @@ export const createParkingSlotSchema = z.object({
     supportedVehicleTypes: z
         .array(z.enum(VEHICLE_TYPE_VALUES))
         .min(1, "At least one vehicle type is required"),
-    displayOrder: z
-        .number()
-        .int()
-        .min(0)
-        .default(0),
+    displayOrder: z.number().int().min(0).default(0),
     notes: z
         .string()
         .trim()

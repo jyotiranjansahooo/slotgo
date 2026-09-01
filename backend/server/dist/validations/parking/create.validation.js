@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { VEHICLE_TYPE_VALUES } from "../../constants/vehicle.js";
 const vehiclePricingSchema = z.object({
     hourly: z.number().min(0).optional(),
     daily: z.number().min(0).optional(),
@@ -7,13 +8,10 @@ const vehiclePricingSchema = z.object({
 export const createParkingSchema = z.object({
     parkingName: z.string().trim().min(2, "Parking name is required.").max(100),
     description: z.string().trim().max(1000).default(""),
-    parkingType: z.enum([
-        "open",
-        "covered",
-        "basement",
-        "multiLevel",
-        "street",
-    ]),
+    parkingType: z.enum(["open", "covered", "basement", "multiLevel", "street"]),
+    supportedVehicleTypes: z
+        .array(z.enum(VEHICLE_TYPE_VALUES))
+        .min(1, "Select at least one vehicle type."),
     address: z.string().trim().min(5, "Parking address is required.").max(250),
     landmark: z.string().trim().max(150).optional(),
     city: z.string().trim().min(2).max(100),
@@ -24,12 +22,8 @@ export const createParkingSchema = z.object({
         longitude: z.number().min(-180).max(180),
     }),
     ownerName: z.string().trim().min(2, "Owner name is required.").max(100),
-    contactNumber: z
-        .string()
-        .regex(/^[6-9]\d{9}$/, "Invalid contact number."),
-    parkingArea: z
-        .number()
-        .positive("Parking area must be greater than 0."),
+    contactNumber: z.string().regex(/^[6-9]\d{9}$/, "Invalid contact number."),
+    parkingArea: z.number().positive("Parking area must be greater than 0."),
     facilities: z.array(z.string()).default([]),
     rules: z.array(z.string().trim().min(1).max(300)).default([]),
     entryInstructions: z.string().trim().max(1000).default(""),

@@ -9,6 +9,12 @@ export declare const createParkingSchema: z.ZodObject<{
         open: "open";
         street: "street";
     }>;
+    supportedVehicleTypes: z.ZodArray<z.ZodEnum<{
+        fourWheeler: "fourWheeler";
+        heavyVehicle: "heavyVehicle";
+        twoWheeler: "twoWheeler";
+        vanMinibus: "vanMinibus";
+    }>>;
     address: z.ZodString;
     landmark: z.ZodOptional<z.ZodString>;
     city: z.ZodString;

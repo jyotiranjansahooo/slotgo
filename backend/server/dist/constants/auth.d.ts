@@ -4,9 +4,9 @@ export declare const AUTH: {
         readonly MAX_LENGTH: 32;
     };
     readonly ACCESS_TOKEN: {
-        readonly EXPIRES_IN: "1d";
+        readonly EXPIRES_IN: "15d";
     };
     readonly REFRESH_TOKEN: {
-        readonly EXPIRES_IN: "7d";
+        readonly EXPIRES_IN: "15d";
     };
 };

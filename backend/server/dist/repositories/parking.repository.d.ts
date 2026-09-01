@@ -8,6 +8,8 @@ declare class ParkingRepository {
     update(id: string, data: Partial<IParking>): Promise<any>;
     deactivate(id: string): Promise<any>;
     delete(id: string): Promise<any>;
+    temporarilyClose(id: string, reason?: string): Promise<any>;
+    reopen(id: string): Promise<any>;
     approve(id: string): Promise<any>;
     reject(id: string): Promise<any>;
     findApprovedParkings(): Promise<any[]>;
