@@ -58,15 +58,6 @@ export default function HomePage() {
         break;
     }
   }, [user, isLoading, minimumLoadingDone, router]);
-
-  /*
-   * Show loader while:
-   *
-   * 1. Auth state is loading
-   * 2. Minimum loader duration hasn't finished
-   * 3. Admin is being redirected
-   * 4. Parking owner is being redirected
-   */
   if (
     isLoading ||
     !minimumLoadingDone ||
@@ -76,10 +67,6 @@ export default function HomePage() {
     return <ParkingLoader />;
   }
 
-  /*
-   * Driver / unauthenticated user
-   * gets the normal homepage.
-   */
   return (
     <main className="min-h-screen bg-[#080b18]">
       <Navbar />

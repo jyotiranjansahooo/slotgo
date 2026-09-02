@@ -8,6 +8,15 @@ export const PARKING_TYPES = {
 
 export type ParkingType = (typeof PARKING_TYPES)[keyof typeof PARKING_TYPES];
 
+export const VEHICLE_TYPES = {
+  TWO_WHEELER: "twoWheeler",
+  FOUR_WHEELER: "fourWheeler",
+  VAN_MINIBUS: "vanMinibus",
+  HEAVY_VEHICLE: "heavyVehicle",
+} as const;
+
+export type VehicleType = (typeof VEHICLE_TYPES)[keyof typeof VEHICLE_TYPES];
+
 export interface ParkingLocation {
   latitude: number;
   longitude: number;
@@ -21,9 +30,13 @@ export interface VehiclePricing {
 
 export interface ParkingPricing {
   currency: string;
+
   twoWheeler: VehiclePricing;
+
   fourWheeler: VehiclePricing;
+
   vanMinibus: VehiclePricing;
+
   heavyVehicle: VehiclePricing;
 }
 
@@ -45,35 +58,37 @@ export interface BookingModes {
 
 export interface Parking {
   _id: string;
+
   ownerId: string;
 
   parkingName: string;
+
   description: string;
 
   parkingType: ParkingType;
-  supportedVehicleTypes: (
-    | "twoWheeler"
-    | "fourWheeler"
-    | "vanMinibus"
-    | "heavyVehicle"
-  )[];
+
+  supportedVehicleTypes: VehicleType[];
+
   address: string;
+
   landmark?: string;
+
   city: string;
+
   state: string;
+
   pincode: string;
 
-  location: {
-    latitude: number;
-    longitude: number;
-  };
+  location: ParkingLocation;
 
   ownerName?: string;
+
   contactNumber?: string;
 
   parkingArea?: number;
 
   facilities: string[];
+
   rules: string[];
 
   entryInstructions: string;
@@ -84,12 +99,10 @@ export interface Parking {
 
   images: ParkingImage[];
 
-  operatingHours: {
-    open: string;
-    close: string;
-  };
+  operatingHours: OperatingHours;
 
   averageRating: number;
+
   totalReviews: number;
 
   status: "pending" | "approved" | "rejected";
@@ -99,16 +112,28 @@ export interface Parking {
   isTemporarilyClosed: boolean;
 
   temporaryClosedReason?: string;
+
   createdAt: string;
+
   updatedAt: string;
 }
 
 export interface ParkingDetails {
   parking: Parking;
-  availability: Record<string, unknown>;
+
+  availability: {
+    totalAvailableSlots: number;
+
+    slots: unknown[];
+  };
 }
 
 export interface ParkingDetailsResponse {
   parking: Parking;
-  availability: Record<string, unknown>;
+
+  availability: {
+    totalAvailableSlots: number;
+
+    slots: unknown[];
+  };
 }

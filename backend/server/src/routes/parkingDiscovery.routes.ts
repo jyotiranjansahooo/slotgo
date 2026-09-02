@@ -8,26 +8,12 @@ import {
 } from "../controllers/parking/parkingDiscovery.controller.js";
 const router = Router();
 
-router.get(
-  "/",
-  getApprovedParkings,
-);
+router.get("/", getApprovedParkings);
 
-router.get(
-  "/search",
-  searchParkings,
-);
+router.get("/search", searchParkings);
 
-router.get(
-  "/:id/available-slots",
-  getAvailableSlots,
-);
+router.get("/:id/available-slots", getAvailableSlots);
 
-router.get(
-  "/:id",
-  getParkingDetails,
-);
-
-
+router.get("/:id", getParkingDetails);
 
 export default router;

@@ -30,4 +30,4 @@ export const resetPasswordController =
         data: result,
       });
     },
-  );
+  ); 

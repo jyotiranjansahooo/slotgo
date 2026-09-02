@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import type { Parking } from "@/types/parking";
+import type { Parking, VehicleType } from "@/types/parking";
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -35,13 +35,7 @@ export interface CreateParkingPayload {
 
   parkingArea: number;
 
-  /**
-   * Vehicle types supported by this parking.
-   *
-   * Example:
-   * ["twoWheeler", "fourWheeler"]
-   */
-  supportedVehicleTypes: string[];
+  supportedVehicleTypes: VehicleType[];
 
   facilities: string[];
   rules: string[];
@@ -55,7 +49,6 @@ export interface CreateParkingPayload {
 
   pricing: {
     currency: string;
-
     twoWheeler: VehiclePricing;
     fourWheeler: VehiclePricing;
     vanMinibus: VehiclePricing;
@@ -72,11 +65,18 @@ export interface UpdateParkingPayload extends CreateParkingPayload {
   removeImagePublicIds?: string[];
 }
 
-/*
-|--------------------------------------------------------------------------
-| GET ALL PARKINGS
-|--------------------------------------------------------------------------
-*/
+export type ParkingAction = "temporary-close" | "delete";
+
+export interface ParkingActionVerificationResponse {
+  message: string;
+}
+
+export interface GetAvailableSlotsResponse {
+  parkingId: string;
+  vehicleType: VehicleType;
+  totalAvailableSlots: number;
+  slots: unknown[];
+}
 
 export async function getParkings(): Promise<Parking[]> {
   const response = await api.get<ApiResponse<Parking[]>>("/parkings");
@@ -95,10 +95,49 @@ export async function getParking(parkingId: string): Promise<Parking> {
 
   return response.data.data;
 }
-export type ParkingAction = "temporary-close" | "delete";
 
-export interface ParkingActionVerificationResponse {
-  message: string;
+export async function getApprovedParkings(): Promise<Parking[]> {
+  const response = await api.get<ApiResponse<Parking[]>>("/parking-discovery");
+
+  return response.data.data;
+}
+
+export async function searchApprovedParkings(params?: {
+  city?: string;
+  parkingType?: string;
+}): Promise<Parking[]> {
+  const response = await api.get<ApiResponse<Parking[]>>(
+    "/parking-discovery/search",
+    {
+      params,
+    },
+  );
+
+  return response.data.data;
+}
+
+export async function getParkingDetails(parkingId: string): Promise<Parking> {
+  const response = await api.get<ApiResponse<Parking>>(
+    `/parking-discovery/${parkingId}`,
+  );
+
+  return response.data.data;
+}
+
+export async function getAvailableParkingSlots(
+  parkingId: string,
+  vehicleType: VehicleType,
+): Promise<GetAvailableSlotsResponse> {
+  const response = await api.get<ApiResponse<GetAvailableSlotsResponse>>(
+    `/parking-discovery/${parkingId}/available-slots`,
+    {
+      params: {
+        vehicleType,
+      },
+    },
+  );
+
+  return response.data.data;
 }
 
 export async function requestParkingActionVerification(
@@ -140,6 +179,7 @@ export async function deleteOwnerParking(
     },
   });
 }
+
 export async function createParking(
   payload: CreateParkingPayload,
   images: File[],
