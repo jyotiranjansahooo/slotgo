@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import Navbar from "@/components/landing/Navbar";
+import DriverNavbar from "@/components/driver/DriverNavbar";
 import Hero from "@/components/landing/Hero";
 import NearbyParking from "@/components/home/NearbyParking";
 import ParkingMap from "@/components/home/ParkingMap";
@@ -21,9 +21,6 @@ export default function HomePage() {
 
   const [minimumLoadingDone, setMinimumLoadingDone] = useState(false);
 
-  /*
-   * Keep the loader visible for at least 1 second.
-   */
   useEffect(() => {
     const timer = setTimeout(() => {
       setMinimumLoadingDone(true);
@@ -32,10 +29,6 @@ export default function HomePage() {
     return () => clearTimeout(timer);
   }, []);
 
-  /*
-   * Redirect authenticated users to their
-   * appropriate dashboard.
-   */
   useEffect(() => {
     if (isLoading || !minimumLoadingDone || !user) {
       return;
@@ -69,7 +62,7 @@ export default function HomePage() {
 
   return (
     <main className="min-h-screen bg-[#080b18]">
-      <Navbar />
+    <DriverNavbar />
 
       <Hero />
 

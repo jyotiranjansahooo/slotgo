@@ -71,11 +71,31 @@ export interface ParkingActionVerificationResponse {
   message: string;
 }
 
+export interface ParkingSlot {
+  _id: string;
+  slotNumber: string;
+  floor: string;
+  supportedVehicleTypes: VehicleType[];
+  status?: string;
+  displayOrder?: number;
+  notes?: string;
+}
+
+export interface ParkingAvailability {
+  totalAvailableSlots: number;
+  slots: ParkingSlot[];
+}
+
+export interface ParkingDetailsResponse {
+  parking: Parking;
+  availability: ParkingAvailability;
+}
+
 export interface GetAvailableSlotsResponse {
   parkingId: string;
   vehicleType: VehicleType;
   totalAvailableSlots: number;
-  slots: unknown[];
+  slots: ParkingSlot[];
 }
 
 export async function getParkings(): Promise<Parking[]> {
@@ -116,8 +136,10 @@ export async function searchApprovedParkings(params?: {
   return response.data.data;
 }
 
-export async function getParkingDetails(parkingId: string): Promise<Parking> {
-  const response = await api.get<ApiResponse<Parking>>(
+export async function getParkingDetails(
+  parkingId: string,
+): Promise<ParkingDetailsResponse> {
+  const response = await api.get<ApiResponse<ParkingDetailsResponse>>(
     `/parking-discovery/${parkingId}`,
   );
 

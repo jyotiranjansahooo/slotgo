@@ -18,9 +18,9 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useQuery } from "@tanstack/react-query";
 
 import { getMyBookings } from "@/services/booking.service";
-import { getApiErrorMessage } from "@/lib/api-error";
 import { getMyVehicles } from "@/services/vehicle.service";
 import type { Booking } from "@/types/booking";
+import DriverNavbar from "@/components/driver/DriverNavbar";
 
 export default function DriverPage() {
   const { user } = useAuth();
@@ -39,15 +39,15 @@ export default function DriverPage() {
   });
 
   const bookings: Booking[] = bookingsQuery.data?.data ?? [];
-const vehicles = vehiclesQuery.data?.data ?? [];
+  const vehicles = vehiclesQuery.data?.data ?? [];
 
-const vehicleCount = vehicles.length;
+  const vehicleCount = vehicles.length;
+
   const activeBookings = bookings.filter(
     (booking) =>
       booking.bookingStatus === "active" ||
       booking.bookingStatus === "confirmed",
   );
-
 
   const currentBooking = bookings.find(
     (booking) => booking.bookingStatus === "active",
@@ -55,9 +55,7 @@ const vehicleCount = vehicles.length;
 
   const currentParking = currentBooking?.parkingSnapshot?.parkingName ?? "None";
 
-
   const now = new Date();
-
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
 
@@ -81,74 +79,39 @@ const vehicleCount = vehicles.length;
     .reduce((total, booking) => {
       return total + Number(booking.driverPays || 0);
     }, 0);
+
   return (
-    <main className="min-h-screen bg-[#4f46f5] text-white">
-      <header className="border-b border-white/10 bg-[#4f46f5]/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
-          {/* LOGO */}
+    <main className="relative min-h-screen overflow-hidden bg-[#4f46f5] text-white">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          className="absolute inset-0 opacity-[0.14]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, transparent 0px, transparent 42px, rgba(255,255,255,0.16) 43px, rgba(255,255,255,0.16) 44px)",
+          }}
+        />
 
-          <Link
-            href="/"
-            className="flex items-center gap-3 transition hover:opacity-90"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#4f46f5] shadow-lg">
-              <MapPin size={23} strokeWidth={2.5} />
-            </div>
+        <div
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, transparent 0px, transparent 120px, rgba(255,255,255,0.12) 121px, rgba(255,255,255,0.12) 123px)",
+          }}
+        />
 
-            <span className="text-xl font-bold tracking-tight">SlotGo</span>
-          </Link>
+        <div className="absolute -left-40 -top-40 h-[30rem] w-[30rem] rounded-full bg-white/10 blur-[120px]" />
 
-          {/* NAVIGATION */}
+        <div className="absolute -right-40 top-24 h-[32rem] w-[32rem] rounded-full bg-indigo-300/20 blur-[120px]" />
 
-          <nav className="hidden items-center gap-8 md:flex">
-            <Link
-              href="/driver/parkings"
-              className="text-sm font-medium text-white/80 transition hover:text-white"
-            >
-              Find Parking
-            </Link>
+        <div className="absolute left-[35%] top-[35%] h-[28rem] w-[28rem] rounded-full bg-white/10 blur-[120px]" />
 
-            <Link
-              href="/driver/bookings"
-              className="text-sm font-medium text-white/80 transition hover:text-white"
-            >
-              My Bookings
-            </Link>
-          </nav>
+        <div className="absolute -bottom-40 right-1/4 h-[30rem] w-[30rem] rounded-full bg-violet-300/10 blur-[120px]" />
+      </div>
 
-          {/* ACTIONS */}
+      <DriverNavbar />
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="hidden rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-medium backdrop-blur-md transition hover:bg-white/20 sm:block"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/profile"
-              className="flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-[#4f46f5] shadow-lg transition hover:bg-white/90"
-            >
-              <User size={17} />
-              Profile
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* ===================================================== */}
-      {/* MAIN */}
-      {/* ===================================================== */}
-
-      <section className="mx-auto max-w-7xl px-6 py-10 lg:px-10 lg:py-14">
-        {/* =================================================== */}
-        {/* WELCOME HERO */}
-        {/* =================================================== */}
-
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-28 sm:px-6 sm:pb-12 sm:pt-32 lg:px-10 lg:pb-16 lg:pt-36">
         <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-white/15 via-white/10 to-white/5 p-8 shadow-2xl backdrop-blur-xl lg:p-12">
-          {/* Decorative circles */}
-
           <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
 
           <div className="absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-indigo-300/10 blur-3xl" />
@@ -191,8 +154,6 @@ const vehicleCount = vehicles.length;
               </div>
             </div>
 
-            {/* HERO VISUAL */}
-
             <div className="relative hidden lg:block">
               <div className="relative mx-auto h-72 w-72 rounded-full border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl">
                 <div className="absolute inset-8 rounded-full border border-dashed border-white/20" />
@@ -228,8 +189,8 @@ const vehicleCount = vehicles.length;
             icon={<CalendarDays size={20} />}
             label="Bookings"
             value={String(bookings.length)}
-            description={`${activeBookings.length} active booking${
-              activeBookings.length === 1 ? "" : "s"
+            description={`${activeBookings.length} active ${
+              activeBookings.length === 1 ? "booking" : "bookings"
             }`}
             href="/driver/bookings"
           />
@@ -285,7 +246,7 @@ const vehicleCount = vehicles.length;
               title="Manage Vehicles"
               description="Add vehicles, update vehicle information, and manage your registered vehicles."
               button="Manage vehicles"
-              href="/vehicles"
+              href="/driver/vehicles"
             />
 
             <ActionCard
@@ -342,10 +303,6 @@ const vehicleCount = vehicles.length;
           </div>
         </div>
 
-        {/* =================================================== */}
-        {/* BOTTOM CTA */}
-        {/* =================================================== */}
-
         <div className="mt-12 overflow-hidden rounded-[2rem] border border-white/10 bg-white p-8 text-[#4f46f5] shadow-2xl sm:p-10">
           <div className="flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
             <div>
@@ -376,10 +333,6 @@ const vehicleCount = vehicles.length;
     </main>
   );
 }
-
-/* ============================================================= */
-/* STAT CARD */
-/* ============================================================= */
 
 interface DashboardStatProps {
   icon: React.ReactNode;
@@ -416,16 +369,12 @@ function DashboardStat({
         {label}
       </p>
 
-      <p className="mt-1 text-2xl font-bold">{value}</p>
+      <p className="mt-1 truncate text-2xl font-bold">{value}</p>
 
       <p className="mt-1 text-sm text-white/50">{description}</p>
     </Link>
   );
 }
-
-/* ============================================================= */
-/* ACTION CARD */
-/* ============================================================= */
 
 interface ActionCardProps {
   icon: React.ReactNode;
@@ -484,6 +433,7 @@ function ActionCard({
     </div>
   );
 }
+
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",

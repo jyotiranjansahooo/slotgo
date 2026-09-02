@@ -106,9 +106,7 @@ function Vehicles() {
 
   const activeVehicles = vehicles.filter((vehicle) => vehicle.isActive);
 
-  const defaultVehicle = activeVehicles.find(
-    (vehicle) => vehicle.isDefault,
-  );
+  const defaultVehicle = activeVehicles.find((vehicle) => vehicle.isDefault);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#26174f] text-white">
@@ -137,102 +135,16 @@ function Vehicles() {
           }}
         />
 
-        {/* Top-left glow */}
-
         <div className="absolute -left-40 -top-40 h-[30rem] w-[30rem] rounded-full bg-fuchsia-400/20 blur-[110px]" />
-
-        {/* Top-right glow */}
 
         <div className="absolute -right-40 top-16 h-[32rem] w-[32rem] rounded-full bg-violet-300/20 blur-[120px]" />
 
-        {/* Center glow */}
-
         <div className="absolute left-[35%] top-[35%] h-[28rem] w-[28rem] rounded-full bg-purple-300/10 blur-[120px]" />
-
-        {/* Bottom glow */}
 
         <div className="absolute -bottom-40 right-1/4 h-[30rem] w-[30rem] rounded-full bg-pink-400/10 blur-[120px]" />
       </div>
 
-      {/* ======================================================
-          HEADER
-         ====================================================== */}
-
-      <header className="relative z-10 border-b border-white/10 bg-[#2f1c4d] backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-10">
-          {/* LOGO */}
-
-          <button
-            type="button"
-            onClick={() => router.push("/driver")}
-            className="flex items-center gap-3 transition hover:opacity-90"
-          >
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[#5b21b6] shadow-lg">
-              <Car size={22} strokeWidth={2.5} />
-            </div>
-
-            <div className="text-left">
-              <span className="block text-xl font-bold tracking-tight">
-                SlotGo
-              </span>
-
-              <span className="hidden text-xs text-white/50 sm:block">
-                Driver dashboard
-              </span>
-            </div>
-          </button>
-
-          {/* NAVIGATION */}
-
-          <nav className="hidden items-center gap-8 md:flex">
-            <button
-              type="button"
-              onClick={() => router.push("/driver")}
-              className="text-sm font-medium text-white/65 transition hover:text-white"
-            >
-              Dashboard
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/driver/parkings")}
-              className="text-sm font-medium text-white/65 transition hover:text-white"
-            >
-              Find Parking
-            </button>
-
-            <button
-              type="button"
-              onClick={() => router.push("/driver/bookings")}
-              className="text-sm font-medium text-white/65 transition hover:text-white"
-            >
-              My Bookings
-            </button>
-
-            <span className="text-sm font-semibold text-white">
-              My Vehicles
-            </span>
-          </nav>
-
-          {/* PROFILE */}
-
-          <button
-            type="button"
-            onClick={() => router.push("/profile")}
-            className="rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-[#5b21b6] shadow-lg transition hover:bg-white/90 sm:px-5 sm:py-3"
-          >
-            Profile
-          </button>
-        </div>
-      </header>
-
-      {/* ======================================================
-          CONTENT
-         ====================================================== */}
-
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10 lg:px-10 lg:py-14">
-        {/* PAGE HEADER */}
-
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-28 sm:px-6 sm:pb-12 sm:pt-32 lg:px-10 lg:pb-16 lg:pt-36">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <button
@@ -289,9 +201,7 @@ function Vehicles() {
                 Vehicle operation failed
               </p>
 
-              <p className="mt-1 text-sm text-red-200/70">
-                {actionError}
-              </p>
+              <p className="mt-1 text-sm text-red-200/70">{actionError}</p>
             </div>
           </div>
         )}
@@ -325,16 +235,12 @@ function Vehicles() {
            ====================================================== */}
 
         {vehicles.length === 0 ? (
-          <EmptyVehicles
-            onAdd={() => router.push("/driver/vehicles/add")}
-          />
+          <EmptyVehicles onAdd={() => router.push("/driver/vehicles/add")} />
         ) : (
           <>
             <div className="mt-12 flex items-end justify-between">
               <div>
-                <p className="text-sm font-medium text-white/50">
-                  Your garage
-                </p>
+                <p className="text-sm font-medium text-white/50">Your garage</p>
 
                 <h2 className="mt-1 text-2xl font-bold tracking-tight">
                   Your vehicles
@@ -355,9 +261,7 @@ function Vehicles() {
                   isDeleting={deleteMutation.isPending}
                   isSettingDefault={defaultMutation.isPending}
                   onEdit={() =>
-                    router.push(
-                      `/driver/vehicles/${vehicle._id}/edit`,
-                    )
+                    router.push(`/driver/vehicles/${vehicle._id}/edit`)
                   }
                   onDelete={() => {
                     const confirmed = window.confirm(
@@ -373,9 +277,7 @@ function Vehicles() {
                     setActionError("");
                     defaultMutation.mutate(vehicle._id);
                   }}
-                  onView={() =>
-                    router.push(`/driver/vehicles/${vehicle._id}`)
-                  }
+                  onView={() => router.push(`/driver/vehicles/${vehicle._id}`)}
                 />
               ))}
             </div>
@@ -477,7 +379,6 @@ function VehicleCard({
           className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.06] px-4 py-3.5 text-sm font-medium text-white transition hover:bg-white/10"
         >
           View vehicle
-
           <ChevronRight className="h-4 w-4 text-white/40 transition group-hover:translate-x-1" />
         </button>
 
@@ -503,7 +404,6 @@ function VehicleCard({
             ) : (
               <Trash2 className="h-4 w-4" />
             )}
-
             Delete
           </button>
         </div>
@@ -520,7 +420,6 @@ function VehicleCard({
             ) : (
               <Star className="h-4 w-4" />
             )}
-
             Set as default
           </button>
         )}
@@ -572,13 +471,10 @@ function EmptyVehicles({ onAdd }: { onAdd: () => void }) {
         <Car className="h-8 w-8" />
       </div>
 
-      <h2 className="mt-6 text-2xl font-bold">
-        No vehicles registered
-      </h2>
+      <h2 className="mt-6 text-2xl font-bold">No vehicles registered</h2>
 
       <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-white/55">
-        Add your first vehicle to start making parking bookings through
-        SlotGo.
+        Add your first vehicle to start making parking bookings through SlotGo.
       </p>
 
       <button
@@ -593,15 +489,10 @@ function EmptyVehicles({ onAdd }: { onAdd: () => void }) {
   );
 }
 
-/*
- * =============================================================
- * LOADING
- * =============================================================
- */
-
 function VehiclesLoading() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#5b21b6] px-4 py-8 text-white sm:px-6 lg:px-10">
+    <main className="relative min-h-screen overflow-hidden bg-[#26174f] px-4 pb-8 pt-28 text-white sm:px-6 sm:pb-10 sm:pt-32 lg:px-10 lg:pt-36">
+      {" "}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
@@ -609,7 +500,6 @@ function VehiclesLoading() {
             "repeating-linear-gradient(90deg, transparent 0px, transparent 42px, rgba(255,255,255,0.16) 43px, rgba(255,255,255,0.16) 44px)",
         }}
       />
-
       <div className="relative z-10 mx-auto max-w-7xl animate-pulse">
         <div className="h-10 w-52 rounded-xl bg-white/10" />
 
@@ -617,19 +507,13 @@ function VehiclesLoading() {
 
         <div className="mt-10 grid gap-4 sm:grid-cols-3">
           {[1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="h-28 rounded-[1.5rem] bg-white/10"
-            />
+            <div key={item} className="h-28 rounded-[1.5rem] bg-white/10" />
           ))}
         </div>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {[1, 2, 3].map((item) => (
-            <div
-              key={item}
-              className="h-72 rounded-[1.75rem] bg-white/10"
-            />
+            <div key={item} className="h-72 rounded-[1.75rem] bg-white/10" />
           ))}
         </div>
       </div>
@@ -651,7 +535,7 @@ function VehiclesError({
   onRetry: () => void;
 }) {
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#5b21b6] px-4 text-white">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#26174f] px-4 pb-8 pt-28 text-white sm:pt-32">
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.14]"
         style={{
@@ -665,13 +549,9 @@ function VehiclesError({
           <AlertCircle className="h-7 w-7 text-red-200" />
         </div>
 
-        <h1 className="mt-5 text-xl font-semibold">
-          Unable to load vehicles
-        </h1>
+        <h1 className="mt-5 text-xl font-semibold">Unable to load vehicles</h1>
 
-        <p className="mt-2 text-sm leading-6 text-red-100/70">
-          {message}
-        </p>
+        <p className="mt-2 text-sm leading-6 text-red-100/70">{message}</p>
 
         <button
           type="button"
@@ -692,9 +572,7 @@ function VehiclesError({
  * =============================================================
  */
 
-function formatVehicleType(
-  type: Vehicle["vehicleType"],
-): string {
+function formatVehicleType(type: Vehicle["vehicleType"]): string {
   switch (type) {
     case "twoWheeler":
       return "Two Wheeler";

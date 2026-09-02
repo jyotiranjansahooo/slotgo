@@ -15,6 +15,7 @@ import {
   Search,
   Star,
   UserRound,
+  ArrowRight,
 } from "lucide-react";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -87,28 +88,28 @@ function ParkingList() {
   const [directionLoadingId, setDirectionLoadingId] = useState<string | null>(
     null,
   );
-useEffect(() => {
-  if (!navigator.geolocation) {
-    return;
-  }
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      return;
+    }
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      setUserLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
-    },
-    () => {
-      setUserLocation(null);
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 30000,
-    },
-  );
-}, []);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      () => {
+        setUserLocation(null);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 30000,
+      },
+    );
+  }, []);
   const parkings: Parking[] = parkingQuery.data ?? [];
 
   const filteredParkings = useMemo(() => {
@@ -389,8 +390,6 @@ useEffect(() => {
         <BackgroundPattern />
 
         <div className="relative z-10">
-          <DriverNavbar />
-
           <div className="mx-auto flex min-h-[75vh] max-w-7xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
             <div className="w-full max-w-lg rounded-3xl border border-white/20 bg-blue-300 p-8 text-zinc-900 shadow-2xl">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 text-xl font-bold text-red-600">
@@ -420,12 +419,10 @@ useEffect(() => {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden text-white">
+    <main className="relative mt-16 min-h-screen overflow-hidden text-white">
       <BackgroundPattern />
 
       <div className="relative z-10">
-        <DriverNavbar />
-
         <div className="mx-auto max-w-7xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8">
           <section>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
@@ -648,6 +645,9 @@ useEffect(() => {
                   selectedVehicleType={appliedFilters.vehicleType}
                   directionLoading={directionLoadingId === parking._id}
                   onView={() => router.push(`/driver/parkings/${parking._id}`)}
+                  onBook={() =>
+                    router.push(`/driver/parkings/${parking._id}/book`)
+                  }
                   onDirections={() => handleGetDirections(parking)}
                 />
               ))}
@@ -665,6 +665,7 @@ interface ParkingCardProps {
   selectedVehicleType: VehicleFilter;
   directionLoading: boolean;
   onView: () => void;
+  onBook: () => void;
   onDirections: () => void;
 }
 
@@ -674,6 +675,7 @@ function ParkingCard({
   selectedVehicleType,
   directionLoading,
   onView,
+  onBook,
   onDirections,
 }: ParkingCardProps) {
   const startingPrice = getStartingPrice(parking, selectedVehicleType);
@@ -772,24 +774,23 @@ function ParkingCard({
             </p>
           </div>
         </div>
-{distance !== null &&
-  Number.isFinite(distance) && (
-    <div className="mt-4 flex items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-3">
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4338ff] shadow-sm">
-        <Navigation className="h-5 w-5" />
-      </div>
+        {distance !== null && Number.isFinite(distance) && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-indigo-50 px-4 py-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4338ff] shadow-sm">
+              <Navigation className="h-5 w-5" />
+            </div>
 
-      <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-          Distance from you
-        </p>
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                Distance from you
+              </p>
 
-        <p className="text-sm font-bold text-zinc-900">
-          {formatDistance(distance)}
-        </p>
-      </div>
-    </div>
-  )}
+              <p className="text-sm font-bold text-zinc-900">
+                {formatDistance(distance)}
+              </p>
+            </div>
+          </div>
+        )}
         {parking.supportedVehicleTypes?.length > 0 && (
           <div className="mt-4">
             <div className="mb-2 flex items-center gap-2">
@@ -890,37 +891,42 @@ function ParkingCard({
           </div>
         </div>
 
-        <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
+        <div className="mt-5 grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={onView}
-            className="flex h-12 items-center justify-center rounded-2xl bg-[#4338ff] text-sm font-bold text-white shadow-lg shadow-[#4338ff]/20 transition duration-200 hover:-translate-y-0.5 hover:bg-[#3730d8] active:scale-[0.98]"
+            className="group/view flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#4338ff] px-3 text-sm font-bold text-white shadow-lg shadow-[#4338ff]/20 transition duration-200 hover:-translate-y-0.5 hover:bg-[#3730d8] active:scale-[0.98]"
           >
             View parking
-            <span className="ml-2 transition-transform duration-200 group-hover:translate-x-1">
-              →
-            </span>
+            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover/view:translate-x-1" />
           </button>
 
           <button
             type="button"
-            onClick={onDirections}
-            disabled={directionLoading || !hasCoordinates}
-            aria-label="Get directions"
-            title={
-              hasCoordinates
-                ? "Open Google Maps directions"
-                : "Location unavailable"
-            }
-            className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-[#4338ff]/15 bg-blue-50 text-[#4338ff] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4338ff] hover:text-white active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={() => {
+              window.location.href = `/driver/parkings/${parking._id}/book`;
+            }}
+            className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-emerald-500 px-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition duration-200 hover:-translate-y-0.5 hover:bg-emerald-600 active:scale-[0.98]"
           >
-            {directionLoading ? (
-              <LoaderCircle className="h-5 w-5 animate-spin" />
-            ) : (
-              <Navigation className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
-            )}
+            <Car className="h-4 w-4" />
+            Book slot
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={onDirections}
+          disabled={directionLoading || !hasCoordinates}
+          className="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-[#4338ff]/15 bg-blue-50 text-sm font-semibold text-[#4338ff] transition duration-200 hover:-translate-y-0.5 hover:bg-[#4338ff] hover:text-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {directionLoading ? (
+            <LoaderCircle className="h-4 w-4 animate-spin" />
+          ) : (
+            <Navigation className="h-4 w-4" />
+          )}
+
+          {directionLoading ? "Opening directions..." : "Get directions"}
+        </button>
       </div>
     </article>
   );
@@ -966,8 +972,6 @@ function ParkingSkeletonPage() {
       <BackgroundPattern />
 
       <div className="relative z-10">
-        <DriverNavbar />
-
         <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
           <div className="animate-pulse">
             <div className="h-12 w-72 rounded-lg bg-white/20" />
@@ -1004,48 +1008,6 @@ function ParkingSkeletonPage() {
         </div>
       </div>
     </main>
-  );
-}
-
-function DriverNavbar() {
-  const router = useRouter();
-
-  return (
-    <nav className="border-b border-white/15 bg-[#4338ff]/20 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <button
-          type="button"
-          onClick={() => router.push("/")}
-          className="flex items-center gap-2.5"
-        >
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#4338ff] shadow-lg">
-            <MapPinSearch className="h-5 w-5" />
-          </div>
-
-          <span className="text-xl font-black tracking-tight text-white">
-            SlotGo
-          </span>
-        </button>
-
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={() => router.push("/driver")}
-            className="hidden rounded-xl px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white sm:block"
-          >
-            Dashboard
-          </button>
-
-          <button
-            type="button"
-            onClick={() => router.push("/driver/bookings")}
-            className="rounded-xl border border-white/25 bg-white/10 px-3 py-2.5 text-sm font-semibold text-white backdrop-blur transition hover:bg-white hover:text-[#4338ff] sm:px-4"
-          >
-            My Bookings
-          </button>
-        </div>
-      </div>
-    </nav>
   );
 }
 

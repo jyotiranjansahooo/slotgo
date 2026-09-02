@@ -1,13 +1,12 @@
 "use client";
 
-import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-import { getParking } from "@/services/parking.service";
+import { getParkingDetails } from "@/services/parking.service";
 import { getMyVehicles } from "@/services/vehicle.service";
 import { createBooking } from "@/services/booking.service";
 
@@ -23,6 +22,20 @@ interface BookingModeOption {
   value: BookingMode;
   label: string;
   description: string;
+}
+
+interface BookingPreview {
+  start: Date;
+  end: Date;
+}
+
+interface PricePreview {
+  rate: number;
+  parkingAmount: number;
+  discountAmount: number;
+  actualAmount: number;
+  driverServiceFee: number;
+  driverPays: number;
 }
 
 export default function BookingPage() {
@@ -41,102 +54,34 @@ function BookingForm() {
 
   const [vehicleId, setVehicleId] = useState("");
   const [bookingTiming, setBookingTiming] = useState<BookingTiming>("now");
-
   const [bookingMode, setBookingMode] = useState<BookingMode>("hourly");
-
   const [duration, setDuration] = useState(1);
-
   const [futureStartTime, setFutureStartTime] = useState("");
-  const [minimumDateTime, setMinimumDateTime] = useState("");
-
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [error, setError] = useState("");
 
-  // ============================================================
-  // CURRENT TIME
-  // ============================================================
-
   useEffect(() => {
-    const updateMinimumDateTime = () => {
-      const now = new Date();
-
-      const offset = now.getTimezoneOffset();
-
-      const localDate = new Date(now.getTime() - offset * 60 * 1000);
-
-      setMinimumDateTime(localDate.toISOString().slice(0, 16));
-    };
-
-    updateMinimumDateTime();
-
-    const interval = window.setInterval(updateMinimumDateTime, 60_000);
+    const interval = window.setInterval(() => {
+      setCurrentTime(new Date());
+    }, 30_000);
 
     return () => {
       window.clearInterval(interval);
     };
   }, []);
 
-  // ============================================================
-  // PARKING QUERY
-  // ============================================================
-
   const parkingQuery = useQuery({
-    queryKey: ["parking", parkingId],
-
-    queryFn: () => getParking(parkingId),
-
+    queryKey: ["driver-parking", parkingId],
+    queryFn: () => getParkingDetails(parkingId),
     enabled: parkingId.length > 0,
   });
 
-  const parking: Parking | undefined = parkingQuery.data;
+  const parking: Parking | undefined = parkingQuery.data?.parking;
 
   const vehiclesQuery = useQuery({
     queryKey: ["vehicles"],
-
     queryFn: () => getMyVehicles(),
   });
-
-
-  const availableModes = useMemo(() => {
-    const bookingModes = parking?.bookingModes;
-
-    if (!bookingModes) {
-      return [];
-    }
-
-    const modes: BookingModeOption[] = [
-      {
-        value: "hourly",
-        label: "Hourly",
-        description: "Choose number of hours",
-      },
-      {
-        value: "daily",
-        label: "Daily",
-        description: "Choose number of days",
-      },
-      {
-        value: "monthly",
-        label: "Monthly",
-        description: "Choose number of months",
-      },
-    ];
-
-    return modes.filter((mode) => bookingModes[mode.value] === true);
-  }, [parking?.bookingModes]);
-
-  // ============================================================
-  // EFFECTIVE BOOKING MODE
-  // ============================================================
-
-  const effectiveBookingMode = availableModes.some(
-    (mode) => mode.value === bookingMode,
-  )
-    ? bookingMode
-    : availableModes[0]?.value;
-
-  // ============================================================
-  // VEHICLES
-  // ============================================================
 
   const vehicles: Vehicle[] = vehiclesQuery.data?.data ?? [];
 
@@ -146,104 +91,126 @@ function BookingForm() {
     (vehicle) => vehicle._id === vehicleId,
   );
 
-  // ============================================================
-  // DURATION LIMITS
-  // ============================================================
+  const selectedVehicleType = selectedVehicle?.vehicleType;
 
-  const durationLimits = useMemo(() => {
-    switch (effectiveBookingMode) {
-      case "hourly":
-        return {
-          min: 1,
-          max: 24,
-          unit: "hour",
-        };
+  const bookingModes = parking?.bookingModes;
 
-      case "daily":
-        return {
-          min: 1,
-          max: 30,
-          unit: "day",
-        };
-
-      case "monthly":
-        return {
-          min: 1,
-          max: 12,
-          unit: "month",
-        };
-
-      default:
-        return {
-          min: 1,
-          max: 1,
-          unit: "unit",
-        };
+  const availableModes: BookingModeOption[] = [
+    {
+      value: "hourly" as BookingMode,
+      label: "Hourly",
+      description: "Choose number of hours",
+    },
+    {
+      value: "daily" as BookingMode,
+      label: "Daily",
+      description: "Choose number of days",
+    },
+    {
+      value: "monthly" as BookingMode,
+      label: "Monthly",
+      description: "Choose number of months",
+    },
+  ].filter((mode) => {
+    if (!bookingModes) {
+      return false;
     }
-  }, [effectiveBookingMode]);
 
- const pricePreview = (() => {
-  if (!parking?.pricing || !selectedVehicle?.vehicleType || !effectiveBookingMode) {
-    return null;
+    return bookingModes[mode.value] === true;
+  });
+
+  const effectiveBookingMode = availableModes.some(
+    (mode) => mode.value === bookingMode,
+  )
+    ? bookingMode
+    : availableModes[0]?.value;
+
+  let durationLimits: {
+    min: number;
+    max: number;
+    unit: string;
+  };
+
+  switch (effectiveBookingMode) {
+    case "hourly":
+      durationLimits = {
+        min: 1,
+        max: 24,
+        unit: "hour",
+      };
+      break;
+
+    case "daily":
+      durationLimits = {
+        min: 1,
+        max: 30,
+        unit: "day",
+      };
+      break;
+
+    case "monthly":
+      durationLimits = {
+        min: 1,
+        max: 12,
+        unit: "month",
+      };
+      break;
+
+    default:
+      durationLimits = {
+        min: 1,
+        max: 1,
+        unit: "unit",
+      };
+      break;
   }
 
   let rate = 0;
 
-  switch (selectedVehicle.vehicleType) {
-    case "twoWheeler":
-      rate =
-        parking.pricing.twoWheeler?.[effectiveBookingMode] ?? 0;
-      break;
+  if (parking?.pricing && selectedVehicleType && effectiveBookingMode) {
+    switch (selectedVehicleType) {
+      case "twoWheeler":
+        rate = parking.pricing.twoWheeler?.[effectiveBookingMode] ?? 0;
+        break;
 
-    case "fourWheeler":
-      rate =
-        parking.pricing.fourWheeler?.[effectiveBookingMode] ?? 0;
-      break;
+      case "fourWheeler":
+        rate = parking.pricing.fourWheeler?.[effectiveBookingMode] ?? 0;
+        break;
 
-    case "vanMinibus":
-      rate =
-        parking.pricing.vanMinibus?.[effectiveBookingMode] ?? 0;
-      break;
+      case "vanMinibus":
+        rate = parking.pricing.vanMinibus?.[effectiveBookingMode] ?? 0;
+        break;
 
-    case "heavyVehicle":
-      rate =
-        parking.pricing.heavyVehicle?.[effectiveBookingMode] ?? 0;
-      break;
+      case "heavyVehicle":
+        rate = parking.pricing.heavyVehicle?.[effectiveBookingMode] ?? 0;
+        break;
+    }
   }
 
-  if (rate <= 0) {
-    return null;
+  let pricePreview: PricePreview | null = null;
+
+  if (rate > 0) {
+    const parkingAmount = rate * duration;
+    const discountAmount = 0;
+
+    const actualAmount = Math.max(0, parkingAmount - discountAmount);
+
+    let driverServiceFee = Math.round(actualAmount * 0.05);
+
+    driverServiceFee = Math.max(5, Math.min(driverServiceFee, 35));
+
+    const driverPays = Number((actualAmount + driverServiceFee).toFixed(2));
+
+    pricePreview = {
+      rate,
+      parkingAmount,
+      discountAmount,
+      actualAmount,
+      driverServiceFee,
+      driverPays,
+    };
   }
 
-  const parkingAmount = rate * duration;
-
-  const discountAmount = 0;
-
-  const actualAmount = Math.max(
-    0,
-    parkingAmount - discountAmount,
-  );
-
-  let driverServiceFee = Math.round(actualAmount * 0.05);
-
-  driverServiceFee = Math.max(
-    5,
-    Math.min(driverServiceFee, 35),
-  );
-
-  const driverPays = Number(
-    (actualAmount + driverServiceFee).toFixed(2),
-  );
-
-  return {
-    rate,
-    parkingAmount,
-    discountAmount,
-    actualAmount,
-    driverServiceFee,
-    driverPays,
-  };
-})();
   const handleBookingModeChange = (mode: BookingMode) => {
     setBookingMode(mode);
     setDuration(1);
@@ -274,52 +241,44 @@ function BookingForm() {
     return end;
   };
 
-  // ============================================================
-  // BOOKING PREVIEW
-  // ============================================================
+  const getBookNowStartTime = (): Date => {
+    return new Date(currentTime.getTime() + 60 * 1000);
+  };
 
-  const bookingPreview = useMemo(() => {
-    let start: Date;
+  const getFutureMinimumDateTime = (): string => {
+    const minimum = new Date(currentTime.getTime() + 60 * 1000);
+
+    const offset = minimum.getTimezoneOffset();
+
+    const localDate = new Date(minimum.getTime() - offset * 60 * 1000);
+
+    return localDate.toISOString().slice(0, 16);
+  };
+
+  let bookingPreview: BookingPreview | null = null;
+
+  if (effectiveBookingMode) {
+    let start: Date | null = null;
 
     if (bookingTiming === "now") {
-      if (!minimumDateTime) {
-        return null;
-      }
+      start = getBookNowStartTime();
+    } else if (futureStartTime) {
+      const futureDate = new Date(futureStartTime);
 
-      start = new Date(minimumDateTime);
-    } else {
-      if (!futureStartTime) {
-        return null;
-      }
-
-      start = new Date(futureStartTime);
-
-      if (Number.isNaN(start.getTime())) {
-        return null;
+      if (!Number.isNaN(futureDate.getTime())) {
+        start = futureDate;
       }
     }
 
-    if (!effectiveBookingMode) {
-      return null;
+    if (start) {
+      const end = calculateEndDate(start, effectiveBookingMode, duration);
+
+      bookingPreview = {
+        start,
+        end,
+      };
     }
-
-    const end = calculateEndDate(start, effectiveBookingMode, duration);
-
-    return {
-      start,
-      end,
-    };
-  }, [
-    bookingTiming,
-    futureStartTime,
-    minimumDateTime,
-    effectiveBookingMode,
-    duration,
-  ]);
-
-  // ============================================================
-  // CREATE BOOKING
-  // ============================================================
+  }
 
   const bookingMutation = useMutation({
     mutationFn: createBooking,
@@ -330,13 +289,11 @@ function BookingForm() {
 
       if (!booking?._id) {
         setError("Booking was created but no booking ID was returned.");
-
         return;
       }
 
       if (!payment?.orderId) {
         setError("Payment order was not created.");
-
         return;
       }
 
@@ -357,10 +314,6 @@ function BookingForm() {
     },
   });
 
-  // ============================================================
-  // VALIDATE BOOKING
-  // ============================================================
-
   const validateBooking = (): {
     start: Date;
     end: Date;
@@ -372,6 +325,11 @@ function BookingForm() {
 
     if (!vehicleId) {
       setError("Please select a vehicle.");
+      return null;
+    }
+
+    if (!selectedVehicle) {
+      setError("Selected vehicle could not be found.");
       return null;
     }
 
@@ -388,18 +346,16 @@ function BookingForm() {
       setError(
         `Duration must be between ${durationLimits.min} and ${durationLimits.max} ${durationLimits.unit}s.`,
       );
-
       return null;
     }
 
     let start: Date;
 
     if (bookingTiming === "now") {
-      start = new Date();
+      start = new Date(Date.now() + 60 * 1000);
     } else {
       if (!futureStartTime) {
         setError("Please select a future start date and time.");
-
         return null;
       }
 
@@ -407,19 +363,14 @@ function BookingForm() {
 
       if (Number.isNaN(start.getTime())) {
         setError("Please select a valid start date and time.");
-
         return null;
       }
     }
 
-    const currentTime = new Date();
+    const validationNow = new Date();
 
-    if (
-      bookingTiming === "future" &&
-      start.getTime() <= currentTime.getTime()
-    ) {
-      setError("Future bookings must start in the future.");
-
+    if (start.getTime() <= validationNow.getTime()) {
+      setError("Booking start time must be in the future.");
       return null;
     }
 
@@ -427,7 +378,6 @@ function BookingForm() {
 
     if (end.getTime() <= start.getTime()) {
       setError("End time must be after start time.");
-
       return null;
     }
 
@@ -437,12 +387,12 @@ function BookingForm() {
     };
   };
 
-  // ============================================================
-  // SUBMIT
-  // ============================================================
-
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (bookingMutation.isPending) {
+      return;
+    }
 
     setError("");
 
@@ -459,32 +409,26 @@ function BookingForm() {
 
     bookingMutation.mutate({
       parkingId,
-
       vehicleId,
-
       bookingMode: effectiveBookingMode,
-
       startTime: result.start.toISOString(),
-
       endTime: result.end.toISOString(),
     });
   };
 
-  // ============================================================
-  // LOADING
-  // ============================================================
-
   if (parkingQuery.isLoading || vehiclesQuery.isLoading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-        <p className="text-slate-400">Loading booking information...</p>
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-blue-500" />
+
+          <p className="text-sm text-slate-400">
+            Loading booking information...
+          </p>
+        </div>
       </main>
     );
   }
-
-  // ============================================================
-  // PARKING ERROR
-  // ============================================================
 
   if (parkingQuery.isError) {
     return (
@@ -495,10 +439,6 @@ function BookingForm() {
     );
   }
 
-  // ============================================================
-  // VEHICLE ERROR
-  // ============================================================
-
   if (vehiclesQuery.isError) {
     return (
       <ErrorState
@@ -507,10 +447,6 @@ function BookingForm() {
       />
     );
   }
-
-  // ============================================================
-  // PARKING NOT FOUND
-  // ============================================================
 
   if (!parking) {
     return (
@@ -521,47 +457,41 @@ function BookingForm() {
     );
   }
 
-  // ============================================================
-  // PAGE
-  // ============================================================
-
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-3xl">
-        {/* HEADER */}
-
         <div className="mb-8">
           <button
             type="button"
             onClick={() => router.push(`/driver/parkings/${parkingId}`)}
-            className="mb-5 text-sm text-slate-400 transition hover:text-white"
+            className="mb-5 inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
           >
-            ← Back to parking
+            <span aria-hidden="true">←</span>
+            Back to parking
           </button>
 
           <h1 className="text-3xl font-bold">Book Parking</h1>
 
           <p className="mt-2 text-slate-400">
             Reserve a parking slot at{" "}
-            <span className="text-white">{parking.parkingName}</span>
+            <span className="font-medium text-white">
+              {parking.parkingName}
+            </span>
           </p>
 
           <p className="mt-1 text-sm text-slate-500">{parking.address}</p>
         </div>
 
-        {/* ERROR */}
-
         {error && (
-          <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
+          >
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* ==================================================
-              VEHICLE
-             ================================================== */}
-
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Select Vehicle</h2>
 
@@ -578,7 +508,7 @@ function BookingForm() {
                 <button
                   type="button"
                   onClick={() => router.push("/driver/vehicles/add")}
-                  className="mt-3 rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black"
+                  className="mt-3 rounded-lg bg-yellow-400 px-4 py-2 text-sm font-semibold text-black transition hover:bg-yellow-300"
                 >
                   Add Vehicle
                 </button>
@@ -594,7 +524,6 @@ function BookingForm() {
                       key={vehicle._id}
                       onClick={() => {
                         setVehicleId(vehicle._id);
-
                         setError("");
                       }}
                       className={`w-full rounded-xl border p-4 text-left transition ${
@@ -625,16 +554,10 @@ function BookingForm() {
             )}
           </section>
 
-          {/* ==================================================
-              BOOKING TIMING
-             ================================================== */}
-
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">When do you want to park?</h2>
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {/* BOOK NOW */}
-
               <button
                 type="button"
                 onClick={() => {
@@ -651,11 +574,9 @@ function BookingForm() {
                 <p className="font-semibold">Book Now</p>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Start your parking from now.
+                  Start your parking immediately.
                 </p>
               </button>
-
-              {/* FUTURE */}
 
               <button
                 type="button"
@@ -690,8 +611,11 @@ function BookingForm() {
                   id="futureStartTime"
                   type="datetime-local"
                   value={futureStartTime}
-                  min={minimumDateTime}
-                  onChange={(event) => setFutureStartTime(event.target.value)}
+                  min={getFutureMinimumDateTime()}
+                  onChange={(event) => {
+                    setFutureStartTime(event.target.value);
+                    setError("");
+                  }}
                   className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none transition focus:border-blue-500"
                   required
                 />
@@ -702,10 +626,6 @@ function BookingForm() {
               </div>
             )}
           </section>
-
-          {/* ==================================================
-              BOOKING TYPE
-             ================================================== */}
 
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Booking Type</h2>
@@ -742,10 +662,6 @@ function BookingForm() {
             )}
           </section>
 
-          {/* ==================================================
-              DURATION
-             ================================================== */}
-
           {effectiveBookingMode && (
             <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Duration</h2>
@@ -762,6 +678,7 @@ function BookingForm() {
                   }
                   disabled={duration <= durationLimits.min}
                   className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 text-xl transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="Decrease duration"
                 >
                   −
                 </button>
@@ -782,6 +699,7 @@ function BookingForm() {
                   }
                   disabled={duration >= durationLimits.max}
                   className="flex h-11 w-11 items-center justify-center rounded-lg bg-white/10 text-xl transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-30"
+                  aria-label="Increase duration"
                 >
                   +
                 </button>
@@ -792,10 +710,6 @@ function BookingForm() {
               </p>
             </section>
           )}
-
-          {/* ==================================================
-              BOOKING PREVIEW
-             ================================================== */}
 
           {bookingPreview && (
             <section className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 sm:p-6">
@@ -829,10 +743,6 @@ function BookingForm() {
               </div>
             </section>
           )}
-
-          {/* ==================================================
-              PRICE SUMMARY
-             ================================================== */}
 
           {pricePreview && (
             <section className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5 sm:p-6">
@@ -879,10 +789,6 @@ function BookingForm() {
             </section>
           )}
 
-          {/* ==================================================
-              SUBMIT
-             ================================================== */}
-
           <button
             type="submit"
             disabled={
@@ -893,11 +799,16 @@ function BookingForm() {
             }
             className="w-full rounded-xl bg-blue-600 px-5 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {bookingMutation.isPending
-              ? "Creating Booking..."
-              : pricePreview
-                ? `Continue to Payment • ₹${pricePreview.driverPays.toFixed(2)}`
-                : "Continue to Payment"}
+            {bookingMutation.isPending ? (
+              <span className="flex items-center justify-center gap-3">
+                <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Creating Booking...
+              </span>
+            ) : pricePreview ? (
+              `Continue to Payment • ₹${pricePreview.driverPays.toFixed(2)}`
+            ) : (
+              "Continue to Payment"
+            )}
           </button>
         </form>
       </div>
@@ -905,20 +816,12 @@ function BookingForm() {
   );
 }
 
-// ============================================================
-// FORMAT DATE
-// ============================================================
-
 function formatDate(date: Date): string {
   return new Intl.DateTimeFormat("en-IN", {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
 }
-
-// ============================================================
-// ERROR STATE
-// ============================================================
 
 interface ErrorStateProps {
   message: string;
@@ -929,6 +832,10 @@ function ErrorState({ message, onBack }: ErrorStateProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
       <div className="w-full max-w-lg rounded-2xl border border-red-900 bg-red-950/30 p-6">
+        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+          !
+        </div>
+
         <h1 className="text-xl font-semibold">
           Unable to load booking information
         </h1>
@@ -938,7 +845,7 @@ function ErrorState({ message, onBack }: ErrorStateProps) {
         <button
           type="button"
           onClick={onBack}
-          className="mt-5 rounded-xl bg-white px-5 py-3 font-medium text-black"
+          className="mt-5 rounded-xl bg-white px-5 py-3 font-medium text-black transition hover:bg-slate-200"
         >
           Go back
         </button>

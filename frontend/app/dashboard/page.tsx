@@ -14,7 +14,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (isLoading || !user) {
       return;
-    }
+    } 
 
     if (user.role === "driver") {
       router.replace("/driver");
