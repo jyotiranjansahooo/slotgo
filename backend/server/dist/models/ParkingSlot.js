@@ -33,6 +33,23 @@ const parkingSlotSchema = new Schema({
             message: "At least one vehicle type is required.",
         },
     },
+    capacity: {
+        type: Number,
+        required: true,
+        default: 50,
+        min: 1,
+        max: 10000,
+    },
+    occupiedCount: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
+    reservedCount: {
+        type: Number,
+        default: 0,
+        min: 0,
+    },
     status: {
         type: String,
         enum: SLOT_STATUS_VALUES,
@@ -63,21 +80,32 @@ const parkingSlotSchema = new Schema({
     timestamps: true,
     versionKey: false,
 });
-/* One slot number cannot repeat inside the same parking */
 parkingSlotSchema.index({
     parkingId: 1,
     slotNumber: 1,
 }, {
     unique: true,
 });
-/* Fast lookup for available slots */
 parkingSlotSchema.index({
     parkingId: 1,
     status: 1,
 });
-/* Fast lookup by vehicle type */
 parkingSlotSchema.index({
     supportedVehicleTypes: 1,
+});
+parkingSlotSchema.index({
+    parkingId: 1,
+    occupiedCount: 1,
+    reservedCount: 1,
+});
+parkingSlotSchema.virtual("availableCount").get(function () {
+    return Math.max(0, this.capacity - this.occupiedCount - this.reservedCount);
+});
+parkingSlotSchema.set("toJSON", {
+    virtuals: true,
+});
+parkingSlotSchema.set("toObject", {
+    virtuals: true,
 });
 const ParkingSlot = mongoose.models.ParkingSlot ||
     mongoose.model("ParkingSlot", parkingSlotSchema);

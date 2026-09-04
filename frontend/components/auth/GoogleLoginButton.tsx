@@ -200,14 +200,8 @@ export default function GoogleLoginButton({ role }: GoogleLoginButtonProps) {
                 response.credential ? "YES" : "NO",
               );
 
-              /*
-               * Send Google ID token to backend
-               */
               const user = await googleLogin(response.credential);
 
-              /*
-               * Redirect according to backend user role
-               */
               if (user.role === "driver") {
                 router.replace("/");
                 return;

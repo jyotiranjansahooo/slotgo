@@ -10,7 +10,6 @@ import {
 import { useParams, useRouter } from "next/navigation";
 import type { Parking } from "@/types/parking";
 import {
-  ArrowLeft,
   Bike,
   Car,
   CheckCircle2,
@@ -71,6 +70,8 @@ export default function ParkingSlotsPage() {
 
   const [slotNumber, setSlotNumber] = useState("");
   const [floor, setFloor] = useState("Ground");
+  const [capacity, setCapacity] = useState(50);
+
   type VehicleType =
     | "twoWheeler"
     | "fourWheeler"
@@ -118,13 +119,41 @@ export default function ParkingSlotsPage() {
       cancelled = true;
     };
   }, [parkingId]);
+
   const allowedVehicleTypes = parking?.supportedVehicleTypes ?? [];
+
   const statistics = useMemo(() => {
+    const totalCapacity = slots.reduce(
+      (total, slot) => total + slot.capacity,
+      0,
+    );
+
+    const occupiedVehicles = slots.reduce(
+      (total, slot) => total + slot.occupiedCount,
+      0,
+    );
+
+    const reservedVehicles = slots.reduce(
+      (total, slot) => total + slot.reservedCount,
+      0,
+    );
+
+    const availableVehicles = slots.reduce(
+      (total, slot) =>
+        total +
+        Math.max(
+          0,
+          slot.capacity - slot.occupiedCount - slot.reservedCount,
+        ),
+      0,
+    );
+
     return {
       total: slots.length,
-      available: slots.filter((slot) => slot.status === "available").length,
-      occupied: slots.filter((slot) => slot.status === "occupied").length,
-      reserved: slots.filter((slot) => slot.status === "reserved").length,
+      totalCapacity,
+      occupiedVehicles,
+      reservedVehicles,
+      availableVehicles,
     };
   }, [slots]);
 
@@ -156,18 +185,20 @@ export default function ParkingSlotsPage() {
       return;
     }
 
+    if (!Number.isInteger(capacity) || capacity < 1) {
+      toast.error("Capacity must be at least 1 vehicle.");
+      return;
+    }
+
     try {
       setCreating(true);
 
       const newSlot = await createParkingSlot(parkingId, {
         slotNumber: slotNumber.trim().toUpperCase(),
-
         floor: floor.trim() || "Ground",
-
+        capacity,
         supportedVehicleTypes,
-
         displayOrder,
-
         notes: notes.trim() || undefined,
       });
 
@@ -181,6 +212,7 @@ export default function ParkingSlotsPage() {
 
       setSlotNumber("");
       setFloor("Ground");
+      setCapacity(50);
       setSupportedVehicleTypes([]);
       setDisplayOrder((current) => current + 1);
       setNotes("");
@@ -206,6 +238,7 @@ export default function ParkingSlotsPage() {
       setDeletingSlotId(slotId);
 
       await deleteParkingSlot(parkingId, slotId);
+
       setSlots((current) => current.filter((slot) => slot._id !== slotId));
 
       toast.success("Parking slot deleted successfully.");
@@ -217,17 +250,18 @@ export default function ParkingSlotsPage() {
   }
 
   return (
-    <div className="">
+    <div>
       <OwnerNavbar />
+
       <main
         className="
-        min-h-screen
-        bg-[#075e59]
-        px-4 py-6
-        text-white
-        md:px-6 md:py-8
-        lg:px-8
-      "
+          min-h-screen
+          bg-[#075e59]
+          px-4 py-6
+          text-white
+          md:px-6 md:py-8
+          lg:px-8
+        "
         style={{
           backgroundImage:
             "repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 2px, transparent 2px, transparent 28px)",
@@ -239,13 +273,13 @@ export default function ParkingSlotsPage() {
               <div className="flex items-center gap-4">
                 <div
                   className="
-                  flex h-13 w-13 shrink-0 items-center justify-center
-                  rounded-2xl
-                  border border-white/15
-                  bg-white/10
-                  shadow-lg
-                  backdrop-blur-xl
-                "
+                    flex h-13 w-13 shrink-0 items-center justify-center
+                    rounded-2xl
+                    border border-white/15
+                    bg-white/10
+                    shadow-lg
+                    backdrop-blur-xl
+                  "
                 >
                   <CircleParking className="h-7 w-7 text-white" />
                 </div>
@@ -256,7 +290,7 @@ export default function ParkingSlotsPage() {
                   </h1>
 
                   <p className="mt-1 text-sm text-white/60">
-                    Create and manage individual parking spaces.
+                    Create and manage parking capacity zones.
                   </p>
                 </div>
               </div>
@@ -264,33 +298,29 @@ export default function ParkingSlotsPage() {
               <a
                 href="#add-slot"
                 className="
-                inline-flex
-                w-full
-                items-center
-                justify-center
-                gap-2
-                rounded-xl
-                bg-white
-                px-5
-                py-3
-                text-sm
-                font-bold
-                text-[#075e59]
-                shadow-lg
-                transition
-                hover:bg-white/90
-                sm:w-auto
-              "
+                  inline-flex
+                  w-full
+                  items-center
+                  justify-center
+                  gap-2
+                  rounded-xl
+                  bg-white
+                  px-5
+                  py-3
+                  text-sm
+                  font-bold
+                  text-[#075e59]
+                  shadow-lg
+                  transition
+                  hover:bg-white/90
+                  sm:w-auto
+                "
               >
                 <Plus className="h-4 w-4" />
                 Add Slot
               </a>
             </div>
           </header>
-
-          {/* ======================================================
-            STATISTICS
-        ====================================================== */}
 
           <div className="mb-7 grid grid-cols-2 gap-3 lg:grid-cols-4">
             <StatCard
@@ -300,45 +330,43 @@ export default function ParkingSlotsPage() {
             />
 
             <StatCard
-              label="Available"
-              value={statistics.available}
+              label="Total Capacity"
+              value={statistics.totalCapacity}
+              icon={Warehouse}
+            />
+
+            <StatCard
+              label="Available Vehicles"
+              value={statistics.availableVehicles}
               icon={CheckCircle2}
             />
 
-            <StatCard label="Occupied" value={statistics.occupied} icon={Car} />
-
             <StatCard
-              label="Reserved"
-              value={statistics.reserved}
-              icon={Warehouse}
+              label="Occupied Vehicles"
+              value={statistics.occupiedVehicles}
+              icon={Car}
             />
           </div>
-
-          {/* ======================================================
-            ADD SLOT
-        ====================================================== */}
 
           <section
             id="add-slot"
             className="
-            mb-8
-            overflow-hidden
-            rounded-2xl
-            border border-white/15
-            bg-white/[0.08]
-            shadow-xl
-            backdrop-blur-xl
-          "
+              mb-8
+              overflow-hidden
+              rounded-2xl
+              border border-white/15
+              bg-white/[0.08]
+              shadow-xl
+              backdrop-blur-xl
+            "
           >
-            {/* Form header */}
-
             <div
               className="
-              border-b border-white/10
-              bg-black/20
-              px-5 py-4
-              sm:px-6
-            "
+                border-b border-white/10
+                bg-black/20
+                px-5 py-4
+                sm:px-6
+              "
             >
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10">
@@ -349,7 +377,7 @@ export default function ParkingSlotsPage() {
                   <h2 className="font-bold">Add Parking Slot</h2>
 
                   <p className="text-xs text-white/55">
-                    Create a new parking space.
+                    Create a parking capacity zone.
                   </p>
                 </div>
               </div>
@@ -357,8 +385,6 @@ export default function ParkingSlotsPage() {
 
             <form onSubmit={handleCreateSlot} className="p-5 sm:p-6">
               <div className="grid gap-5 lg:grid-cols-12">
-                {/* Slot Number */}
-
                 <div className="lg:col-span-3">
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
                     Slot Number
@@ -371,28 +397,26 @@ export default function ParkingSlotsPage() {
                     placeholder="A-01"
                     maxLength={20}
                     className="
-                    h-11
-                    w-full
-                    rounded-xl
-                    border border-white/10
-                    bg-black/15
-                    px-4
-                    text-sm
-                    text-white
-                    outline-none
-                    placeholder:text-white/30
-                    transition
-                    focus:border-white/30
-                    focus:bg-black/20
-                    focus:ring-2
-                    focus:ring-white/10
-                  "
+                      h-11
+                      w-full
+                      rounded-xl
+                      border border-white/10
+                      bg-black/15
+                      px-4
+                      text-sm
+                      text-white
+                      outline-none
+                      placeholder:text-white/30
+                      transition
+                      focus:border-white/30
+                      focus:bg-black/20
+                      focus:ring-2
+                      focus:ring-white/10
+                    "
                   />
                 </div>
 
-                {/* Floor */}
-
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-2">
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
                     Floor
                   </label>
@@ -404,28 +428,62 @@ export default function ParkingSlotsPage() {
                     placeholder="Ground"
                     maxLength={30}
                     className="
-                    h-11
-                    w-full
-                    rounded-xl
-                    border border-white/10
-                    bg-black/15
-                    px-4
-                    text-sm
-                    text-white
-                    outline-none
-                    placeholder:text-white/30
-                    transition
-                    focus:border-white/30
-                    focus:bg-black/20
-                    focus:ring-2
-                    focus:ring-white/10
-                  "
+                      h-11
+                      w-full
+                      rounded-xl
+                      border border-white/10
+                      bg-black/15
+                      px-4
+                      text-sm
+                      text-white
+                      outline-none
+                      placeholder:text-white/30
+                      transition
+                      focus:border-white/30
+                      focus:bg-black/20
+                      focus:ring-2
+                      focus:ring-white/10
+                    "
                   />
                 </div>
 
-                {/* Display Order */}
-
                 <div className="lg:col-span-2">
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
+                    Capacity
+                  </label>
+
+                  <input
+                    type="number"
+                    min={1}
+                    max={10000}
+                    value={capacity}
+                    onChange={(event) =>
+                      setCapacity(Number(event.target.value))
+                    }
+                    className="
+                      h-11
+                      w-full
+                      rounded-xl
+                      border border-white/10
+                      bg-black/15
+                      px-4
+                      text-sm
+                      text-white
+                      outline-none
+                      transition
+                      focus:border-white/30
+                      focus:bg-black/20
+                      focus:ring-2
+                      focus:ring-white/10
+                    "
+                  />
+
+                  <p className="mt-1 text-[10px] text-white/40">
+                    Maximum vehicles
+                  </p>
+                </div>
+
+                <div className="lg:col-span-1">
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
                     Order
                   </label>
@@ -438,25 +496,23 @@ export default function ParkingSlotsPage() {
                       setDisplayOrder(Number(event.target.value))
                     }
                     className="
-                    h-11
-                    w-full
-                    rounded-xl
-                    border border-white/10
-                    bg-black/15
-                    px-4
-                    text-sm
-                    text-white
-                    outline-none
-                    transition
-                    focus:border-white/30
-                    focus:bg-black/20
-                    focus:ring-2
-                    focus:ring-white/10
-                  "
+                      h-11
+                      w-full
+                      rounded-xl
+                      border border-white/10
+                      bg-black/15
+                      px-4
+                      text-sm
+                      text-white
+                      outline-none
+                      transition
+                      focus:border-white/30
+                      focus:bg-black/20
+                      focus:ring-2
+                      focus:ring-white/10
+                    "
                   />
                 </div>
-
-                {/* Notes */}
 
                 <div className="lg:col-span-4">
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
@@ -470,26 +526,24 @@ export default function ParkingSlotsPage() {
                     placeholder="Optional notes..."
                     maxLength={200}
                     className="
-                    h-11
-                    w-full
-                    rounded-xl
-                    border border-white/10
-                    bg-black/15
-                    px-4
-                    text-sm
-                    text-white
-                    outline-none
-                    placeholder:text-white/30
-                    transition
-                    focus:border-white/30
-                    focus:bg-black/20
-                    focus:ring-2
-                    focus:ring-white/10
-                  "
+                      h-11
+                      w-full
+                      rounded-xl
+                      border border-white/10
+                      bg-black/15
+                      px-4
+                      text-sm
+                      text-white
+                      outline-none
+                      placeholder:text-white/30
+                      transition
+                      focus:border-white/30
+                      focus:bg-black/20
+                      focus:ring-2
+                      focus:ring-white/10
+                    "
                   />
                 </div>
-
-                {/* Vehicle Types */}
 
                 <div className="lg:col-span-9">
                   <label className="mb-2 block text-xs font-semibold uppercase tracking-wide text-white/60">
@@ -521,7 +575,20 @@ export default function ParkingSlotsPage() {
                         onClick={() =>
                           router.push(`/owner/parkings/${parkingId}/edit`)
                         }
-                        className="mt-3 inline-flex items-center rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#075e59] transition hover:bg-white/90"
+                        className="
+                          mt-3
+                          inline-flex
+                          items-center
+                          rounded-lg
+                          bg-white
+                          px-3
+                          py-2
+                          text-xs
+                          font-bold
+                          text-[#075e59]
+                          transition
+                          hover:bg-white/90
+                        "
                       >
                         Edit Parking
                       </button>
@@ -543,27 +610,29 @@ export default function ParkingSlotsPage() {
                             type="button"
                             onClick={() => toggleVehicleType(vehicle.value)}
                             className={`
-              flex
-              h-11
-              items-center
-              gap-2
-              rounded-xl
-              border
-              px-3
-              text-left
-              text-sm
-              font-medium
-              transition
-              ${
-                selected
-                  ? "border-white bg-white text-[#075e59] shadow-md"
-                  : "border-white/10 bg-black/10 text-white/75 hover:border-white/25 hover:bg-white/10"
-              }
-            `}
+                              flex
+                              h-11
+                              items-center
+                              gap-2
+                              rounded-xl
+                              border
+                              px-3
+                              text-left
+                              text-sm
+                              font-medium
+                              transition
+                              ${
+                                selected
+                                  ? "border-white bg-white text-[#075e59] shadow-md"
+                                  : "border-white/10 bg-black/10 text-white/75 hover:border-white/25 hover:bg-white/10"
+                              }
+                            `}
                           >
                             <Icon className="h-4 w-4 shrink-0" />
 
-                            <span className="truncate">{vehicle.label}</span>
+                            <span className="truncate">
+                              {vehicle.label}
+                            </span>
 
                             {selected && (
                               <CheckCircle2 className="ml-auto h-4 w-4 shrink-0" />
@@ -575,31 +644,29 @@ export default function ParkingSlotsPage() {
                   )}
                 </div>
 
-                {/* Submit */}
-
                 <div className="lg:col-span-3 lg:self-end">
                   <button
                     type="submit"
                     disabled={creating}
                     className="
-                    flex
-                    h-11
-                    w-full
-                    items-center
-                    justify-center
-                    gap-2
-                    rounded-xl
-                    bg-white
-                    px-5
-                    text-sm
-                    font-bold
-                    text-[#075e59]
-                    shadow-md
-                    transition
-                    hover:bg-white/90
-                    disabled:cursor-not-allowed
-                    disabled:opacity-60
-                  "
+                      flex
+                      h-11
+                      w-full
+                      items-center
+                      justify-center
+                      gap-2
+                      rounded-xl
+                      bg-white
+                      px-5
+                      text-sm
+                      font-bold
+                      text-[#075e59]
+                      shadow-md
+                      transition
+                      hover:bg-white/90
+                      disabled:cursor-not-allowed
+                      disabled:opacity-60
+                    "
                   >
                     {creating ? (
                       <>
@@ -618,10 +685,6 @@ export default function ParkingSlotsPage() {
             </form>
           </section>
 
-          {/* ======================================================
-            SLOTS
-        ====================================================== */}
-
           <section>
             <div className="mb-5 flex items-end justify-between">
               <div>
@@ -630,20 +693,18 @@ export default function ParkingSlotsPage() {
                 <p className="mt-1 text-sm text-white/55">
                   {slots.length === 0
                     ? "No slots created yet."
-                    : `${slots.length} parking ${
+                    : `${slots.length} ${
                         slots.length === 1 ? "slot" : "slots"
-                      } configured.`}
+                      } configured with vehicle capacity.`}
                 </p>
               </div>
 
               {slots.length > 0 && (
                 <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
-                  {slots.length} total
+                  {statistics.totalCapacity} vehicle capacity
                 </span>
               )}
             </div>
-
-            {/* Loading */}
 
             {loading ? (
               <SlotsSkeleton />
@@ -667,10 +728,6 @@ export default function ParkingSlotsPage() {
     </div>
   );
 }
-
-/* ============================================================
-   STAT CARD
-============================================================ */
 
 function StatCard({
   label,
@@ -698,7 +755,7 @@ function StatCard({
           <Icon className="h-4 w-4 text-white/80" />
         </div>
 
-        <span className="text-xs font-medium text-white/40">Slots</span>
+        <span className="text-xs font-medium text-white/40">Parking</span>
       </div>
 
       <p className="text-xs font-medium text-white/55">{label}</p>
@@ -707,10 +764,6 @@ function StatCard({
     </div>
   );
 }
-
-/* ============================================================
-   SLOT CARD
-============================================================ */
 
 function SlotCard({
   slot,
@@ -724,24 +777,31 @@ function SlotCard({
   const statusConfig = {
     available: {
       label: "Available",
-      className: "border-emerald-300/20 bg-emerald-400/10 text-emerald-200",
+      className:
+        "border-emerald-300/20 bg-emerald-400/10 text-emerald-200",
     },
 
     occupied: {
-      label: "Occupied",
+      label: "Full",
       className: "border-red-300/20 bg-red-400/10 text-red-200",
     },
 
     reserved: {
-      label: "Reserved",
+      label: "Capacity Reserved",
       className: "border-amber-300/20 bg-amber-400/10 text-amber-200",
     },
 
     maintenance: {
       label: "Maintenance",
-      className: "border-orange-300/20 bg-orange-400/10 text-orange-200",
+      className:
+        "border-orange-300/20 bg-orange-400/10 text-orange-200",
     },
   };
+
+  const availableCount = Math.max(
+    0,
+    slot.capacity - slot.occupiedCount - slot.reservedCount,
+  );
 
   const status =
     statusConfig[slot.status as keyof typeof statusConfig] ??
@@ -763,8 +823,6 @@ function SlotCard({
         hover:bg-white/[0.11]
       "
     >
-      {/* Top */}
-
       <div className="border-b border-white/10 p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
@@ -773,7 +831,9 @@ function SlotCard({
             </div>
 
             <div className="min-w-0">
-              <h3 className="truncate text-lg font-bold">{slot.slotNumber}</h3>
+              <h3 className="truncate text-lg font-bold">
+                {slot.slotNumber}
+              </h3>
 
               <p className="text-xs text-white/50">{slot.floor}</p>
             </div>
@@ -796,9 +856,38 @@ function SlotCard({
         </div>
       </div>
 
-      {/* Content */}
-
       <div className="p-5">
+        <div className="mb-5 grid grid-cols-3 gap-2">
+          <CapacityCard
+            label="Capacity"
+            value={slot.capacity}
+          />
+
+          <CapacityCard
+            label="Occupied"
+            value={slot.occupiedCount}
+          />
+
+          <CapacityCard
+            label="Available"
+            value={availableCount}
+          />
+        </div>
+
+        {slot.reservedCount > 0 && (
+          <div className="mb-5 rounded-xl border border-amber-300/15 bg-amber-400/5 px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-amber-100/70">
+                Temporarily reserved
+              </span>
+
+              <span className="text-sm font-bold text-amber-100">
+                {slot.reservedCount}
+              </span>
+            </div>
+          </div>
+        )}
+
         <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.15em] text-white/40">
           Supported Vehicles
         </p>
@@ -830,8 +919,6 @@ function SlotCard({
             </p>
           </div>
         )}
-
-        {/* Delete */}
 
         <button
           type="button"
@@ -875,9 +962,25 @@ function SlotCard({
   );
 }
 
-/* ============================================================
-   EMPTY STATE
-============================================================ */
+function CapacityCard({
+  label,
+  value,
+}: {
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-black/10 p-3">
+      <p className="text-[10px] font-bold uppercase tracking-wide text-white/40">
+        {label}
+      </p>
+
+      <p className="mt-1 text-lg font-bold">{value}</p>
+
+      <p className="text-[10px] text-white/40">vehicles</p>
+    </div>
+  );
+}
 
 function EmptySlots() {
   return (
@@ -901,15 +1004,12 @@ function EmptySlots() {
       <h3 className="mt-4 text-base font-bold">No parking slots yet</h3>
 
       <p className="mx-auto mt-1 max-w-md text-sm text-white/50">
-        Add your first parking slot above to start managing availability.
+        Add your first parking capacity zone above to start managing vehicle
+        capacity.
       </p>
     </div>
   );
 }
-
-/* ============================================================
-   SKELETON
-============================================================ */
 
 function SlotsSkeleton() {
   return (
@@ -940,14 +1040,18 @@ function SlotsSkeleton() {
           </div>
 
           <div className="space-y-4 p-5">
+            <div className="grid grid-cols-3 gap-2">
+              <div className="h-20 rounded-xl bg-white/10" />
+              <div className="h-20 rounded-xl bg-white/10" />
+              <div className="h-20 rounded-xl bg-white/10" />
+            </div>
+
             <div className="h-3 w-28 rounded bg-white/10" />
 
             <div className="flex gap-2">
               <div className="h-7 w-16 rounded-lg bg-white/10" />
               <div className="h-7 w-16 rounded-lg bg-white/10" />
             </div>
-
-            <div className="h-10 rounded-xl bg-white/10" />
 
             <div className="h-10 rounded-xl bg-white/10" />
           </div>

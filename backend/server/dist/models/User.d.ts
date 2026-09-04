@@ -28,6 +28,8 @@ export interface IUser {
     passwordResetOtpExpiresAt?: Date;
     passwordResetOtpAttempts: number;
     passwordResetVerifiedAt?: Date;
+    passwordResetTokenHash?: string;
+    passwordResetTokenExpiresAt?: Date;
     actionVerificationOtpHash?: string;
     actionVerificationOtpExpiresAt?: Date;
     actionVerificationOtpAttempts: number;

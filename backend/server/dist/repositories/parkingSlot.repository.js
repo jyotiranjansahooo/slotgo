@@ -1,5 +1,4 @@
 import ParkingSlot from "../models/ParkingSlot.js";
-import { SLOT_STATUS } from "../constants/slot.js";
 class ParkingSlotRepository {
     async create(data) {
         return ParkingSlot.create(data);
@@ -23,9 +22,21 @@ class ParkingSlotRepository {
     async findAvailableByVehicleType(parkingId, vehicleType) {
         return ParkingSlot.find({
             parkingId,
-            status: SLOT_STATUS.AVAILABLE,
             isActive: true,
             supportedVehicleTypes: vehicleType,
+            $expr: {
+                $gt: [
+                    {
+                        $subtract: [
+                            "$capacity",
+                            {
+                                $add: ["$occupiedCount", "$reservedCount"],
+                            },
+                        ],
+                    },
+                    0,
+                ],
+            },
         }).sort({
             displayOrder: 1,
         });
@@ -33,8 +44,20 @@ class ParkingSlotRepository {
     async findAvailable(parkingId) {
         return ParkingSlot.find({
             parkingId,
-            status: SLOT_STATUS.AVAILABLE,
             isActive: true,
+            $expr: {
+                $gt: [
+                    {
+                        $subtract: [
+                            "$capacity",
+                            {
+                                $add: ["$occupiedCount", "$reservedCount"],
+                            },
+                        ],
+                    },
+                    0,
+                ],
+            },
         }).sort({
             displayOrder: 1,
         });
@@ -42,9 +65,21 @@ class ParkingSlotRepository {
     async findFirstAvailable(parkingId, vehicleType) {
         return ParkingSlot.findOne({
             parkingId,
-            status: SLOT_STATUS.AVAILABLE,
             isActive: true,
             supportedVehicleTypes: vehicleType,
+            $expr: {
+                $gt: [
+                    {
+                        $subtract: [
+                            "$capacity",
+                            {
+                                $add: ["$occupiedCount", "$reservedCount"],
+                            },
+                        ],
+                    },
+                    0,
+                ],
+            },
         }).sort({
             displayOrder: 1,
         });
@@ -52,12 +87,26 @@ class ParkingSlotRepository {
     async reserve(parkingId, vehicleType, reservedUntil) {
         return ParkingSlot.findOneAndUpdate({
             parkingId,
-            status: SLOT_STATUS.AVAILABLE,
             isActive: true,
             supportedVehicleTypes: vehicleType,
+            $expr: {
+                $gt: [
+                    {
+                        $subtract: [
+                            "$capacity",
+                            {
+                                $add: ["$occupiedCount", "$reservedCount"],
+                            },
+                        ],
+                    },
+                    0,
+                ],
+            },
         }, {
+            $inc: {
+                reservedCount: 1,
+            },
             $set: {
-                status: SLOT_STATUS.RESERVED,
                 reservedUntil,
             },
         }, {
@@ -68,9 +117,28 @@ class ParkingSlotRepository {
         });
     }
     async occupy(slotId) {
-        return ParkingSlot.findByIdAndUpdate(slotId, {
-            status: SLOT_STATUS.OCCUPIED,
-            reservedUntil: null,
+        return ParkingSlot.findOneAndUpdate({
+            _id: slotId,
+            $expr: {
+                $gt: [
+                    {
+                        $subtract: [
+                            "$capacity",
+                            {
+                                $add: ["$occupiedCount", "$reservedCount"],
+                            },
+                        ],
+                    },
+                    0,
+                ],
+            },
+        }, {
+            $inc: {
+                occupiedCount: 1,
+            },
+            $set: {
+                reservedUntil: null,
+            },
         }, {
             new: true,
         });
@@ -78,9 +146,13 @@ class ParkingSlotRepository {
     async finalizeReservation(slotId, reservedUntil) {
         return ParkingSlot.findOneAndUpdate({
             _id: slotId,
-            status: SLOT_STATUS.RESERVED,
+            reservedCount: {
+                $gt: 0,
+            },
         }, {
-            reservedUntil,
+            $set: {
+                reservedUntil,
+            },
         }, {
             new: true,
         });
@@ -88,8 +160,13 @@ class ParkingSlotRepository {
     async confirmReservation(slotId) {
         return ParkingSlot.findOneAndUpdate({
             _id: slotId,
-            status: SLOT_STATUS.RESERVED,
+            reservedCount: {
+                $gt: 0,
+            },
         }, {
+            $inc: {
+                reservedCount: -1,
+            },
             $set: {
                 reservedUntil: null,
             },
@@ -98,9 +175,18 @@ class ParkingSlotRepository {
         });
     }
     async release(slotId) {
-        return ParkingSlot.findByIdAndUpdate(slotId, {
-            status: SLOT_STATUS.AVAILABLE,
-            reservedUntil: null,
+        return ParkingSlot.findOneAndUpdate({
+            _id: slotId,
+            reservedCount: {
+                $gt: 0,
+            },
+        }, {
+            $inc: {
+                reservedCount: -1,
+            },
+            $set: {
+                reservedUntil: null,
+            },
         }, {
             new: true,
         });
@@ -119,13 +205,15 @@ class ParkingSlotRepository {
     }
     async releaseExpiredReservations() {
         return ParkingSlot.updateMany({
-            status: SLOT_STATUS.RESERVED,
+            reservedCount: {
+                $gt: 0,
+            },
             reservedUntil: {
                 $lte: new Date(),
             },
         }, {
             $set: {
-                status: SLOT_STATUS.AVAILABLE,
+                reservedCount: 0,
                 reservedUntil: null,
             },
         });

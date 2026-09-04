@@ -7,33 +7,30 @@ class ParkingSlotService {
         if (!Types.ObjectId.isValid(parkingId)) {
             throw new ApiError(400, "Invalid parking ID.");
         }
-        // Check parking
         const parking = await parkingRepository.findById(parkingId);
         if (!parking) {
             throw new ApiError(404, "Parking not found.");
         }
-        // Check ownership
         if (parking.ownerId.toString() !== ownerId) {
             throw new ApiError(403, "You are not authorized to add slots to this parking.");
         }
-        // Check active
         if (!parking.isActive) {
             throw new ApiError(400, "Parking is inactive.");
         }
-        // Parking must be approved
         if (parking.status !== "approved") {
             throw new ApiError(400, "Parking must be approved before adding slots.");
         }
-        // Check duplicate slot
         const existingSlot = await parkingSlotRepository.findByParkingAndSlotNumber(parkingId, data.slotNumber);
         if (existingSlot) {
             throw new ApiError(409, "A slot with this number already exists in this parking.");
         }
-        // Create slot
         const slot = await parkingSlotRepository.create({
             parkingId: new Types.ObjectId(parkingId),
             slotNumber: data.slotNumber.toUpperCase(),
             floor: data.floor,
+            capacity: data.capacity,
+            occupiedCount: 0,
+            reservedCount: 0,
             supportedVehicleTypes: data.supportedVehicleTypes,
             displayOrder: data.displayOrder,
             notes: data.notes,
@@ -42,7 +39,6 @@ class ParkingSlotService {
         });
         return slot;
     }
-    // GET AVAILABLE SLOTS
     async getAvailableSlots(parkingId) {
         if (!Types.ObjectId.isValid(parkingId)) {
             throw new ApiError(400, "Invalid parking ID.");
@@ -53,7 +49,6 @@ class ParkingSlotService {
         }
         return parkingSlotRepository.findAvailable(parkingId);
     }
-    // GET ALL SLOTS FOR PARKING
     async getParkingSlots(parkingId) {
         if (!Types.ObjectId.isValid(parkingId)) {
             throw new ApiError(400, "Invalid parking ID.");
@@ -64,7 +59,6 @@ class ParkingSlotService {
         }
         return parkingSlotRepository.findByParking(parkingId);
     }
-    // DELETE SLOT
     async deleteSlot(ownerId, slotId) {
         if (!Types.ObjectId.isValid(slotId)) {
             throw new ApiError(400, "Invalid slot ID.");
@@ -77,14 +71,11 @@ class ParkingSlotService {
         if (!parking) {
             throw new ApiError(404, "Parking not found.");
         }
-        // Check parking owner
         if (parking.ownerId.toString() !== ownerId) {
             throw new ApiError(403, "You are not authorized to delete this slot.");
         }
-        // Don't delete occupied/reserved slots
-        if (slot.status === "occupied" ||
-            slot.status === "reserved") {
-            throw new ApiError(400, "Occupied or reserved slots cannot be deleted.");
+        if (slot.occupiedCount > 0 || slot.reservedCount > 0) {
+            throw new ApiError(400, "Slots with occupied or temporarily reserved capacity cannot be deleted.");
         }
         return parkingSlotRepository.delete(slotId);
     }

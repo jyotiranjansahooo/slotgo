@@ -2,10 +2,6 @@ import api from "@/lib/api";
 
 import type { ApiResponse } from "@/types/api";
 
-// ============================================================
-// VERIFY NORMAL PAYMENT
-// ============================================================
-
 export interface VerifyPaymentData {
   orderId: string;
   paymentId: string;

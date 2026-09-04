@@ -37,31 +37,9 @@ function OvertimePayment() {
 
   const params = useParams();
 
-  /*
-   * IMPORTANT
-   *
-   * Your folder is:
-   *
-   * [Id]
-   *
-   * Therefore:
-   *
-   * params.Id
-   *
-   * NOT:
-   *
-   * params.id
-   */
-
   const bookingId = typeof params.Id === "string" ? params.Id : "";
 
   const [error, setError] = useState("");
-
-  /*
-   * ============================================================
-   * GET BOOKING
-   * ============================================================
-   */
 
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId],
@@ -70,24 +48,6 @@ function OvertimePayment() {
 
     enabled: bookingId.length > 0,
   });
-
-  /*
-   * ============================================================
-   * VERIFY OVERTIME PAYMENT
-   * ============================================================
-   *
-   * IMPORTANT:
-   *
-   * verifyOvertimePayment() expects ONE object:
-   *
-   * {
-   *   orderId,
-   *   paymentId,
-   *   signature
-   * }
-   *
-   * Therefore mutationFn also accepts one object.
-   */
 
   const verifyOvertimePaymentMutation = useMutation<
     ApiResponse<VerifyOvertimePaymentResponse>,
@@ -101,12 +61,6 @@ function OvertimePayment() {
     onSuccess: () => {
       sessionStorage.removeItem(`slotgo-overtime-payment-${bookingId}`);
 
-      /*
-       * Go back to booking details.
-       *
-       * There is no need for a success page.
-       */
-
       router.push(`/driver/bookings/${bookingId}`);
     },
 
@@ -114,12 +68,6 @@ function OvertimePayment() {
       setError(getApiErrorMessage(mutationError));
     },
   });
-
-  /*
-   * ============================================================
-   * LOADING
-   * ============================================================
-   */
 
   if (bookingQuery.isLoading) {
     return (
@@ -228,20 +176,6 @@ function OvertimePayment() {
       return;
     }
 
-    /*
-     * Razorpay
-     *
-     * Razorpay expects amount in paise.
-     *
-     * createOvertimePayment() stores:
-     *
-     * razorpayOrder.amount
-     *
-     * which is already in paise.
-     *
-     * Therefore DO NOT multiply by 100 here.
-     */
-
     const razorpay = new window.Razorpay({
       key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
 
@@ -283,19 +217,7 @@ function OvertimePayment() {
     razorpay.open();
   };
 
-  /*
-   * ============================================================
-   * PAYMENT STATE
-   * ============================================================
-   */
-
   const isVerifying = verifyOvertimePaymentMutation.isPending;
-
-  /*
-   * ============================================================
-   * PAGE
-   * ============================================================
-   */
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white">
@@ -305,10 +227,6 @@ function OvertimePayment() {
       />
 
       <div className="mx-auto max-w-lg">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
-
         <div className="mb-8">
           <button
             type="button"

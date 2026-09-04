@@ -2,6 +2,7 @@ import { z } from "zod";
 export declare const createParkingSlotSchema: z.ZodObject<{
     slotNumber: z.ZodString;
     floor: z.ZodDefault<z.ZodString>;
+    capacity: z.ZodNumber;
     supportedVehicleTypes: z.ZodArray<z.ZodEnum<{
         fourWheeler: "fourWheeler";
         heavyVehicle: "heavyVehicle";

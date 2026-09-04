@@ -1,8 +1,7 @@
 import Booking from "../models/Booking.js";
 // import { Types } from "mongoose";
-import Parking from "../models/Parking.js";
+// import Parking from "../models/Parking.js";
 class BookingRepository {
-    // CREATE
     async create(data, session) {
         if (session) {
             const booking = await Booking.create([data], { session });
@@ -10,7 +9,6 @@ class BookingRepository {
         }
         return Booking.create(data);
     }
-    // FIND ALL
     async findAll() {
         return Booking.find().sort({
             createdAt: -1,
@@ -52,13 +50,11 @@ class BookingRepository {
         });
     }
     async findByOwner(ownerId) {
-        console.log("🔥🔥🔥 FIND BY OWNER WAS CALLED 🔥🔥🔥");
-        console.log("OWNER ID =", ownerId);
-        const parkings = await Parking.find({});
-        console.log("🔥 TOTAL PARKINGS =", parkings.length);
-        return parkings;
+        return Booking.find({
+            ownerId,
+            isActive: true,
+        }).sort({ createdAt: -1 });
     }
-    // FIND OVERLAPPING VEHICLE BOOKING
     async findOverlappingBooking(vehicleId, startTime, endTime) {
         const now = new Date();
         return Booking.findOne({
@@ -70,21 +66,11 @@ class BookingRepository {
                 $gt: startTime,
             },
             $or: [
-                // ------------------------------------------------------
-                // CONFIRMED / ACTIVE BOOKINGS
-                // These always block the vehicle.
-                // ------------------------------------------------------
                 {
                     bookingStatus: {
                         $in: ["confirmed", "active"],
                     },
                 },
-                // ------------------------------------------------------
-                // PENDING PAYMENT
-                //
-                // A pending booking only blocks the vehicle if its
-                // booking window has not expired.
-                // ------------------------------------------------------
                 {
                     bookingStatus: "pending",
                     paymentStatus: "pending",

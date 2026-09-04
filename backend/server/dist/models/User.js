@@ -116,6 +116,16 @@ const userSchema = new Schema({
         default: undefined,
         select: false,
     },
+    passwordResetTokenHash: {
+        type: String,
+        default: "",
+        select: false,
+    },
+    passwordResetTokenExpiresAt: {
+        type: Date,
+        default: undefined,
+        select: false,
+    },
     actionVerificationOtpHash: {
         type: String,
         default: "",

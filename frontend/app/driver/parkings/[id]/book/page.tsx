@@ -8,7 +8,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 import { getParkingDetails } from "@/services/parking.service";
 import { getMyVehicles } from "@/services/vehicle.service";
-import { createBooking } from "@/services/booking.service";
+import { createBookingCheckout } from "@/services/booking.service";
 
 import { getApiErrorMessage } from "@/lib/api-error";
 
@@ -280,37 +280,33 @@ function BookingForm() {
     }
   }
 
-  const bookingMutation = useMutation({
-    mutationFn: createBooking,
+  const bookingCheckoutMutation = useMutation({
+    mutationFn: createBookingCheckout,
 
     onSuccess: (response) => {
-      const booking = response.data?.booking;
-      const payment = response.data?.payment;
+      const checkout = response.data?.checkout;
+      const razorpayOrder = response.data?.razorpayOrder;
 
-      if (!booking?._id) {
-        setError("Booking was created but no booking ID was returned.");
+      if (!checkout?._id) {
+        setError(
+          "Booking checkout was created but no checkout ID was returned.",
+        );
         return;
       }
 
-      if (!payment?.orderId) {
+      if (!razorpayOrder?.id) {
         setError("Payment order was not created.");
         return;
       }
 
-      sessionStorage.setItem(
-        `slotgo-payment-${booking._id}`,
-        JSON.stringify({
-          orderId: payment.orderId,
-          amount: payment.amount,
-          currency: payment.currency,
-        }),
-      );
-
-      router.push(`/driver/bookings/${booking._id}/payment`);
+      router.push(`/driver/checkout/${checkout._id}/payment`);
     },
 
     onError: (mutationError: unknown) => {
-      setError(getApiErrorMessage(mutationError));
+      setError(
+        getApiErrorMessage(mutationError) ||
+          "Unable to start payment checkout.",
+      );
     },
   });
 
@@ -390,7 +386,7 @@ function BookingForm() {
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (bookingMutation.isPending) {
+    if (bookingCheckoutMutation.isPending) {
       return;
     }
 
@@ -407,7 +403,7 @@ function BookingForm() {
       return;
     }
 
-    bookingMutation.mutate({
+    bookingCheckoutMutation.mutate({
       parkingId,
       vehicleId,
       bookingMode: effectiveBookingMode,
@@ -459,21 +455,12 @@ function BookingForm() {
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto mt-16 max-w-3xl">
         <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => router.push(`/driver/parkings/${parkingId}`)}
-            className="mb-5 inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
-          >
-            <span aria-hidden="true">←</span>
-            Back to parking
-          </button>
-
           <h1 className="text-3xl font-bold">Book Parking</h1>
 
           <p className="mt-2 text-slate-400">
-            Reserve a parking slot at{" "}
+            Reserve parking capacity at{" "}
             <span className="font-medium text-white">
               {parking.parkingName}
             </span>
@@ -792,17 +779,17 @@ function BookingForm() {
           <button
             type="submit"
             disabled={
-              bookingMutation.isPending ||
+              bookingCheckoutMutation.isPending ||
               activeVehicles.length === 0 ||
               !effectiveBookingMode ||
               !pricePreview
             }
             className="w-full rounded-xl bg-blue-600 px-5 py-4 font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {bookingMutation.isPending ? (
+            {bookingCheckoutMutation.isPending ? (
               <span className="flex items-center justify-center gap-3">
                 <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Creating Booking...
+                Preparing Payment...
               </span>
             ) : pricePreview ? (
               `Continue to Payment • ₹${pricePreview.driverPays.toFixed(2)}`

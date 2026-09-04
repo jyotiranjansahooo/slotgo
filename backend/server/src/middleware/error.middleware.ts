@@ -19,26 +19,16 @@ const errorMiddleware = (
     message = err.message;
     errors = err.errors;
   } else {
-    logger.error(
-      `${req.method} ${req.originalUrl} -> ${err.message}`,
-    );
+    logger.error(`${req.method} ${req.originalUrl} -> ${err.message}`);
 
     if (process.env.NODE_ENV !== "production") {
       message = err.message;
     }
   }
 
-  logger.error(
-    `${req.method} ${req.originalUrl} -> ${message}`,
-  );
+  logger.error(`${req.method} ${req.originalUrl} -> ${message}`);
 
-  res.status(statusCode).json(
-    new ApiResponse(
-      statusCode,
-      errors,
-      message,
-    ),
-  );
+  res.status(statusCode).json(new ApiResponse(statusCode, errors, message));
 };
 
 export default errorMiddleware;

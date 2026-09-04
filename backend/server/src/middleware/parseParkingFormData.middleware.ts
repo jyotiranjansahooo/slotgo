@@ -83,12 +83,6 @@ export default function parseParkingFormData(
       }
     }
 
-    /*
-     * ============================================================
-     * DEBUG
-     * ============================================================
-     */
-
     console.log("\n========== PARKING FORM DATA ==========");
 
     console.dir(req.body, {

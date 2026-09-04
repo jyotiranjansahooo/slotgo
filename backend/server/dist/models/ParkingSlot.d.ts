@@ -6,6 +6,9 @@ export interface IParkingSlot {
     slotNumber: string;
     floor: string;
     supportedVehicleTypes: VehicleType[];
+    capacity: number;
+    occupiedCount: number;
+    reservedCount: number;
     status: SlotStatus;
     displayOrder: number;
     isActive: boolean;

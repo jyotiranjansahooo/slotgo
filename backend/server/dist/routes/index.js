@@ -10,11 +10,6 @@ import reviewRoutes from "./review.routes.js";
 import walletRoutes from "./wallet.routes.js";
 import adminRoutes from "./admin.routes.js";
 const router = Router();
-/*
-|--------------------------------------------------------------------------
-| PUBLIC / USER ROUTES
-|--------------------------------------------------------------------------
-*/
 router.use("/vehicles", vehicleRoutes);
 router.use("/bookings", bookingRoutes);
 router.use("/payments", paymentRoutes);

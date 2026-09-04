@@ -10,11 +10,6 @@ import parkingSlotService from "../services/parkingSlot/parkingSlot.service.js";
 export const createSlot = asyncHandler(async (req: Request, res: Response) => {
   const parkingId = req.params.parkingId as string;
 
-  console.log("================================");
-  console.log("AUTH USER ID:", req.user!._id.toString());
-  console.log("PARKING ID:", parkingId);
-  console.log("================================");
-
   const slot = await parkingSlotService.createSlot(
     req.user!._id.toString(),
     parkingId,

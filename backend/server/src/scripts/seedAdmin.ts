@@ -41,7 +41,7 @@ const seedAdmin = async () => {
       process.exit(1);
     }
 
-    const admin = await User.create({
+    await User.create({
       name: {
         first: "SlotGo",
         last: "Admin",
@@ -63,13 +63,6 @@ const seedAdmin = async () => {
 
       loginCount: 0,
     });
-
-    console.log("====================================");
-    console.log("Admin created successfully");
-    console.log("====================================");
-    console.log(`Email    : ${admin.email}`);
-    console.log(`Role     : ${admin.role}`);
-    console.log("====================================");
 
     process.exit(0);
   } catch (error) {

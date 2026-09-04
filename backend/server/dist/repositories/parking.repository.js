@@ -66,12 +66,6 @@ class ParkingRepository {
             runValidators: true,
         }).lean();
     }
-    // HARD DELETE
-    //
-    // Keep this method available, but owner deletion should use
-    // deactivate() so existing bookings/reviews/history are not
-    // destroyed.
-    //
     async delete(id) {
         if (!Types.ObjectId.isValid(id)) {
             return null;

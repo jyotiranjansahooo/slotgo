@@ -9,6 +9,9 @@ import type {
   CreateOvertimePaymentResponse,
   VerifyOvertimePaymentResponse,
   CheckoutResponse,
+  BookingCheckout,
+  CreateBookingCheckoutData,
+  CreateBookingCheckoutResponse,
 } from "@/types/booking";
 
 export const createBooking = async (
@@ -22,12 +25,45 @@ export const createBooking = async (
   return response.data;
 };
 
+export const createBookingCheckout = async (
+  data: CreateBookingCheckoutData,
+): Promise<ApiResponse<CreateBookingCheckoutResponse>> => {
+  const response = await api.post<ApiResponse<CreateBookingCheckoutResponse>>(
+    "/bookings/checkout",
+    data,
+  );
+
+  return response.data;
+};
+
+export const getBookingCheckout = async (
+  checkoutId: string,
+): Promise<ApiResponse<BookingCheckout>> => {
+  const response = await api.get<ApiResponse<BookingCheckout>>(
+    `/bookings/checkout/${checkoutId}`,
+  );
+
+  return response.data;
+};
+
 export const getMyBookings = async (): Promise<ApiResponse<Booking[]>> => {
   const response = await api.get<ApiResponse<Booking[]>>("/bookings");
 
   return response.data;
 };
+export const cancelBooking = async (
+  bookingId: string,
+  reason: string,
+): Promise<ApiResponse<unknown>> => {
+  const response = await api.post<ApiResponse<unknown>>(
+    `/bookings/${bookingId}/cancel`,
+    {
+      reason,
+    },
+  );
 
+  return response.data;
+};
 export const getOwnerBookings = async (): Promise<ApiResponse<Booking[]>> => {
   const response = await api.get<ApiResponse<Booking[]>>("/bookings/owner");
 

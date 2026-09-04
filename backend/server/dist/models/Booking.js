@@ -337,57 +337,33 @@ bookingSchema.index({
     bookingStatus: 1,
     createdAt: -1,
 });
-/*
- * Parking booking lookup
- */
 bookingSchema.index({
     parkingId: 1,
     bookingStatus: 1,
 });
-/*
- * Slot booking lookup
- */
 bookingSchema.index({
     slotId: 1,
     bookingStatus: 1,
 });
-/*
- * Vehicle overlap lookup
- */
 bookingSchema.index({
     vehicleId: 1,
     bookingStatus: 1,
     startTime: 1,
     endTime: 1,
 });
-/*
- * Time overlap lookup
- */
 bookingSchema.index({
     startTime: 1,
     endTime: 1,
 });
-/*
- * Normal payment lookup
- */
 bookingSchema.index({
     paymentStatus: 1,
 });
-/*
- * Overtime payment order lookup
- */
 bookingSchema.index({
     overtimePaymentOrderId: 1,
 });
-/*
- * Overtime payment status lookup
- */
 bookingSchema.index({
     overtimePaymentStatus: 1,
 });
-/* ====
-   MODEL
-   ====*/
 const Booking = mongoose.models.Booking || mongoose.model("Booking", bookingSchema);
 export default Booking;
 //# sourceMappingURL=Booking.js.map

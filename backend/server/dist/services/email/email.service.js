@@ -11,8 +11,6 @@ const transporter = nodemailer.createTransport({
 export const verifySmtpConnection = async () => {
     try {
         await transporter.verify();
-        console.log("SMTP connection successful");
-        console.log(`SMTP user: ${process.env.SMTP_USER}`);
     }
     catch (error) {
         console.error("SMTP connection failed:");
@@ -22,11 +20,6 @@ export const verifySmtpConnection = async () => {
 };
 export const sendVerificationOtp = async (email, otp) => {
     try {
-        console.log("Sending verification email...");
-        console.log(`SMTP host: ${process.env.SMTP_HOST}`);
-        console.log(`SMTP port: ${process.env.SMTP_PORT}`);
-        console.log(`SMTP user: ${process.env.SMTP_USER}`);
-        console.log(`Sending OTP to: ${email}`);
         await transporter.sendMail({
             from: `"SlotGo" <${process.env.SMTP_FROM}>`,
             to: email,

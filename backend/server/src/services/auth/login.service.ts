@@ -18,11 +18,8 @@ export const loginService = async (data: LoginInput) => {
     throw new ApiError(403, "Account is deactivated");
   }
   if (!user.isVerified) {
-  throw new ApiError(
-    403,
-    "Please verify your email before logging in.",
-  );
-}
+    throw new ApiError(403, "Please verify your email before logging in.");
+  }
 
   // Compare password
   const isPasswordValid = await user.comparePassword(password);

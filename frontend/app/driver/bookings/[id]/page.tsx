@@ -41,9 +41,7 @@ function BookingDetails() {
   });
 
   /*
-   * ============================================================
    * CHECKOUT
-   * ============================================================
    *
    * Backend decides whether overtime payment is required.
    */
@@ -83,9 +81,7 @@ function BookingDetails() {
   });
 
   /*
-   * ============================================================
    * CREATE OVERTIME PAYMENT
-   * ============================================================
    */
 
   const overtimePaymentMutation = useMutation({
@@ -128,21 +124,9 @@ function BookingDetails() {
     },
   });
 
-  /*
-   * ============================================================
-   * LOADING
-   * ============================================================
-   */
-
   if (bookingQuery.isLoading) {
     return <LoadingState />;
   }
-
-  /*
-   * ============================================================
-   * ERROR
-   * ============================================================
-   */
 
   if (bookingQuery.isError) {
     return (
@@ -165,17 +149,13 @@ function BookingDetails() {
   }
 
   /*
-   * ============================================================
    * STATUS
-   * ============================================================
    */
 
   const statusLabel = booking.bookingStatus;
 
   /*
-   * ============================================================
    * CHECKOUT BUTTON STATE
-   * ============================================================
    */
 
   const isCheckingOut =
@@ -184,34 +164,19 @@ function BookingDetails() {
   const canCheckout = booking.bookingStatus === "active";
 
   /*
-   * ============================================================
    * PAYMENT STATE
-   * ============================================================
    */
 
   const isPaid = booking.paymentStatus === "paid";
 
   /*
-   * ============================================================
    * PAGE
-   * ============================================================
    */
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-3xl">
-        {/* ======================================================
-            HEADER
-            ====================================================== */}
-
+      <div className="mx-auto mt-16 max-w-3xl">
         <div className="mb-8">
-          <button
-            type="button"
-            onClick={() => router.push("/driver/bookings")}
-            className="mb-5 text-sm text-slate-400 transition hover:text-white"
-          >
-            ← Back to bookings
-          </button>
 
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
@@ -225,11 +190,6 @@ function BookingDetails() {
             <StatusBadge status={statusLabel} />
           </div>
         </div>
-
-        {/* ======================================================
-            ERROR
-            ====================================================== */}
-
         {error && (
           <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}
@@ -475,7 +435,6 @@ function StatusBadge({ status }: { status: string }) {
     </span>
   );
 }
-
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (

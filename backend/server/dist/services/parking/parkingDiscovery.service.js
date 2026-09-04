@@ -10,7 +10,6 @@ class ParkingDiscoveryService {
     async searchParkings(filters) {
         return parkingRepository.searchParkings(filters);
     }
-    // GET PARKING DETAILS
     async getParkingDetails(parkingId) {
         const parking = await parkingRepository.findApprovedById(parkingId);
         if (!parking) {

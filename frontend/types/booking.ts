@@ -13,7 +13,75 @@ export interface CreateBookingData {
   startTime: string;
   endTime: string;
 }
+export interface CreateBookingCheckoutData {
+  parkingId: string;
 
+  vehicleId: string;
+
+  bookingMode: BookingMode;
+
+  startTime: string;
+
+  endTime: string;
+}
+
+export interface BookingCheckout {
+  _id: string;
+
+  driverId: string;
+
+  ownerId: string;
+
+  parkingId: string;
+
+  slotId: string;
+
+  vehicleId: string;
+
+  vehicleType: string;
+
+  bookingMode: BookingMode;
+
+  startTime: string;
+
+  endTime: string;
+
+  parkingAmount: number;
+
+  discountAmount: number;
+
+  actualAmount: number;
+
+  ownerCommission: number;
+
+  driverServiceFee: number;
+
+  ownerReceives: number;
+
+  driverPays: number;
+
+  orderId: string;
+
+  reservedUntil: string;
+
+  expiresAt: string;
+
+  createdAt: string;
+
+  updatedAt: string;
+}
+
+export interface CreateBookingCheckoutResponse {
+  checkout: BookingCheckout;
+
+  razorpayOrder: {
+    id: string;
+
+    amount: number;
+
+    currency: string;
+  };
+}
 export interface Booking {
   _id: string;
 

@@ -13,6 +13,11 @@ export const createParkingSlotSchema = z.object({
         .min(1, "Floor is required")
         .max(30, "Floor cannot exceed 30 characters")
         .default("Ground"),
+    capacity: z
+        .number()
+        .int("Capacity must be a whole number")
+        .min(1, "Capacity must be at least 1 vehicle")
+        .max(10000, "Capacity cannot exceed 10000 vehicles"),
     supportedVehicleTypes: z
         .array(z.enum(VEHICLE_TYPE_VALUES))
         .min(1, "At least one vehicle type is required"),

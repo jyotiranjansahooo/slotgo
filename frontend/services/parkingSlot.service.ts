@@ -33,6 +33,7 @@ export async function createParkingSlot(
   payload: {
     slotNumber: string;
     floor: string;
+    capacity: number;
     supportedVehicleTypes: string[];
     displayOrder?: number;
     notes?: string;

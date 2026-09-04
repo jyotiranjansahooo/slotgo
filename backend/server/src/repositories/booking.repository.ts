@@ -1,10 +1,8 @@
 import Booking, { IBooking } from "../models/Booking.js";
 import { ClientSession } from "mongoose";
 // import { Types } from "mongoose";
-import Parking from "../models/Parking.js";
+// import Parking from "../models/Parking.js";
 class BookingRepository {
-  // CREATE
-
   async create(data: Partial<IBooking>, session?: ClientSession) {
     if (session) {
       const booking = await Booking.create([data], { session });
@@ -14,8 +12,6 @@ class BookingRepository {
 
     return Booking.create(data);
   }
-
-  // FIND ALL
 
   async findAll() {
     return Booking.find().sort({
@@ -68,18 +64,12 @@ class BookingRepository {
     });
   }
 
-async findByOwner(ownerId: string) {
-  console.log("🔥🔥🔥 FIND BY OWNER WAS CALLED 🔥🔥🔥");
-  console.log("OWNER ID =", ownerId);
-
-  const parkings = await Parking.find({});
-
-  console.log("🔥 TOTAL PARKINGS =", parkings.length);
-
-  return parkings;
-}
-
-  // FIND OVERLAPPING VEHICLE BOOKING
+  async findByOwner(ownerId: string) {
+    return Booking.find({
+      ownerId,
+      isActive: true,
+    }).sort({ createdAt: -1 });
+  }
 
   async findOverlappingBooking(
     vehicleId: string,
@@ -100,23 +90,11 @@ async findByOwner(ownerId: string) {
       },
 
       $or: [
-        // ------------------------------------------------------
-        // CONFIRMED / ACTIVE BOOKINGS
-        // These always block the vehicle.
-        // ------------------------------------------------------
-
         {
           bookingStatus: {
             $in: ["confirmed", "active"],
           },
         },
-
-        // ------------------------------------------------------
-        // PENDING PAYMENT
-        //
-        // A pending booking only blocks the vehicle if its
-        // booking window has not expired.
-        // ------------------------------------------------------
 
         {
           bookingStatus: "pending",

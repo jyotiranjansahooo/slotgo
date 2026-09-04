@@ -10,6 +10,7 @@ class SlotAllocatorService {
 
     return parkingSlotRepository.findFirstAvailable(parkingId, vehicleType);
   }
+
   async confirmReservation(slotId: string) {
     const slot = await parkingSlotRepository.confirmReservation(slotId);
 
@@ -24,7 +25,6 @@ class SlotAllocatorService {
   }
 
   async reserveAvailableSlot(parkingId: string, vehicleType: VehicleType) {
-    // Release expired temporary reservations first.
     await parkingSlotRepository.releaseExpiredReservations();
 
     const reservedUntil = new Date(Date.now() + 15 * 60 * 1000);
@@ -38,17 +38,18 @@ class SlotAllocatorService {
     if (!slot) {
       throw new ApiError(
         409,
-        "No parking slot is available for this vehicle type.",
+        "No parking capacity is available for this vehicle type.",
       );
     }
 
     return slot;
   }
+
   async releaseSlot(slotId: string) {
     const slot = await parkingSlotRepository.release(slotId);
 
     if (!slot) {
-      throw new ApiError(404, "Parking slot not found.");
+      throw new ApiError(404, "Parking slot reservation not found.");
     }
 
     return slot;
@@ -58,7 +59,10 @@ class SlotAllocatorService {
     const slot = await parkingSlotRepository.occupy(slotId);
 
     if (!slot) {
-      throw new ApiError(404, "Parking slot not found.");
+      throw new ApiError(
+        404,
+        "Parking slot not found or no capacity is available.",
+      );
     }
 
     return slot;

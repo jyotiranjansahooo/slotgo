@@ -1,12 +1,16 @@
 import { Router } from "express";
 import authMiddleware from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
-import { createBookingSchema } from "../validations/booking/create.validation.js";
-import { checkInSchema } from "../validations/booking/checkIn.validation.js";
 import requireRole from "../middleware/role.middleware.js";
 import { USER_ROLES } from "../constants/roles.js";
+import { createBookingSchema } from "../validations/booking/create.validation.js";
+import { checkInSchema } from "../validations/booking/checkIn.validation.js";
+import { createBookingCheckoutSchema } from "../validations/booking/checkout.validation.js";
 import { createBooking, verifyPayment, createOvertimePayment, verifyOvertimePayment, getBooking, getDriverBookings, getOwnerBookings, cancelBooking, checkIn, checkOut, } from "../controllers/booking.controller.js";
+import { createBookingCheckout, getBookingCheckout, } from "../controllers/bookingCheckout.controller.js";
 const router = Router();
+router.post("/checkout", authMiddleware, requireRole(USER_ROLES.DRIVER), validate(createBookingCheckoutSchema), createBookingCheckout);
+router.get("/checkout/:checkoutId", authMiddleware, requireRole(USER_ROLES.DRIVER), getBookingCheckout);
 router.post("/", authMiddleware, requireRole(USER_ROLES.DRIVER), validate(createBookingSchema), createBooking);
 router.post("/payment/verify", authMiddleware, requireRole(USER_ROLES.DRIVER), verifyPayment);
 router.post("/:bookingId/payment/overtime", authMiddleware, requireRole(USER_ROLES.DRIVER), createOvertimePayment);

@@ -17,6 +17,10 @@ export interface IParkingSlot {
 
   supportedVehicleTypes: VehicleType[];
 
+  capacity: number;
+  occupiedCount: number;
+  reservedCount: number;
+
   status: SlotStatus;
   displayOrder: number;
   isActive: boolean;
@@ -49,25 +53,46 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
       trim: true,
     },
 
-   supportedVehicleTypes: {
-  type: [
-    {
-      type: String,
-      enum: VEHICLE_TYPE_VALUES,
+    supportedVehicleTypes: {
+      type: [
+        {
+          type: String,
+          enum: VEHICLE_TYPE_VALUES,
+        },
+      ],
+      required: true,
+      validate: {
+        validator: (value: string[]) => value.length > 0,
+        message: "At least one vehicle type is required.",
+      },
     },
-  ],
-  required: true,
-  validate: {
-    validator: (value: string[]) => value.length > 0,
-    message: "At least one vehicle type is required.",
-  },
-},
+
+    capacity: {
+      type: Number,
+      required: true,
+      default: 50,
+      min: 1,
+      max: 10000,
+    },
+
+    occupiedCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+
+    reservedCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
 
     status: {
       type: String,
       enum: SLOT_STATUS_VALUES,
       default: SLOT_STATUS.AVAILABLE,
     },
+
     reservedUntil: {
       type: Date,
       default: null,
@@ -82,9 +107,11 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
       type: Boolean,
       default: true,
     },
+
     lastOccupiedAt: {
       type: Date,
     },
+
     notes: {
       type: String,
       default: "",
@@ -98,7 +125,6 @@ const parkingSlotSchema = new Schema<IParkingSlot>(
   },
 );
 
-/* One slot number cannot repeat inside the same parking */
 parkingSlotSchema.index(
   {
     parkingId: 1,
@@ -109,15 +135,31 @@ parkingSlotSchema.index(
   },
 );
 
-/* Fast lookup for available slots */
 parkingSlotSchema.index({
   parkingId: 1,
   status: 1,
 });
 
-/* Fast lookup by vehicle type */
 parkingSlotSchema.index({
   supportedVehicleTypes: 1,
+});
+
+parkingSlotSchema.index({
+  parkingId: 1,
+  occupiedCount: 1,
+  reservedCount: 1,
+});
+
+parkingSlotSchema.virtual("availableCount").get(function () {
+  return Math.max(0, this.capacity - this.occupiedCount - this.reservedCount);
+});
+
+parkingSlotSchema.set("toJSON", {
+  virtuals: true,
+});
+
+parkingSlotSchema.set("toObject", {
+  virtuals: true,
 });
 
 const ParkingSlot =

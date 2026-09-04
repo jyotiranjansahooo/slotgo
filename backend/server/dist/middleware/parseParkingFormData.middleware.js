@@ -66,11 +66,6 @@ export default function parseParkingFormData(req, res, next) {
                 req.body[field] = numberValue;
             }
         }
-        /*
-         * ============================================================
-         * DEBUG
-         * ============================================================
-         */
         console.log("\n========== PARKING FORM DATA ==========");
         console.dir(req.body, {
             depth: null,
