@@ -1,10 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarDays,
-  CarFront,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -41,31 +41,26 @@ export default function OwnerNavbar() {
 
   return (
     <>
-      {/* DESKTOP / MOBILE NAVBAR */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-[#064b46]/90 backdrop-blur-2xl">
-        <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* LOGO */}
+        <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link
             href="/owner"
-            className="group flex items-center gap-3"
+            className="group flex items-center"
             onClick={() => setMobileOpen(false)}
+            aria-label="SlotGo Owner Dashboard"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-200/15 bg-emerald-300/10 transition group-hover:bg-emerald-300/15">
-              <CarFront className="h-5 w-5 text-emerald-100" />
-            </div>
-
-            <div>
-              <p className="text-lg font-bold tracking-tight text-white">
-                Slot<span className="text-emerald-200">Go</span>
-              </p>
-
-              <p className="hidden text-[10px] font-medium uppercase tracking-[0.18em] text-white/35 sm:block">
-                Owner Portal
-              </p>
+            <div className="flex h-[48px] w-[48px] shrink-0 items-center justify-center overflow-hidden rounded-full bg-transparent/10 shadow-lg shadow-black/15 transition-all duration-300 group-hover:scale-105 group-hover:shadow-xl">
+              <Image
+                src="/images/logo.png"
+                alt="SlotGo"
+                width={150}
+                height={150}
+                priority
+                className="h-full w-full object-contain p-1"
+              />
             </div>
           </Link>
 
-          {/* DESKTOP NAVIGATION */}
           <nav className="hidden items-center gap-1 md:flex">
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -101,9 +96,7 @@ export default function OwnerNavbar() {
             })}
           </nav>
 
-          {/* RIGHT */}
           <div className="flex items-center gap-3">
-            {/* USER */}
             <div className="hidden items-center gap-3 sm:flex">
               <div className="text-right">
                 <p className="text-sm font-medium text-white">
@@ -124,7 +117,6 @@ export default function OwnerNavbar() {
               </Link>
             </div>
 
-            {/* DESKTOP LOGOUT */}
             <button
               type="button"
               onClick={logout}
@@ -134,7 +126,6 @@ export default function OwnerNavbar() {
               Logout
             </button>
 
-            {/* MOBILE BUTTON */}
             <button
               type="button"
               aria-label={mobileOpen ? "Close menu" : "Open menu"}
@@ -150,7 +141,6 @@ export default function OwnerNavbar() {
           </div>
         </div>
 
-        {/* MOBILE MENU */}
         {mobileOpen && (
           <div className="border-t border-white/10 bg-[#064b46]/95 px-4 py-4 backdrop-blur-2xl md:hidden">
             <nav className="space-y-1">

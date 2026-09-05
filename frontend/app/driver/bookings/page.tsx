@@ -369,10 +369,6 @@ function BookingCard({
           </div>
         </div>
 
-        {/* ====================================================
-            VEHICLE / TIME
-            ==================================================== */}
-
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           <InfoItem
             icon={<CarFront className="h-4 w-4" />}

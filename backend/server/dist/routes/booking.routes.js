@@ -3,6 +3,7 @@ import authMiddleware from "../middleware/auth.middleware.js";
 import validate from "../middleware/validate.middleware.js";
 import requireRole from "../middleware/role.middleware.js";
 import { USER_ROLES } from "../constants/roles.js";
+import { cancelBookingSchema } from "../validations/booking/cancel.validation.js";
 import { createBookingSchema } from "../validations/booking/create.validation.js";
 import { checkInSchema } from "../validations/booking/checkIn.validation.js";
 import { createBookingCheckoutSchema } from "../validations/booking/checkout.validation.js";
@@ -18,7 +19,7 @@ router.post("/payment/overtime/verify", authMiddleware, requireRole(USER_ROLES.D
 router.get("/", authMiddleware, requireRole(USER_ROLES.DRIVER), getDriverBookings);
 router.get("/owner", authMiddleware, requireRole(USER_ROLES.PARKING_OWNER), getOwnerBookings);
 router.get("/:bookingId", authMiddleware, getBooking);
-router.post("/:bookingId/cancel", authMiddleware, requireRole(USER_ROLES.DRIVER), cancelBooking);
+router.post("/:bookingId/cancel", authMiddleware, requireRole(USER_ROLES.DRIVER), validate(cancelBookingSchema), cancelBooking);
 router.post("/:bookingId/check-in", authMiddleware, validate(checkInSchema), checkIn);
 router.post("/:bookingId/check-out", authMiddleware, checkOut);
 export default router;

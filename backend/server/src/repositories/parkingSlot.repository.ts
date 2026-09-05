@@ -53,7 +53,27 @@ class ParkingSlotRepository {
       displayOrder: 1,
     });
   }
-
+  async releaseOccupied(slotId: string) {
+    return ParkingSlot.findOneAndUpdate(
+      {
+        _id: slotId,
+        occupiedCount: {
+          $gt: 0,
+        },
+      },
+      {
+        $inc: {
+          occupiedCount: -1,
+        },
+        $set: {
+          lastOccupiedAt: new Date(),
+        },
+      },
+      {
+        new: true,
+      },
+    );
+  }
   async findAvailable(parkingId: string) {
     return ParkingSlot.find({
       parkingId,

@@ -49,10 +49,6 @@ import { getApiErrorMessage } from "@/lib/api-error";
 
 import type { ParkingType } from "@/types/parking";
 
-/* ============================================================
-   CONSTANTS
-============================================================ */
-
 const MAX_IMAGES = 5;
 const MIN_IMAGES = 2;
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -89,15 +85,15 @@ const FACILITIES = [
     label: "CCTV",
   },
   {
-    value: "securityGuard",
+    value: "security_guard",
     label: "Security Guard",
   },
   {
-    value: "coveredParking",
+    value: "covered_parking",
     label: "Covered Parking",
   },
   {
-    value: "evCharging",
+    value: "ev_charging",
     label: "EV Charging",
   },
   {
@@ -109,19 +105,19 @@ const FACILITIES = [
     label: "Washroom",
   },
   {
-    value: "drinkingWater",
+    value: "drinking_water",
     label: "Drinking Water",
   },
   {
-    value: "valetParking",
+    value: "valet_parking",
     label: "Valet Parking",
   },
   {
-    value: "disabledAccess",
+    value: "disabled_access",
     label: "Disabled Access",
   },
   {
-    value: "carWash",
+    value: "car_wash",
     label: "Car Wash",
   },
 ] as const;

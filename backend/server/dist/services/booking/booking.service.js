@@ -304,9 +304,11 @@ class BookingService {
             }
         }
         // RELEASE SLOT
-        const released = await slotAllocatorService.releaseSlot(booking.slotId.toString());
-        if (!released) {
-            throw new ApiError(500, "Unable to release parking slot.");
+        if (booking.bookingStatus === BOOKING_STATUS.PENDING) {
+            const released = await slotAllocatorService.releaseSlot(booking.slotId.toString());
+            if (!released) {
+                throw new ApiError(500, "Unable to release parking slot reservation.");
+            }
         }
         // UPDATE BOOKING
         const updatedBooking = await bookingRepository.update(booking._id.toString(), {
@@ -452,7 +454,7 @@ class BookingService {
             };
         }
         // NORMAL CHECKOUT
-        const released = await slotAllocatorService.releaseSlot(booking.slotId.toString());
+        const released = await slotAllocatorService.releaseOccupiedSlot(booking.slotId.toString());
         if (!released) {
             throw new ApiError(500, "Unable to release parking slot.");
         }

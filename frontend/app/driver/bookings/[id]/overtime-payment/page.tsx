@@ -37,7 +37,7 @@ function OvertimePayment() {
 
   const params = useParams();
 
-  const bookingId = typeof params.Id === "string" ? params.Id : "";
+  const bookingId = typeof params.id === "string" ? params.id : "";
 
   const [error, setError] = useState("");
 

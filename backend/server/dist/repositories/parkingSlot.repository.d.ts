@@ -7,6 +7,7 @@ declare class ParkingSlotRepository {
     findByParkingAndSlotNumber(parkingId: string, slotNumber: string): Promise<any>;
     findByParking(parkingId: string): Promise<any[]>;
     findAvailableByVehicleType(parkingId: string, vehicleType: VehicleType): Promise<any[]>;
+    releaseOccupied(slotId: string): Promise<any>;
     findAvailable(parkingId: string): Promise<any[]>;
     findFirstAvailable(parkingId: string, vehicleType: VehicleType): Promise<any>;
     reserve(parkingId: string, vehicleType: VehicleType, reservedUntil: Date): Promise<any>;

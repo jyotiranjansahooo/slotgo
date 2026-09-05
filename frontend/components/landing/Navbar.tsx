@@ -83,12 +83,6 @@ export default function Navbar() {
     router.push("/login");
   };
 
-  /*
-   * ============================================================
-   * LOGOUT
-   * ============================================================
-   */
-
   const handleLogout = () => {
     setMobileOpen(false);
 
@@ -96,12 +90,6 @@ export default function Navbar() {
 
     router.push("/");
   };
-
-  /*
-   * ============================================================
-   * HOW IT WORKS
-   * ============================================================
-   */
 
   const scrollToHowItWorks = () => {
     setMobileOpen(false);
@@ -114,10 +102,6 @@ export default function Navbar() {
   return (
     <header className="absolute inset-x-0 top-0 z-50">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8 lg:px-10">
-        {/* ======================================================
-            LOGO
-        ====================================================== */}
-
         <button
           type="button"
           onClick={() => goTo("/")}
@@ -131,10 +115,6 @@ export default function Navbar() {
             SlotGo
           </span>
         </button>
-
-        {/* ======================================================
-            DESKTOP NAVIGATION
-        ====================================================== */}
 
         <div className="hidden items-center gap-8 md:flex">
           {/* FIND PARKING */}

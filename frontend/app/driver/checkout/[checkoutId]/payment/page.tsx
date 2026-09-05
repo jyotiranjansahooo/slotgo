@@ -7,7 +7,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-import { getBookingCheckout } from "@/services/booking.service";
+import { getBookingCheckout, verifyPayment } from "@/services/booking.service";
 
 import { getApiErrorMessage } from "@/lib/api-error";
 
@@ -27,17 +27,21 @@ interface RazorpayOptions {
   name: string;
   description: string;
   order_id: string;
+
   prefill?: {
     name?: string;
     email?: string;
     contact?: string;
   };
+
   theme?: {
     color?: string;
   };
+
   modal?: {
     ondismiss?: () => void;
   };
+
   handler: (response: RazorpayResponse) => void;
 }
 
@@ -60,6 +64,9 @@ interface CheckoutVerificationResponse {
   };
 }
 
+const CHECKOUT_EXPIRED_MESSAGE =
+  "This payment checkout has expired. Please start the booking again.";
+
 export default function PaymentPage() {
   return (
     <ProtectedRoute allowedRoles={["driver"]}>
@@ -79,42 +86,82 @@ function Payment() {
   const [isGatewayReady, setIsGatewayReady] = useState(false);
   const [paymentStarted, setPaymentStarted] = useState(false);
 
+  /*
+   * React-safe clock.
+   *
+   * We do not call Date.now() during render.
+   */
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, []);
+
+  /*
+   * GET CHECKOUT
+   */
   const checkoutQuery = useQuery({
     queryKey: ["booking-checkout", checkoutId],
+
     queryFn: () => getBookingCheckout(checkoutId),
+
     enabled: checkoutId.length > 0,
+
     retry: false,
   });
 
   const checkout: BookingCheckout | undefined = checkoutQuery.data?.data;
 
+  /*
+   * CHECKOUT EXPIRATION
+   */
+  const expiresAtMs = checkout
+    ? new Date(checkout.expiresAt).getTime()
+    : Number.NaN;
+
+  const isInvalidExpiry = Number.isNaN(expiresAtMs);
+
+  const isExpired =
+    Boolean(checkout) &&
+    (isInvalidExpiry || (currentTime > 0 && expiresAtMs <= currentTime));
+
+  /*
+   * Show expiration as derived UI state.
+   *
+   * We do NOT call setError() from an effect.
+   */
+  const displayError = isExpired ? CHECKOUT_EXPIRED_MESSAGE : error;
+
+  /*
+   * VERIFY PAYMENT
+   *
+   * IMPORTANT:
+   *
+   * We now use the project's Axios API service instead
+   * of raw fetch().
+   *
+   * This means the same authentication mechanism used by
+   * the rest of the application is used here as well.
+   */
   const verifyMutation = useMutation({
     mutationFn: async (
       data: CheckoutVerificationData,
     ): Promise<CheckoutVerificationResponse> => {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL ?? ""}/api/v1/bookings/checkout/payment/verify`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(data),
-        },
-      );
+      const response = await verifyPayment(data);
 
-      const responseData = await response.json();
-
-      if (!response.ok) {
+      if (!response?.data) {
         throw new Error(
-          responseData?.message ??
-            responseData?.error ??
-            "Payment verification failed.",
+          "Payment verification succeeded but no booking was returned.",
         );
       }
 
-      return responseData;
+      return response.data;
     },
 
     onSuccess: (response) => {
@@ -127,6 +174,7 @@ function Payment() {
         setError(
           "Payment was successful, but the booking ID was not returned.",
         );
+
         return;
       }
 
@@ -135,44 +183,20 @@ function Payment() {
 
     onError: (mutationError: unknown) => {
       setPaymentStarted(false);
+
       setError(getApiErrorMessage(mutationError));
     },
   });
 
-  useEffect(() => {
-    if (!checkout) {
-      return;
-    }
-
-    const expiresAt = new Date(checkout.expiresAt).getTime();
-
-    if (Number.isNaN(expiresAt)) {
-      return;
-    }
-
-    if (expiresAt <= Date.now()) {
-      setError(
-        "This payment checkout has expired. Please start the booking again.",
-      );
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setError(
-        "This payment checkout has expired. Please start the booking again.",
-      );
-    }, expiresAt - Date.now());
-
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [checkout]);
-
+  /*
+   * OPEN RAZORPAY
+   */
   const handlePayment = () => {
     setError("");
 
     if (!checkout) {
       setError("Payment checkout information is not available.");
+
       return;
     }
 
@@ -182,6 +206,7 @@ function Payment() {
 
     if (!isGatewayReady || typeof window === "undefined") {
       setError("Payment gateway is still loading. Please try again.");
+
       return;
     }
 
@@ -191,25 +216,31 @@ function Payment() {
       setError(
         "Razorpay is not configured. Please check NEXT_PUBLIC_RAZORPAY_KEY_ID.",
       );
+
       return;
     }
 
-    const expiresAt = new Date(checkout.expiresAt).getTime();
+    /*
+     * Date.now() is safe here because this function
+     * runs from a user event, not during render.
+     */
+    const checkoutExpiresAt = new Date(checkout.expiresAt).getTime();
 
-    if (Number.isNaN(expiresAt) || expiresAt <= Date.now()) {
-      setError(
-        "This payment checkout has expired. Please start the booking again.",
-      );
+    if (Number.isNaN(checkoutExpiresAt) || checkoutExpiresAt <= Date.now()) {
+      setError(CHECKOUT_EXPIRED_MESSAGE);
+
       return;
     }
 
     if (!checkout.orderId) {
       setError("Payment order ID is missing.");
+
       return;
     }
 
     if (!checkout.driverPays || checkout.driverPays <= 0) {
       setError("Invalid payment amount.");
+
       return;
     }
 
@@ -217,10 +248,15 @@ function Payment() {
 
     const razorpay = new window.Razorpay({
       key: razorpayKey,
+
       amount: Math.round(checkout.driverPays * 100),
+
       currency: "INR",
+
       name: "SlotGo",
-      description: `Parking reservation at SlotGo`,
+
+      description: "Parking reservation at SlotGo",
+
       order_id: checkout.orderId,
 
       theme: {
@@ -230,27 +266,42 @@ function Payment() {
       modal: {
         ondismiss: () => {
           setPaymentStarted(false);
+
           setError("Payment was cancelled.");
         },
       },
 
       handler: (response: RazorpayResponse) => {
+        /*
+         * Razorpay must return all three values.
+         */
         if (
           !response.razorpay_order_id ||
           !response.razorpay_payment_id ||
           !response.razorpay_signature
         ) {
           setPaymentStarted(false);
+
           setError(
             "Razorpay did not return complete payment verification details.",
           );
+
           return;
         }
 
+        /*
+         * Send payment details to our backend.
+         *
+         * The verifyPayment service uses the application's
+         * authenticated Axios client.
+         */
         verifyMutation.mutate({
           checkoutId,
+
           orderId: response.razorpay_order_id,
+
           paymentId: response.razorpay_payment_id,
+
           signature: response.razorpay_signature,
         });
       },
@@ -259,6 +310,9 @@ function Payment() {
     razorpay.open();
   };
 
+  /*
+   * CHECKOUT ID MISSING
+   */
   if (!checkoutId) {
     return (
       <ErrorState
@@ -268,10 +322,16 @@ function Payment() {
     );
   }
 
+  /*
+   * LOADING
+   */
   if (checkoutQuery.isLoading) {
     return <LoadingState />;
   }
 
+  /*
+   * API ERROR
+   */
   if (checkoutQuery.isError) {
     return (
       <ErrorState
@@ -281,6 +341,9 @@ function Payment() {
     );
   }
 
+  /*
+   * NO CHECKOUT
+   */
   if (!checkout) {
     return (
       <ErrorState
@@ -289,10 +352,6 @@ function Payment() {
       />
     );
   }
-
-  const expiresAt = new Date(checkout.expiresAt);
-  const isExpired =
-    Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now();
 
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-10 text-white sm:px-6 lg:px-8">
@@ -308,6 +367,7 @@ function Payment() {
       />
 
       <div className="mx-auto mt-12 w-full max-w-2xl sm:mt-16">
+        {/* HEADER */}
         <div className="mb-8">
           <button
             type="button"
@@ -329,17 +389,20 @@ function Payment() {
           </p>
         </div>
 
-        {error && (
+        {/* ERROR */}
+        {displayError && (
           <div
             role="alert"
             className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-300"
           >
-            {error}
+            {displayError}
           </div>
         )}
 
         <div className="space-y-6">
+          {/* CHECKOUT CARD */}
           <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+            {/* CARD HEADER */}
             <div className="border-b border-white/10 px-5 py-5 sm:px-6">
               <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div>
@@ -364,7 +427,9 @@ function Payment() {
               </div>
             </div>
 
+            {/* CARD BODY */}
             <div className="space-y-6 px-5 py-6 sm:px-6">
+              {/* RESERVATION */}
               <section>
                 <p className="text-xs uppercase tracking-wider text-slate-500">
                   Reservation
@@ -390,6 +455,7 @@ function Payment() {
                 </div>
               </section>
 
+              {/* PAYMENT */}
               <section className="border-t border-white/10 pt-6">
                 <p className="text-xs uppercase tracking-wider text-slate-500">
                   Payment
@@ -426,6 +492,7 @@ function Payment() {
                 </div>
               </section>
 
+              {/* PAYMENT-FIRST INFORMATION */}
               <section className="border-t border-white/10 pt-6">
                 <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
                   <div className="flex gap-3">
@@ -445,6 +512,7 @@ function Payment() {
                 </div>
               </section>
 
+              {/* PAY BUTTON */}
               <button
                 type="button"
                 onClick={handlePayment}
@@ -472,6 +540,7 @@ function Payment() {
                 )}
               </button>
 
+              {/* CANCEL */}
               <button
                 type="button"
                 onClick={() => router.push("/driver/parkings")}
@@ -498,6 +567,10 @@ function InfoItem({ label, value }: { label: string; value: string }) {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* SUMMARY ROW                                                                */
+/* -------------------------------------------------------------------------- */
+
 function SummaryRow({
   label,
   value,
@@ -518,6 +591,10 @@ function SummaryRow({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* LOADING STATE                                                              */
+/* -------------------------------------------------------------------------- */
+
 function LoadingState() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-white">
@@ -529,6 +606,10 @@ function LoadingState() {
     </main>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* ERROR STATE                                                                */
+/* -------------------------------------------------------------------------- */
 
 function ErrorState({
   message,
@@ -560,6 +641,10 @@ function ErrorState({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* FORMAT DATE                                                                */
+/* -------------------------------------------------------------------------- */
+
 function formatDate(value: string): string {
   const date = new Date(value);
 
@@ -573,6 +658,10 @@ function formatDate(value: string): string {
   }).format(date);
 }
 
+/* -------------------------------------------------------------------------- */
+/* FORMAT MONEY                                                               */
+/* -------------------------------------------------------------------------- */
+
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
@@ -580,6 +669,10 @@ function formatMoney(amount: number): string {
     maximumFractionDigits: 2,
   }).format(amount);
 }
+
+/* -------------------------------------------------------------------------- */
+/* FORMAT BOOKING MODE                                                        */
+/* -------------------------------------------------------------------------- */
 
 function formatBookingMode(value: string): string {
   switch (value) {
@@ -596,6 +689,10 @@ function formatBookingMode(value: string): string {
       return value;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* FORMAT VEHICLE TYPE                                                        */
+/* -------------------------------------------------------------------------- */
 
 function formatVehicleType(value: string): string {
   switch (value) {

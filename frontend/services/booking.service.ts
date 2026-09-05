@@ -79,7 +79,30 @@ export const getBooking = async (
 
   return response.data;
 };
+export const verifyPayment = async (
+  data: {
+    checkoutId: string;
+    orderId: string;
+    paymentId: string;
+    signature: string;
+  },
+): Promise<ApiResponse<{
+  booking: {
+    _id: string;
+    bookingNumber?: string;
+  };
+}>> => {
+  const response = await api.post<
+    ApiResponse<{
+      booking: {
+        _id: string;
+        bookingNumber?: string;
+      };
+    }>
+  >("/bookings/payment/verify", data);
 
+  return response.data;
+};
 export const checkOutBooking = async (
   bookingId: string,
 ): Promise<ApiResponse<CheckoutResponse>> => {

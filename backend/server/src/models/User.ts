@@ -114,7 +114,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       type: String,
       sparse: true,
       trim: true,
-
       match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
 
@@ -306,10 +305,6 @@ userSchema.index(
     sparse: true,
   },
 );
-
-/*
- * Phone numbers.
- */
 
 userSchema.index(
   {

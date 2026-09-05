@@ -1,13 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import {
   CalendarDays,
-  CarFront,
   ChevronDown,
   LayoutDashboard,
   LogOut,
   Menu,
-  ShieldCheck,
+  ParkingSquare,
   User,
   Users,
   X,
@@ -40,7 +40,7 @@ const adminNavItems: AdminNavItem[] = [
   {
     href: "/admin/parkings",
     label: "Parkings",
-    icon: CarFront,
+    icon: ParkingSquare,
   },
   {
     href: "/admin/bookings",
@@ -74,54 +74,37 @@ export default function AdminNavbar() {
   };
 
   const handleLogout = () => {
-    /*
-     * Clear access token and stored user.
-     */
     authStorage.clear();
 
-    /*
-     * Close UI before redirect.
-     */
     setProfileOpen(false);
     setMobileOpen(false);
 
-    /*
-     * Leave the admin section completely.
-     */
     router.replace("/login");
   };
 
   return (
     <nav className="sticky top-0 z-50 border-b border-white/10 bg-[#06544E]/90 backdrop-blur-2xl">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* ============================================================
-            BRAND
-        ============================================================ */}
-
-        <Link
-          href="/admin"
-          onClick={() => {
-            setMobileOpen(false);
-            setProfileOpen(false);
-          }}
-          className="flex shrink-0 items-center gap-3"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-sm font-black text-[#06544E] shadow-lg">
-            S
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="font-bold tracking-tight text-white">SlotGo</span>
-
-            <span className="hidden rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white/40 sm:block">
-              Admin
-            </span>
-          </div>
-        </Link>
-
-        {/* ============================================================
-            DESKTOP NAVIGATION
-        ============================================================ */}
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+       <Link
+  href="/admin"
+  onClick={() => {
+    setMobileOpen(false);
+    setProfileOpen(false);
+  }}
+  className="group flex shrink-0 items-center"
+  aria-label="SlotGo Admin Dashboard"
+>
+  <div className="flex h-[56px] w-[56px] items-center justify-center overflow-hidden rounded-full bg-transparent/10 shadow-lg shadow-black/20 transition-all duration-300 group-hover:scale-105">
+    <Image
+      src="/images/logo.png"
+      alt="SlotGo"
+      width={56}
+      height={56}
+      priority
+      className="h-[48px] w-[48px] object-contain"
+    />
+  </div>
+</Link>
 
         <div className="hidden items-center gap-1 lg:flex">
           {adminNavItems.map((item) => {
@@ -152,15 +135,7 @@ export default function AdminNavbar() {
           })}
         </div>
 
-        {/* ============================================================
-            RIGHT SIDE
-        ============================================================ */}
-
         <div className="flex items-center gap-2">
-          {/* ----------------------------------------------------------
-              PROFILE DROPDOWN
-          ---------------------------------------------------------- */}
-
           <div className="relative hidden sm:block">
             <button
               type="button"
@@ -168,13 +143,9 @@ export default function AdminNavbar() {
               aria-expanded={profileOpen}
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.05] px-2 py-1.5 transition hover:bg-white/10 sm:px-2.5"
             >
-              {/* Avatar */}
-
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white text-xs font-bold text-[#06544E]">
                 {initials}
               </div>
-
-              {/* User information */}
 
               <div className="hidden max-w-32 text-left md:block">
                 <p className="truncate text-xs font-semibold text-white/85">
@@ -193,12 +164,8 @@ export default function AdminNavbar() {
               />
             </button>
 
-            {/* Dropdown */}
-
             {profileOpen && (
               <div className="absolute right-0 top-[calc(100%+10px)] w-64 overflow-hidden rounded-2xl border border-white/10 bg-[#075951] shadow-2xl shadow-black/30">
-                {/* Profile header */}
-
                 <div className="border-b border-white/10 p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-sm font-bold text-[#06544E]">
@@ -216,8 +183,6 @@ export default function AdminNavbar() {
                     </div>
                   </div>
                 </div>
-
-                {/* Dropdown actions */}
 
                 <div className="p-2">
                   <Link
@@ -246,10 +211,6 @@ export default function AdminNavbar() {
             )}
           </div>
 
-          {/* ============================================================
-              MOBILE MENU BUTTON
-          ============================================================ */}
-
           <button
             type="button"
             onClick={() => {
@@ -270,10 +231,6 @@ export default function AdminNavbar() {
           </button>
         </div>
       </div>
-
-      {/* ================================================================
-          MOBILE NAVIGATION
-      ================================================================ */}
 
       {mobileOpen && (
         <div className="border-t border-white/10 bg-[#075951]/95 backdrop-blur-2xl lg:hidden">
@@ -305,8 +262,6 @@ export default function AdminNavbar() {
                 );
               })}
 
-              {/* Profile */}
-
               <Link
                 href="/admin/profile"
                 onClick={() => setMobileOpen(false)}
@@ -320,8 +275,6 @@ export default function AdminNavbar() {
                 Profile
               </Link>
             </div>
-
-            {/* Mobile account */}
 
             <div className="my-4 border-t border-white/10" />
 
@@ -340,8 +293,6 @@ export default function AdminNavbar() {
                 </p>
               </div>
             </div>
-
-            {/* Mobile logout */}
 
             <button
               type="button"

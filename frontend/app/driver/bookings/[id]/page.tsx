@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useParams, useRouter } from "next/navigation";
 
@@ -28,10 +28,28 @@ function BookingDetails() {
   const router = useRouter();
   const params = useParams();
 
+  /*
+   * ============================================================
+   * BOOKING ID
+   * ============================================================
+   *
+   * Route:
+   *
+   * /driver/bookings/[id]
+   *
+   * Therefore the parameter is:
+   *
+   * params.id
+   */
   const bookingId = typeof params.id === "string" ? params.id : "";
 
   const [error, setError] = useState("");
 
+  /*
+   * ============================================================
+   * FETCH BOOKING
+   * ============================================================
+   */
   const bookingQuery = useQuery({
     queryKey: ["booking", bookingId],
 
@@ -41,11 +59,12 @@ function BookingDetails() {
   });
 
   /*
+   * ============================================================
    * CHECKOUT
+   * ============================================================
    *
    * Backend decides whether overtime payment is required.
    */
-
   const checkoutMutation = useMutation({
     mutationFn: () => checkOutBooking(bookingId),
 
@@ -55,23 +74,21 @@ function BookingDetails() {
       const result = response.data;
 
       /*
-       * Overtime payment required.
+       * ========================================================
+       * OVERTIME PAYMENT REQUIRED
+       * ========================================================
        */
-
       if (result?.requiresAdditionalPayment) {
-        /*
-         * Create the Razorpay overtime order.
-         */
-
         overtimePaymentMutation.mutate(bookingId);
 
         return;
       }
 
       /*
-       * Normal checkout completed.
+       * ========================================================
+       * NORMAL CHECKOUT COMPLETED
+       * ========================================================
        */
-
       bookingQuery.refetch();
     },
 
@@ -81,9 +98,10 @@ function BookingDetails() {
   });
 
   /*
+   * ============================================================
    * CREATE OVERTIME PAYMENT
+   * ============================================================
    */
-
   const overtimePaymentMutation = useMutation({
     mutationFn: (id: string) => createOvertimePayment(id),
 
@@ -99,23 +117,27 @@ function BookingDetails() {
       }
 
       /*
-       * Store overtime payment information.
+       * ========================================================
+       * STORE OVERTIME PAYMENT INFORMATION
+       * ========================================================
        *
-       * The overtime payment page can use
-       * this information to open Razorpay.
+       * The overtime payment page reads this information
+       * before opening Razorpay.
        */
-
       sessionStorage.setItem(
         `slotgo-overtime-payment-${bookingId}`,
         JSON.stringify({
           orderId: payment.razorpayOrder.id,
-
           amount: payment.razorpayOrder.amount,
-
           currency: payment.razorpayOrder.currency,
         }),
       );
 
+      /*
+       * ========================================================
+       * REDIRECT TO OVERTIME PAYMENT
+       * ========================================================
+       */
       router.push(`/driver/bookings/${bookingId}/overtime-payment`);
     },
 
@@ -124,10 +146,20 @@ function BookingDetails() {
     },
   });
 
+  /*
+   * ============================================================
+   * LOADING
+   * ============================================================
+   */
   if (bookingQuery.isLoading) {
     return <LoadingState />;
   }
 
+  /*
+   * ============================================================
+   * ERROR
+   * ============================================================
+   */
   if (bookingQuery.isError) {
     return (
       <ErrorState
@@ -137,6 +169,11 @@ function BookingDetails() {
     );
   }
 
+  /*
+   * ============================================================
+   * BOOKING
+   * ============================================================
+   */
   const booking = bookingQuery.data?.data;
 
   if (!booking) {
@@ -149,35 +186,41 @@ function BookingDetails() {
   }
 
   /*
+   * ============================================================
    * STATUS
+   * ============================================================
    */
-
   const statusLabel = booking.bookingStatus;
 
   /*
+   * ============================================================
    * CHECKOUT BUTTON STATE
+   * ============================================================
    */
-
   const isCheckingOut =
     checkoutMutation.isPending || overtimePaymentMutation.isPending;
 
   const canCheckout = booking.bookingStatus === "active";
 
   /*
+   * ============================================================
    * PAYMENT STATE
+   * ============================================================
    */
-
   const isPaid = booking.paymentStatus === "paid";
 
   /*
+   * ============================================================
    * PAGE
+   * ============================================================
    */
-
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto mt-16 max-w-3xl">
+        {/* ======================================================
+            HEADER
+            ====================================================== */}
         <div className="mb-8">
-
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-sm text-slate-500">Booking</p>
@@ -190,6 +233,10 @@ function BookingDetails() {
             <StatusBadge status={statusLabel} />
           </div>
         </div>
+
+        {/* ======================================================
+            ERROR MESSAGE
+            ====================================================== */}
         {error && (
           <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
             {error}
@@ -200,7 +247,6 @@ function BookingDetails() {
           {/* ====================================================
               BOOKING INFORMATION
               ==================================================== */}
-
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Booking Details</h2>
 
@@ -232,7 +278,6 @@ function BookingDetails() {
           {/* ====================================================
               VEHICLE
               ==================================================== */}
-
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Vehicle</h2>
 
@@ -257,7 +302,6 @@ function BookingDetails() {
           {/* ====================================================
               PARKING
               ==================================================== */}
-
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Parking</h2>
 
@@ -277,7 +321,6 @@ function BookingDetails() {
           {/* ====================================================
               PAYMENT SUMMARY
               ==================================================== */}
-
           <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6">
             <h2 className="text-lg font-semibold">Payment Summary</h2>
 
@@ -314,7 +357,6 @@ function BookingDetails() {
           {/* ====================================================
               OVERTIME INFORMATION
               ==================================================== */}
-
           {booking.overtimeMinutes > 0 && (
             <section className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5 sm:p-6">
               <h2 className="text-lg font-semibold text-orange-300">
@@ -353,7 +395,6 @@ function BookingDetails() {
           {/* ====================================================
               CHECKOUT
               ==================================================== */}
-
           {canCheckout && (
             <section className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 sm:p-6">
               <h2 className="text-lg font-semibold">Check Out</h2>
@@ -367,7 +408,6 @@ function BookingDetails() {
                 type="button"
                 onClick={() => {
                   setError("");
-
                   checkoutMutation.mutate();
                 }}
                 disabled={isCheckingOut}
@@ -385,7 +425,6 @@ function BookingDetails() {
           {/* ====================================================
               PAYMENT MESSAGE
               ==================================================== */}
-
           {!isPaid && (
             <section className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4">
               <p className="text-sm text-yellow-300">
@@ -410,11 +449,10 @@ function BookingDetails() {
 }
 
 /*
- * ============================================================
+ * ==============================================================
  * STATUS BADGE
- * ============================================================
+ * ==============================================================
  */
-
 function StatusBadge({ status }: { status: string }) {
   const className =
     status === "active"
@@ -436,6 +474,11 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/*
+ * ==============================================================
+ * INFO ITEM
+ * ==============================================================
+ */
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -447,11 +490,10 @@ function InfoItem({ label, value }: { label: string; value: string }) {
 }
 
 /*
- * ============================================================
+ * ==============================================================
  * SUMMARY ROW
- * ============================================================
+ * ==============================================================
  */
-
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
@@ -463,11 +505,10 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 }
 
 /*
- * ============================================================
- * LOADING
- * ============================================================
+ * ==============================================================
+ * LOADING STATE
+ * ==============================================================
  */
-
 function LoadingState() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
@@ -477,11 +518,10 @@ function LoadingState() {
 }
 
 /*
- * ============================================================
+ * ==============================================================
  * ERROR STATE
- * ============================================================
+ * ==============================================================
  */
-
 function ErrorState({
   message,
   onBack,
@@ -509,11 +549,10 @@ function ErrorState({
 }
 
 /*
- * ============================================================
+ * ==============================================================
  * DATE FORMAT
- * ============================================================
+ * ==============================================================
  */
-
 function formatDate(value?: string): string {
   if (!value) {
     return "—";
@@ -530,12 +569,6 @@ function formatDate(value?: string): string {
     timeStyle: "short",
   }).format(date);
 }
-
-/*
- * ============================================================
- * MONEY FORMAT
- * ============================================================
- */
 
 function formatMoney(amount: number): string {
   return new Intl.NumberFormat("en-IN", {

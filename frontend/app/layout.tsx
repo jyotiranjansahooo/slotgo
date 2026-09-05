@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { siteMetadata } from "./metadata";
 import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
@@ -8,10 +9,7 @@ import QueryProvider from "@/providers/QueryProvider";
 import AppLoader from "@/components/layout/AppLoader";
 import PageTransition from "@/components/layout/PageTransition";
 
-export const metadata: Metadata = {
-  title: "SlotGo",
-  description: "Parking management and booking platform",
-};
+export const metadata: Metadata = siteMetadata;
 
 export default function RootLayout({
   children,

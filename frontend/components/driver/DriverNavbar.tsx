@@ -1,20 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   CalendarDays,
   CarFront,
   ChevronDown,
-  CircleUserRound,
   LayoutDashboard,
   LogOut,
   Mail,
   MapPin,
   Menu,
   Phone,
-  UserRound,
   X,
 } from "lucide-react";
 
@@ -26,7 +25,6 @@ export default function DriverNavbar() {
   const { user, logout } = useAuth();
 
   const [profileOpen, setProfileOpen] = useState(false);
-
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const profileRef = useRef<HTMLDivElement>(null);
@@ -108,15 +106,17 @@ export default function DriverNavbar() {
         <Link
           href="/"
           onClick={handleNavigation}
-          className="group flex shrink-0 items-center gap-3"
+          className="group flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-transparent/10 shadow-lg shadow-black/15 transition-all duration-300 hover:scale-105"
+          aria-label="SlotGo home"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#4338ff] shadow-lg transition duration-200 group-hover:-translate-y-0.5 group-hover:scale-105">
-            <MapPin className="h-5 w-5" strokeWidth={2.7} />
-          </span>
-
-          <span className="text-xl font-black tracking-tight text-white">
-            SlotGo
-          </span>
+          <Image
+            src="/images/logo.png"
+            alt="SlotGo"
+            width={120}
+            height={120}
+            priority
+            className="h-full w-full object-contain p-1"
+          />
         </Link>
 
         <nav className="hidden items-center gap-1 md:flex">
@@ -127,6 +127,7 @@ export default function DriverNavbar() {
               <Link
                 key={href}
                 href={href}
+                onClick={handleNavigation}
                 className={`group flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 ${
                   active
                     ? "bg-white text-[#4338ff] shadow-lg shadow-black/10"

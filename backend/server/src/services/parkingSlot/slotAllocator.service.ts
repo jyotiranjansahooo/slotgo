@@ -54,7 +54,15 @@ class SlotAllocatorService {
 
     return slot;
   }
+  async releaseOccupiedSlot(slotId: string) {
+    const slot = await parkingSlotRepository.releaseOccupied(slotId);
 
+    if (!slot) {
+      throw new ApiError(404, "Occupied parking slot not found.");
+    }
+
+    return slot;
+  }
   async occupySlot(slotId: string) {
     const slot = await parkingSlotRepository.occupy(slotId);
 

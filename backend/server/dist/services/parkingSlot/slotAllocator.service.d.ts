@@ -4,6 +4,7 @@ declare class SlotAllocatorService {
     confirmReservation(slotId: string): Promise<any>;
     reserveAvailableSlot(parkingId: string, vehicleType: VehicleType): Promise<any>;
     releaseSlot(slotId: string): Promise<any>;
+    releaseOccupiedSlot(slotId: string): Promise<any>;
     occupySlot(slotId: string): Promise<any>;
 }
 declare const _default: SlotAllocatorService;
