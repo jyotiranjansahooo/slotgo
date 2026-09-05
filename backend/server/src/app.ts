@@ -17,6 +17,7 @@ import { env } from "./config/env.js";
 import routes from "./routes/index.js";
 import notFoundMiddleware from "./middleware/notFound.middleware.js";
 import errorMiddleware from "./middleware/error.middleware.js";
+import healthRouter from "./routes/health.routes.js";
 
 const app: Express = express();
 
@@ -47,6 +48,7 @@ app.use("/api/v1/reviews", reviewRoutes);
 app.use("/api/v1/vehicles", vehicleRoutes);
 app.use("/api/v1/stats", statsRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/health", healthRouter);
 app.use("/api/v1/parkings", parkingSlotRoutes);
 app.use("/api/v1/parkings/:parkingId/slots", parkingSlotRoutes);
 app.use("/api/v1/admin/users", adminUserRoutes);
