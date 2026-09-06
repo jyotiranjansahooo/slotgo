@@ -178,10 +178,9 @@ function AdminParkings() {
 
         <div className="absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-emerald-300/10 blur-[150px]" />
       </div>
-     <AdminNavbar/>
+      <AdminNavbar />
 
       <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-6">
-
         <header className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <div className="flex items-center gap-3">
@@ -197,7 +196,6 @@ function AdminParkings() {
                 </h1>
               </div>
             </div>
-
           </div>
 
           <button
@@ -320,26 +318,26 @@ function AdminParkings() {
       )}
 
       {(approveMutation.isError || rejectMutation.isError) && (
-  <div className="fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-red-300/20 bg-[#073f3a] p-4 shadow-2xl">
-    <div className="flex gap-3">
-      <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+        <div className="fixed bottom-5 left-1/2 z-[60] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-red-300/20 bg-[#073f3a] p-4 shadow-2xl">
+          <div className="flex gap-3">
+            <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
 
-      <div>
-        <p className="text-sm font-semibold">Action failed</p>
+            <div>
+              <p className="text-sm font-semibold">Action failed</p>
 
-        <p className="mt-1 text-xs leading-5 text-white/40">
-          {getApiErrorMessage(
-            approveMutation.error || rejectMutation.error,
-          )}
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+              <p className="mt-1 text-xs leading-5 text-white/40">
+                {getApiErrorMessage(
+                  approveMutation.error || rejectMutation.error,
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-{/* ADMIN FOOTER */}
-<AdminFooter />
-</main>
+      {/* ADMIN FOOTER */}
+      <AdminFooter />
+    </main>
   );
 }
 
@@ -489,8 +487,6 @@ function ParkingDetailModal({
       }}
     >
       <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-[2rem] border border-white/10 bg-[#064b46] shadow-2xl">
-        {/* IMAGE */}
-
         <div className="relative h-56 overflow-hidden sm:h-72">
           {image ? (
             <Image
@@ -534,8 +530,6 @@ function ParkingDetailModal({
         </div>
 
         <div className="p-5 sm:p-7">
-          {/* BASIC INFO */}
-
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <DetailItem label="Owner" value={getOwnerName(parking)} />
 
@@ -565,8 +559,6 @@ function ParkingDetailModal({
             />
           </div>
 
-          {/* ADDRESS */}
-
           <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.035] p-5">
             <p className="text-xs uppercase tracking-wider text-white/30">
               Address
@@ -587,8 +579,6 @@ function ParkingDetailModal({
             </p>
           </div>
 
-          {/* DESCRIPTION */}
-
           {parking.description && (
             <div className="mt-5">
               <p className="text-xs uppercase tracking-wider text-white/30">
@@ -600,8 +590,6 @@ function ParkingDetailModal({
               </p>
             </div>
           )}
-
-          {/* FACILITIES */}
 
           {parking.facilities && parking.facilities.length > 0 && (
             <div className="mt-5">
@@ -621,8 +609,6 @@ function ParkingDetailModal({
               </div>
             </div>
           )}
-
-          {/* PRICING */}
 
           {parking.pricing && (
             <div className="mt-5">
@@ -654,78 +640,104 @@ function ParkingDetailModal({
             </div>
           )}
 
-          {/* ACTIONS */}
+          <div className="mt-7 border-t border-white/10 pt-6">
+            {status === "pending" && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={onReject}
+                  disabled={isProcessing}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300/15 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-100 transition hover:bg-red-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <XCircle className="h-4 w-4" />
+                  )}
+                  Reject parking
+                </button>
 
-          {status === "pending" && (
-            <div className="mt-7 flex flex-col gap-3 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={onReject}
-                disabled={isProcessing}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-300/15 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-100 transition hover:bg-red-400/20 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <XCircle className="h-4 w-4" />
-                )}
-                Reject parking
-              </button>
-
-              <button
-                type="button"
-                onClick={onApprove}
-                disabled={isProcessing}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#06544E] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isProcessing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4" />
-                )}
-                Approve parking
-              </button>
-            </div>
-          )}
-
-          {status === "approved" && (
-            <div className="mt-7 flex items-center gap-3 rounded-2xl border border-emerald-300/10 bg-emerald-300/[0.05] p-4">
-              <CheckCircle2 className="h-5 w-5 text-emerald-200" />
-
-              <div>
-                <p className="text-sm font-semibold">Parking approved</p>
-
-                <p className="mt-1 text-xs text-white/35">
-                  This parking is currently approved.
-                </p>
+                <button
+                  type="button"
+                  onClick={onApprove}
+                  disabled={isProcessing}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#06544E] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  Approve parking
+                </button>
               </div>
-            </div>
-          )}
+            )}
 
-          {status === "rejected" && (
-            <div className="mt-7 flex items-center gap-3 rounded-2xl border border-red-300/10 bg-red-400/[0.05] p-4">
-              <XCircle className="h-5 w-5 text-red-200" />
+            {status === "approved" && (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 rounded-2xl border border-emerald-300/10 bg-emerald-300/[0.05] p-4">
+                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-200" />
 
-              <div>
-                <p className="text-sm font-semibold">Parking rejected</p>
+                  <div>
+                    <p className="text-sm font-semibold">Parking approved</p>
 
-                <p className="mt-1 text-xs text-white/35">
-                  This parking has been rejected.
-                </p>
+                    <p className="mt-1 text-xs text-white/35">
+                      This parking is currently approved.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onReject}
+                  disabled={isProcessing}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-red-300/15 bg-red-400/10 px-5 py-3 text-sm font-semibold text-red-100 transition hover:bg-red-400/20 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <XCircle className="h-4 w-4" />
+                  )}
+                  Change to rejected
+                </button>
               </div>
-            </div>
-          )}
+            )}
+
+            {status === "rejected" && (
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-3 rounded-2xl border border-red-300/10 bg-red-400/[0.05] p-4">
+                  <XCircle className="h-5 w-5 shrink-0 text-red-200" />
+
+                  <div>
+                    <p className="text-sm font-semibold">Parking rejected</p>
+
+                    <p className="mt-1 text-xs text-white/35">
+                      This parking is currently rejected.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onApprove}
+                  disabled={isProcessing}
+                  className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-[#06544E] transition hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  Change to approved
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </div>  
     </div>
   );
 }
-
-/*
-|--------------------------------------------------------------------------
-| PRICING
-|--------------------------------------------------------------------------
-*/
 
 function PricingCard({
   title,
@@ -912,7 +924,6 @@ function StatusBadge({ status }: { status: ParkingStatus }) {
   );
 }
 
-
 function EmptyState({
   search,
   statusFilter,
@@ -934,7 +945,6 @@ function EmptyState({
     </div>
   );
 }
-
 
 function PageLoading() {
   return (

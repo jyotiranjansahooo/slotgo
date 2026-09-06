@@ -23,6 +23,7 @@ export default function DriverNavbar() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const isLoggedIn = Boolean(user);
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -106,7 +107,7 @@ export default function DriverNavbar() {
         <Link
           href="/"
           onClick={handleNavigation}
-          className="group flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-transparent/10 shadow-lg shadow-black/15 transition-all duration-300 hover:scale-105"
+          className="group flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-transparent/10 shadow-lg shadow-black/15 transition-all duration-300 hover:scale-105"
           aria-label="SlotGo home"
         >
           <Image
@@ -147,127 +148,144 @@ export default function DriverNavbar() {
           })}
         </nav>
 
-        <div ref={profileRef} className="relative hidden md:block">
-          <button
-            type="button"
-            onClick={() => setProfileOpen((current) => !current)}
-            className={`flex items-center gap-2.5 rounded-2xl border px-2 py-1.5 transition-all duration-200 ${
-              profileOpen
-                ? "border-white/30 bg-white/15 shadow-lg"
-                : "border-white/15 bg-white/5 hover:border-white/25 hover:bg-white/10"
-            }`}
-            aria-expanded={profileOpen}
-            aria-label="Open user menu"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-xs font-black text-[#4338ff] shadow-md">
-              {initials}
-            </span>
-
-            <span className="hidden max-w-[130px] truncate text-sm font-bold text-white lg:block">
-              {user?.firstName || "Driver"}
-            </span>
-
-            <ChevronDown
-              className={`h-4 w-4 text-white/80 transition-transform duration-200 ${
-                profileOpen ? "rotate-180" : ""
+        {isLoggedIn ? (
+          <div ref={profileRef} className="relative hidden md:block">
+            <button
+              type="button"
+              onClick={() => setProfileOpen((current) => !current)}
+              className={`flex items-center gap-2.5 rounded-2xl border px-2 py-1.5 transition-all duration-200 ${
+                profileOpen
+                  ? "border-white/30 bg-white/15 shadow-lg"
+                  : "border-white/15 bg-white/5 hover:border-white/25 hover:bg-white/10"
               }`}
-            />
-          </button>
+              aria-expanded={profileOpen}
+              aria-label="Open user menu"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white text-xs font-black text-[#4338ff] shadow-md">
+                {initials}
+              </span>
 
-          {profileOpen && (
-            <div className="absolute right-0 top-[calc(100%+12px)] w-[330px] overflow-hidden rounded-3xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl shadow-black/25">
-              <div className="bg-[#4338ff] p-5">
-                <div className="flex items-center gap-3">
+              <span className="hidden max-w-[130px] truncate text-sm font-bold text-white lg:block">
+                {user?.firstName}
+              </span>
+
+              <ChevronDown
+                className={`h-4 w-4 text-white/80 transition-transform duration-200 ${
+                  profileOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {profileOpen && (
+              <div className="absolute right-0 top-[calc(100%+12px)] w-[330px] overflow-hidden rounded-3xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl shadow-black/25">
+                <div className="bg-[#4338ff] p-5">
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setProfileOpen(false);
+                        setMobileOpen(false);
+                        router.push("/driver");
+                      }}
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-black text-[#4338ff] shadow-lg transition duration-200 hover:scale-105 hover:bg-white/95 active:scale-95"
+                    >
+                      {initials}
+                    </button>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-base font-bold text-white">
+                        {fullName}
+                      </p>
+
+                      <p className="mt-1 text-xs font-semibold text-white/65">
+                        Driver account
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 p-3">
+                  <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3 py-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4338ff] shadow-sm">
+                      <Mail className="h-4 w-4" />
+                    </span>
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+                        Email
+                      </p>
+
+                      <p className="mt-0.5 truncate text-xs font-semibold text-zinc-700">
+                        {user?.email || "Not available"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3 py-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4338ff] shadow-sm">
+                      <Phone className="h-4 w-4" />
+                    </span>
+
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
+                        Phone
+                      </p>
+
+                      <p className="mt-0.5 text-xs font-semibold text-zinc-700">
+                        {user?.phoneNumber || "Not available"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-zinc-100 p-3">
+                  <Link
+                    href="/driver/vehicles"
+                    onClick={handleNavigation}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    <CarFront className="h-4 w-4 text-[#4338ff]" />
+                    My Vehicles
+                  </Link>
+
+                  <Link
+                    href="/driver/bookings"
+                    onClick={handleNavigation}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
+                  >
+                    <CalendarDays className="h-4 w-4 text-[#4338ff]" />
+                    My Bookings
+                  </Link>
+
                   <button
                     type="button"
-                    onClick={() => {
-                      setProfileOpen(false);
-                      setMobileOpen(false);
-                      router.push("/driver");
-                    }}
-                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-black text-[#4338ff] shadow-lg transition duration-200 hover:scale-105 hover:bg-white/95 active:scale-95"
-                    aria-label="Go to driver dashboard"
+                    onClick={handleLogout}
+                    className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
                   >
-                    {initials}
+                    <LogOut className="h-4 w-4" />
+                    Logout
                   </button>
-
-                  <div className="min-w-0">
-                    <p className="truncate text-base font-bold text-white">
-                      {fullName}
-                    </p>
-
-                    <p className="mt-1 text-xs font-semibold text-white/65">
-                      Driver account
-                    </p>
-                  </div>
                 </div>
               </div>
+            )}
+          </div>
+        ) : (
+          <div className="hidden items-center gap-3 md:flex">
+            <Link
+              href="/login"
+              className="rounded-2xl border border-white/40 bg-white/5 px-6 py-3 text-sm font-semibold text-white transition-all duration-200 hover:bg-white/10 hover:border-white/70"
+            >
+              Login
+            </Link>
 
-              <div className="space-y-2 p-3">
-                <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3 py-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4338ff] shadow-sm">
-                    <Mail className="h-4 w-4" />
-                  </span>
-
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
-                      Email
-                    </p>
-
-                    <p className="mt-0.5 truncate text-xs font-semibold text-zinc-700">
-                      {user?.email || "Not available"}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-3 py-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#4338ff] shadow-sm">
-                    <Phone className="h-4 w-4" />
-                  </span>
-
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-zinc-400">
-                      Phone
-                    </p>
-
-                    <p className="mt-0.5 text-xs font-semibold text-zinc-700">
-                      {user?.phoneNumber || "Not available"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-zinc-100 p-3">
-                <Link
-                  href="/driver/vehicles"
-                  onClick={handleNavigation}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-                >
-                  <CarFront className="h-4 w-4 text-[#4338ff]" />
-                  My Vehicles
-                </Link>
-
-                <Link
-                  href="/driver/bookings"
-                  onClick={handleNavigation}
-                  className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50"
-                >
-                  <CalendarDays className="h-4 w-4 text-[#4338ff]" />
-                  My Bookings
-                </Link>
-
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  className="mt-1 flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-semibold text-red-600 transition hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            <Link
+              href="/register"
+              className="rounded-2xl bg-white px-6 py-3 text-sm font-bold text-[#4338ff] shadow-lg shadow-black/10 transition-all duration-200 hover:scale-105 hover:bg-white/90"
+            >
+              Create Account
+            </Link>
+          </div>
+        )}
 
         <button
           type="button"
