@@ -36,12 +36,6 @@ interface GoogleAccounts {
   id: GoogleAccountsId;
 }
 
-interface GoogleWindow extends Window {
-  google?: {
-    accounts: GoogleAccounts;
-  };
-}
-
 declare global {
   interface Window {
     google?: {
@@ -56,57 +50,49 @@ interface GoogleLoginButtonProps {
 
 let googleScriptPromise: Promise<void> | null = null;
 
-function loadGoogleScript(): Promise<void> {
-  /*
-   * IMPORTANT:
-   *
-   * Reuse the same promise so React Strict Mode,
-   * route changes, or multiple buttons don't load
-   * Google Identity Services multiple times.
-   */
+let googleInitialized = false;
 
+let googleCredentialHandler: ((credential: string) => Promise<void>) | null =
+  null;
+
+function loadGoogleScript(): Promise<void> {
   if (googleScriptPromise) {
     return googleScriptPromise;
   }
 
   googleScriptPromise = new Promise((resolve, reject) => {
-    /*
-     * Google is already available
-     */
     if (window.google?.accounts?.id) {
       resolve();
       return;
     }
 
-    /*
-     * Script already exists
-     */
     const existingScript = document.querySelector(
       'script[src="https://accounts.google.com/gsi/client"]',
     );
 
     if (existingScript) {
-      existingScript.addEventListener("load", () => resolve());
-
-      existingScript.addEventListener("error", () => {
-        reject(new Error("Failed to load Google Identity Services."));
+      existingScript.addEventListener("load", () => resolve(), {
+        once: true,
       });
+
+      existingScript.addEventListener(
+        "error",
+        () => {
+          reject(new Error("Failed to load Google Identity Services."));
+        },
+        { once: true },
+      );
 
       return;
     }
 
-    /*
-     * Create Google script
-     */
     const script = document.createElement("script");
 
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
 
-    script.onload = () => {
-      resolve();
-    };
+    script.onload = () => resolve();
 
     script.onerror = () => {
       reject(new Error("Failed to load Google Identity Services."));
@@ -124,10 +110,52 @@ export default function GoogleLoginButton({ role }: GoogleLoginButtonProps) {
 
   const buttonRef = useRef<HTMLDivElement | null>(null);
 
-  const initializedRef = useRef(false);
+  const handlerRef = useRef<(credential: string) => Promise<void>>(
+    async () => {},
+  );
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    handlerRef.current = async (credential: string) => {
+      try {
+        setError("");
+        setLoading(true);
+
+        console.log("Google credential received: YES");
+
+        const user = await googleLogin(credential);
+
+        if (user.role === "driver") {
+          router.replace("/");
+          return;
+        }
+
+        if (user.role === "parkingOwner") {
+          router.replace("/owner");
+          return;
+        }
+
+        if (user.role === "admin") {
+          router.replace("/admin");
+          return;
+        }
+
+        setError("Unknown user role.");
+      } catch (error: unknown) {
+        console.error("Google login error:", error);
+
+        if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError("Google login failed. Please try again.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+  }, [googleLogin, router, role]);
 
   useEffect(() => {
     let cancelled = false;
@@ -137,16 +165,10 @@ export default function GoogleLoginButton({ role }: GoogleLoginButtonProps) {
         const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
         if (!clientId) {
-          console.error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is missing.");
-
           setError("Google login is not configured.");
-
           return;
         }
 
-        /*
-         * Load Google Identity Services
-         */
         await loadGoogleScript();
 
         if (cancelled) {
@@ -161,90 +183,31 @@ export default function GoogleLoginButton({ role }: GoogleLoginButtonProps) {
           return;
         }
 
-        /*
-         * Prevent duplicate initialization
-         */
-        if (initializedRef.current) {
-          return;
+        if (!googleInitialized) {
+          googleInitialized = true;
+
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+
+            callback: async (response: GoogleCredentialResponse) => {
+              if (!response?.credential) {
+                console.error("Google credential was not returned.", response);
+
+                if (googleCredentialHandler) {
+                  await googleCredentialHandler("");
+                }
+
+                return;
+              }
+
+              if (googleCredentialHandler) {
+                await googleCredentialHandler(response.credential);
+              }
+            },
+          });
         }
 
-        initializedRef.current = true;
-
-        /*
-         * --------------------------------------------------
-         * INITIALIZE GOOGLE
-         * --------------------------------------------------
-         */
-
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-
-          callback: async (response: GoogleCredentialResponse) => {
-            /*
-             * Google must return a credential
-             */
-            if (!response?.credential) {
-              console.error("Google credential was not returned.", response);
-
-              setError("Google did not return a login credential.");
-
-              return;
-            }
-
-            try {
-              setError("");
-              setLoading(true);
-
-              console.log(
-                "Google credential received:",
-                response.credential ? "YES" : "NO",
-              );
-
-              const user = await googleLogin(response.credential);
-
-              if (user.role === "driver") {
-                router.replace("/");
-                return;
-              }
-
-              if (user.role === "parkingOwner") {
-                router.replace("/owner");
-                return;
-              }
-
-              if (user.role === "admin") {
-                router.replace("/admin");
-                return;
-              }
-
-              setError("Unknown user role.");
-            } catch (error: unknown) {
-              console.error("Google login error:", error);
-
-              if (error instanceof Error) {
-                setError(error.message);
-              } else {
-                setError("Google login failed. Please try again.");
-              }
-            } finally {
-              setLoading(false);
-            }
-          },
-        });
-
-        /*
-         * --------------------------------------------------
-         * RENDER NORMAL GOOGLE BUTTON
-         * --------------------------------------------------
-         *
-         * We intentionally DO NOT call:
-         *
-         * google.accounts.id.prompt()
-         *
-         * That is Google One Tap.
-         *
-         * We don't need it.
-         */
+        buttonRef.current.innerHTML = "";
 
         window.google.accounts.id.renderButton(buttonRef.current, {
           type: "standard",
@@ -264,12 +227,31 @@ export default function GoogleLoginButton({ role }: GoogleLoginButtonProps) {
       }
     };
 
+    googleCredentialHandler = async (credential: string) => {
+      if (!credential) {
+        setError("Google did not return a login credential.");
+        return;
+      }
+
+      await handlerRef.current(credential);
+    };
+
     initializeGoogle();
 
     return () => {
       cancelled = true;
+
+      if (googleCredentialHandler) {
+        googleCredentialHandler = null;
+      }
+
+      window.google?.accounts?.id.cancel();
+
+      if (buttonRef.current) {
+        buttonRef.current.innerHTML = "";
+      }
     };
-  }, [googleLogin, router, role]);
+  }, []);
 
   return (
     <div className="w-full">
