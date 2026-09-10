@@ -1,124 +1,91 @@
 import nodemailer from "nodemailer";
 import SMTPTransport from "nodemailer/lib/smtp-transport/index.js";
+import dns from "node:dns";
 
-const smtpHost = process.env.SMTP_HOST;
+dns.setDefaultResultOrder("ipv4first");
+
 const smtpPort = Number(process.env.SMTP_PORT ?? 587);
-const smtpUser = process.env.SMTP_USER;
-const smtpPassword = process.env.SMTP_PASSWORD;
-const smtpFrom = process.env.SMTP_FROM;
-
-if (
-  !smtpHost ||
-  !smtpUser ||
-  !smtpPassword ||
-  !smtpFrom
-) {
-  throw new Error(
-    "Missing required SMTP environment variables.",
-  );
-}
 
 const transportOptions: SMTPTransport.Options = {
-  host: smtpHost,
-
+  host: process.env.SMTP_HOST,
   port: smtpPort,
 
   secure: process.env.SMTP_SECURE === "true",
 
   auth: {
-    user: smtpUser,
-    pass: smtpPassword,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
   },
 
   connectionTimeout: 10_000,
-
   greetingTimeout: 10_000,
-
   socketTimeout: 15_000,
 };
 
-const transporter =
-  nodemailer.createTransport(transportOptions);
+const transporter = nodemailer.createTransport(transportOptions);
 
-export const verifySmtpConnection =
-  async (): Promise<void> => {
-    try {
-      await transporter.verify();
+export const verifySmtpConnection = async (): Promise<void> => {
+  try {
+    await transporter.verify();
 
-      console.log(
-        "SMTP connection verified successfully",
-      );
-    } catch (error) {
-      console.error(
-        "SMTP connection failed:",
-        error,
-      );
+    console.log("SMTP connection verified successfully");
+  } catch (error) {
+    console.error("SMTP connection failed:");
+    console.error(error);
 
-      throw error;
-    }
-  };
+    throw error;
+  }
+};
 
-export const sendVerificationOtp =
-  async (
-    email: string,
-    otp: string,
-  ): Promise<void> => {
-    try {
-      await transporter.sendMail({
-        from: `"SlotGo" <${smtpFrom}>`,
+export const sendVerificationOtp = async (
+  email: string,
+  otp: string,
+): Promise<void> => {
+  try {
+    await transporter.sendMail({
+      from: `"SlotGo" <${process.env.SMTP_FROM}>`,
+      to: email,
 
-        to: email,
+      subject: "Verify your SlotGo account",
 
-        subject:
-          "Verify your SlotGo account",
+      text: `Your SlotGo verification code is ${otp}. It expires in 10 minutes.`,
 
-        text:
-          `Your SlotGo verification code is ${otp}. ` +
-          "It expires in 10 minutes.",
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">
+          <h2>Verify your SlotGo account</h2>
 
-        html: `
-          <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">
-            <h2>Verify your SlotGo account</h2>
+          <p>
+            Use the verification code below to complete your registration.
+          </p>
 
-            <p>
-              Use the verification code below to complete
-              your registration.
-            </p>
-
-            <div
-              style="
-                font-size:32px;
-                font-weight:700;
-                letter-spacing:8px;
-                margin:24px 0;
-              "
-            >
-              ${otp}
-            </div>
-
-            <p>
-              This code expires in
-              <strong>10 minutes</strong>.
-            </p>
-
-            <p>
-              If you did not request this code,
-              you can safely ignore this email.
-            </p>
+          <div
+            style="
+              font-size:32px;
+              font-weight:700;
+              letter-spacing:8px;
+              margin:24px 0;
+            "
+          >
+            ${otp}
           </div>
-        `,
-      });
 
-      console.log(
-        `Verification email sent successfully to ${email}`,
-      );
-    } catch (error) {
-      console.error(
-        "Nodemailer sendMail failed:",
-        error,
-      );
+          <p>
+            This code expires in <strong>10 minutes</strong>.
+          </p>
 
-      throw error;
-    }
-  };
+          <p>
+            If you did not request this code,
+            you can safely ignore this email.
+          </p>
+        </div>
+      `,
+    });
 
+    console.log(`Verification email sent successfully to ${email}`);
+  } catch (error) {
+    console.error("Nodemailer sendMail failed:");
+    console.error(error);
+
+    throw new Error("Unable to send verification email. Please try again.");
+  }
+};
