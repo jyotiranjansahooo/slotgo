@@ -1,41 +1,34 @@
-import nodemailer from "nodemailer";
-import SMTPTransport from "nodemailer/lib/smtp-transport/index.js";
-import dns from "node:dns";
+import { Resend } from "resend";
 
-dns.setDefaultResultOrder("ipv4first");
+const apiKey = process.env.RESEND_API_KEY;
+const emailFrom = process.env.EMAIL_FROM;
 
-const smtpPort = Number(process.env.SMTP_PORT ?? 587);
+if (!apiKey) {
+  throw new Error("RESEND_API_KEY is not configured.");
+}
 
-const transportOptions: SMTPTransport.Options = {
-  host: process.env.SMTP_HOST,
-  port: smtpPort,
+if (!emailFrom) {
+  throw new Error("EMAIL_FROM is not configured.");
+}
 
-  secure: process.env.SMTP_SECURE === "true",
+const resend = new Resend(apiKey);
 
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-
-  connectionTimeout: 15_000,
-  greetingTimeout: 15_000,
-  socketTimeout: 20_000,
+export const verifySmtpConnection = async (): Promise<void> => {
+  console.log("Email service ready.");
 };
-
-const transporter = nodemailer.createTransport(transportOptions);
 
 export const sendVerificationOtp = async (
   email: string,
   otp: string,
 ): Promise<void> => {
   try {
-    await transporter.sendMail({
-      from: `"SlotGo" <${process.env.SMTP_FROM}>`,
-      to: email,
+    const result = await resend.emails.send({
+      from: emailFrom,
+      to: [email],
       subject: "Verify your SlotGo account",
-
-      text: `Your SlotGo verification code is ${otp}. It expires in 10 minutes.`,
-
+      text:
+        `Your SlotGo verification code is ${otp}. ` +
+        "It expires in 10 minutes.",
       html: `
         <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">
           <h2>Verify your SlotGo account</h2>
@@ -67,10 +60,20 @@ export const sendVerificationOtp = async (
       `,
     });
 
-    console.log(`Verification email sent successfully to ${email}`);
-  } catch (error) {
-    console.error("Nodemailer sendMail failed:", error);
+    if (result.error) {
+      console.error("Resend email failed:", result.error);
 
-    throw new Error("Unable to send verification email. Please try again.");
+      throw new Error(result.error.message);
+    }
+
+    console.log(
+      `Verification email sent successfully to ${email}`,
+    );
+  } catch (error) {
+    console.error("Email sending failed:", error);
+
+    throw new Error(
+      "Unable to send verification email. Please try again.",
+    );
   }
 };
