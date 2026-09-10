@@ -1,6 +1,11 @@
 import ApiError from "../../utils/ApiError.js";
+
 import User from "../../models/User.js";
+
+import PendingRegistration from "../../models/PendingRegistration.js";
+
 import { verifyOtp, getMaxOtpAttempts } from "../../utils/otp.js";
+
 import { generateAccessToken, generateRefreshToken } from "../../utils/jwt.js";
 
 export interface VerifyOtpData {
@@ -11,66 +16,42 @@ export interface VerifyOtpData {
 export const verifyOtpService = async ({ email, otp }: VerifyOtpData) => {
   const normalizedEmail = email.trim().toLowerCase();
 
-  const user = await User.findOne({
+  const pendingRegistration = await PendingRegistration.findOne({
     email: normalizedEmail,
-  }).select(
-    "+verificationOtpHash +verificationOtpExpiresAt +verificationOtpAttempts +refreshToken",
-  );
+  }).select("+otpHash +otpExpiresAt +otpAttempts +passwordHash");
 
-  if (!user) {
-    throw new ApiError(404, "Account not found");
-  }
-
-  if (user.isVerified) {
-    throw new ApiError(400, "Email is already verified");
-  }
-
-  if (!user.verificationOtpHash) {
+  if (!pendingRegistration) {
     throw new ApiError(
-      400,
-      "No verification code found. Please request a new code.",
+      404,
+      "Registration request not found. Please register again.",
     );
   }
 
-  if (!user.verificationOtpExpiresAt) {
-    throw new ApiError(
-      400,
-      "Verification code has expired. Please request a new code.",
-    );
-  }
-
-  if (user.verificationOtpExpiresAt.getTime() <= Date.now()) {
-    user.verificationOtpHash = "";
-    user.verificationOtpExpiresAt = undefined;
-    user.verificationOtpAttempts = 0;
-
-    await user.save();
+  if (pendingRegistration.otpExpiresAt.getTime() <= Date.now()) {
+    await PendingRegistration.findByIdAndDelete(pendingRegistration._id);
 
     throw new ApiError(
       400,
-      "Verification code has expired. Please request a new code.",
+      "Verification code has expired. Please register again.",
     );
   }
 
   const maxAttempts = getMaxOtpAttempts();
 
-  if (user.verificationOtpAttempts >= maxAttempts) {
+  if (pendingRegistration.otpAttempts >= maxAttempts) {
     throw new ApiError(
       429,
       "Too many incorrect attempts. Please request a new verification code.",
     );
   }
 
-  const isValidOtp = verifyOtp(otp, user.verificationOtpHash);
+  const isValidOtp = verifyOtp(otp, pendingRegistration.otpHash);
 
   if (!isValidOtp) {
-    user.verificationOtpAttempts += 1;
+    pendingRegistration.otpAttempts += 1;
 
-    if (user.verificationOtpAttempts >= maxAttempts) {
-      user.verificationOtpHash = "";
-      user.verificationOtpExpiresAt = undefined;
-
-      await user.save();
+    if (pendingRegistration.otpAttempts >= maxAttempts) {
+      await PendingRegistration.findByIdAndDelete(pendingRegistration._id);
 
       throw new ApiError(
         429,
@@ -78,9 +59,9 @@ export const verifyOtpService = async ({ email, otp }: VerifyOtpData) => {
       );
     }
 
-    await user.save();
+    await pendingRegistration.save();
 
-    const remainingAttempts = maxAttempts - user.verificationOtpAttempts;
+    const remainingAttempts = maxAttempts - pendingRegistration.otpAttempts;
 
     throw new ApiError(
       400,
@@ -90,15 +71,62 @@ export const verifyOtpService = async ({ email, otp }: VerifyOtpData) => {
     );
   }
 
-  user.isVerified = true;
-  user.verifiedAt = new Date();
+  const existingUser = await User.findOne({
+    $or: [
+      {
+        email: pendingRegistration.email,
+      },
+      {
+        phoneNumber: pendingRegistration.phoneNumber,
+      },
+    ],
+  });
 
-  user.verificationOtpHash = "";
-  user.verificationOtpExpiresAt = undefined;
-  user.verificationOtpAttempts = 0;
+  if (existingUser) {
+    await PendingRegistration.findByIdAndDelete(pendingRegistration._id);
 
-  user.lastLogin = new Date();
-  user.loginCount += 1;
+    throw new ApiError(
+      409,
+      "An account with this email or phone number already exists.",
+    );
+  }
+
+  const user = new User({
+    name: {
+      first: pendingRegistration.firstName,
+      last: pendingRegistration.lastName,
+    },
+
+    email: pendingRegistration.email,
+
+    phoneNumber: pendingRegistration.phoneNumber,
+
+    password: pendingRegistration.passwordHash,
+
+    authProvider: "local",
+
+    role: pendingRegistration.role,
+
+    isVerified: true,
+
+    verifiedAt: new Date(),
+
+    verificationOtpHash: "",
+
+    verificationOtpExpiresAt: undefined,
+
+    verificationOtpAttempts: 0,
+
+    isActive: true,
+
+    lastLogin: new Date(),
+
+    loginCount: 1,
+  });
+
+  await user.save();
+
+  await PendingRegistration.findByIdAndDelete(pendingRegistration._id);
 
   const accessToken = generateAccessToken(user);
 
@@ -111,15 +139,24 @@ export const verifyOtpService = async ({ email, otp }: VerifyOtpData) => {
   return {
     user: {
       id: user._id.toString(),
+
       firstName: user.name.first,
+
       lastName: user.name.last,
+
       email: user.email,
+
       phoneNumber: user.phoneNumber,
+
       role: user.role,
+
       avatar: user.avatar,
+
       isVerified: user.isVerified,
     },
+
     accessToken,
+
     refreshToken,
   };
 };

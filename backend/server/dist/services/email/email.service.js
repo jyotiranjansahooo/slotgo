@@ -1,16 +1,22 @@
 import nodemailer from "nodemailer";
-const transporter = nodemailer.createTransport({
+const smtpPort = Number(process.env.SMTP_PORT ?? 587);
+const transportOptions = {
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT ?? 587),
+    port: smtpPort,
     secure: process.env.SMTP_SECURE === "true",
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
     },
-});
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 15_000,
+};
+const transporter = nodemailer.createTransport(transportOptions);
 export const verifySmtpConnection = async () => {
     try {
         await transporter.verify();
+        console.log("SMTP connection verified successfully");
     }
     catch (error) {
         console.error("SMTP connection failed:");
@@ -30,8 +36,7 @@ export const sendVerificationOtp = async (email, otp) => {
           <h2>Verify your SlotGo account</h2>
 
           <p>
-            Use the verification code below to complete
-            your registration.
+            Use the verification code below to complete your registration.
           </p>
 
           <div
@@ -61,7 +66,7 @@ export const sendVerificationOtp = async (email, otp) => {
     catch (error) {
         console.error("Nodemailer sendMail failed:");
         console.error(error);
-        throw error;
+        throw new Error("Unable to send verification email. Please try again.");
     }
 };
 //# sourceMappingURL=email.service.js.map

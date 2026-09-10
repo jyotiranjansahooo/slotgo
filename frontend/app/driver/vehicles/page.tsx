@@ -144,18 +144,9 @@ function Vehicles() {
         <div className="absolute -bottom-40 right-1/4 h-[30rem] w-[30rem] rounded-full bg-pink-400/10 blur-[120px]" />
       </div>
 
-      <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-28 sm:px-6 sm:pb-12 sm:pt-32 lg:px-10 lg:pb-16 lg:pt-36">
+      <section className="relative z-10 mx-auto w-full max-w-7xl px-4 pb-10 pt-28 sm:px-6 sm:pb-12 sm:pt-32 lg:px-4 lg:pb-16 lg:pt-26">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <button
-              type="button"
-              onClick={() => router.push("/driver")}
-              className="mb-5 inline-flex items-center gap-2 text-sm text-white/60 transition hover:text-white"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to dashboard
-            </button>
-
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-white/10 shadow-lg backdrop-blur-xl">
                 <Car className="h-6 w-6 text-white" />

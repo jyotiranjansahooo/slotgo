@@ -161,7 +161,6 @@ const bookingCheckoutSchema = new Schema<IBookingCheckout>(
 
     expiresAt: {
       type: Date,
-      index: true,
     },
   },
   {

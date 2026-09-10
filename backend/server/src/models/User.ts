@@ -44,6 +44,7 @@ export interface IUser {
   verificationOtpExpiresAt?: Date;
 
   verificationOtpAttempts: number;
+
   passwordResetOtpHash?: string;
 
   passwordResetOtpExpiresAt?: Date;
@@ -51,8 +52,11 @@ export interface IUser {
   passwordResetOtpAttempts: number;
 
   passwordResetVerifiedAt?: Date;
+
   passwordResetTokenHash?: string;
+
   passwordResetTokenExpiresAt?: Date;
+
   actionVerificationOtpHash?: string;
 
   actionVerificationOtpExpiresAt?: Date;
@@ -62,7 +66,9 @@ export interface IUser {
   actionVerificationType?: ParkingAction;
 
   actionVerificationLastSentAt?: Date;
+
   passwordResetOtpLastSentAt?: Date;
+
   isActive: boolean;
 
   deletedAt?: Date | null;
@@ -106,16 +112,15 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       unique: true,
       lowercase: true,
       trim: true,
-
       match: [/^\S+@\S+\.\S+$/, "Invalid email"],
     },
 
-    phoneNumber: {
-      type: String,
-      sparse: true,
-      trim: true,
-      match: [/^[6-9]\d{9}$/, "Invalid phone number"],
-    },
+   phoneNumber: {
+  type: String,
+  trim: true,
+  default: undefined,
+  match: [/^[6-9]\d{9}$/, "Invalid phone number"],
+},
 
     password: {
       type: String,
@@ -129,18 +134,17 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: "local",
       required: true,
     },
+
     googleId: {
       type: String,
+      trim: true,
       default: undefined,
     },
 
     role: {
       type: String,
-
       enum: USER_ROLE_VALUES,
-
       default: USER_ROLES.DRIVER,
-
       required: true,
     },
 
@@ -189,16 +193,19 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: 0,
       select: false,
     },
+
     passwordResetOtpHash: {
       type: String,
       default: "",
       select: false,
     },
+
     passwordResetOtpLastSentAt: {
       type: Date,
       default: undefined,
       select: false,
     },
+
     passwordResetOtpExpiresAt: {
       type: Date,
       default: undefined,
@@ -216,6 +223,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: undefined,
       select: false,
     },
+
     passwordResetTokenHash: {
       type: String,
       default: "",
@@ -227,6 +235,7 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: undefined,
       select: false,
     },
+
     actionVerificationOtpHash: {
       type: String,
       default: "",
@@ -247,11 +256,8 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
 
     actionVerificationType: {
       type: String,
-
       enum: ["temporary-close", "delete"],
-
       default: undefined,
-
       select: false,
     },
 
@@ -271,10 +277,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: null,
     },
 
-    /*
-     * LOGIN INFORMATION
-     */
-
     lastLogin: {
       type: Date,
       default: undefined,
@@ -285,7 +287,6 @@ const userSchema = new Schema<IUser, UserModel, IUserMethods>(
       default: 0,
     },
   },
-
   {
     timestamps: true,
     versionKey: false,
@@ -322,6 +323,10 @@ userSchema.pre("save", async function (): Promise<void> {
   }
 
   if (!this.password) {
+    return;
+  }
+
+  if (this.password.startsWith("$2a$") || this.password.startsWith("$2b$")) {
     return;
   }
 

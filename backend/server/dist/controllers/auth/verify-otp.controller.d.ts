@@ -1,2 +1,1 @@
-import { Request, Response } from "express";
-export declare const verifyOtpController: (req: Request, res: Response) => Promise<void>;
+export declare const verifyOtpController: import("express").RequestHandler<Record<string, string>, unknown, unknown, Record<string, unknown>, Record<string, any>>;

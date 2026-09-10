@@ -78,7 +78,6 @@ interface RegisterResponse {
   data: {
     requiresVerification: boolean;
     email: string;
-    message: string;
   };
 }
 
@@ -99,72 +98,74 @@ export default function RegisterPage() {
     },
   });
   const selectedRole = watch("role");
-  const onSubmit = async (data: RegisterFormData): Promise<void> => {
-    try {
-      setServerError("");
 
-      const response = await api.post<RegisterResponse>("/auth/register", data);
+const onSubmit = async (
+  data: RegisterFormData,
+): Promise<void> => {
+  try {
+    setServerError("");
 
-      if (response.data.success && response.data.data.requiresVerification) {
-        router.push(
-          `/verify-otp?email=${encodeURIComponent(response.data.data.email)}`,
-        );
+    await api.post<RegisterResponse>(
+      "/auth/register",
+      data,
+    );
 
+    const email = data.email.trim().toLowerCase();
+
+    router.push(
+      `/verify-otp?email=${encodeURIComponent(email)}`,
+    );
+  } catch (error: unknown) {
+    console.error("Registration error:", error);
+
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error
+    ) {
+      const axiosError = error as {
+        response?: {
+          data?: {
+            message?: string;
+            data?: Array<{
+              field?: string;
+              message?: string;
+            }>;
+          };
+        };
+      };
+
+      const responseData = axiosError.response?.data;
+
+      const fieldError = responseData?.data?.find(
+        (item) => typeof item?.message === "string",
+      );
+
+      if (fieldError?.message) {
+        setServerError(fieldError.message);
+        return;
+      }
+
+      if (typeof responseData?.message === "string") {
+        setServerError(responseData.message);
         return;
       }
 
       setServerError(
-        response.data.message || "Registration could not be completed.",
+        "Registration failed. Please check your information and try again.",
       );
-    } catch (error: unknown) {
-      console.error("Registration error:", error);
 
-      if (typeof error === "object" && error !== null && "response" in error) {
-        const axiosError = error as {
-          response?: {
-            data?: {
-              message?: string;
-              data?: Array<{
-                field?: string;
-                message?: string;
-              }>;
-            };
-          };
-        };
-
-        const responseData = axiosError.response?.data;
-
-        const fieldError = responseData?.data?.find(
-          (item) => typeof item?.message === "string",
-        );
-
-        if (fieldError?.message) {
-          setServerError(fieldError.message);
-          return;
-        }
-
-        if (typeof responseData?.message === "string") {
-          setServerError(responseData.message);
-          return;
-        }
-
-        setServerError(
-          "Registration failed. Please check your information and try again.",
-        );
-
-        return;
-      }
-
-      setServerError("Something went wrong. Please try again.");
+      return;
     }
-  };
+
+    setServerError(
+      "Something went wrong. Please try again.",
+    );
+  }
+};
 
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#f7f3e8] px-4 py-6 text-[#181818] sm:px-6">
-      {/* ===================================================== */}
-      {/* BACKGROUND */}
-      {/* ===================================================== */}
-
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         {/* Yellow glow */}
 
@@ -436,7 +437,6 @@ export default function RegisterPage() {
                   {serverError}
                 </div>
               )}
-              {/* CREATE ACCOUNT */}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -451,10 +451,6 @@ export default function RegisterPage() {
                   <>
                     <UserPlus size={17} />
                     Create account
-                    <ArrowRight
-                      size={16}
-                      className="transition group-hover:translate-x-1"
-                    />
                   </>
                 )}
               </button>

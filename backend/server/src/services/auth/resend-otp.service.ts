@@ -1,6 +1,9 @@
 import ApiError from "../../utils/ApiError.js";
-import User from "../../models/User.js";
-import { generateOtp, getOtpExpiry, hashOtp } from "../../utils/otp.js";
+
+import PendingRegistration from "../../models/PendingRegistration.js";
+
+import { generateOtp, hashOtp } from "../../utils/otp.js";
+
 import { sendVerificationOtp } from "../email/email.service.js";
 
 const RESEND_COOLDOWN_MS = 60 * 1000;
@@ -12,60 +15,49 @@ export interface ResendOtpData {
 export const resendOtpService = async (data: ResendOtpData) => {
   const email = data.email.trim().toLowerCase();
 
-  const user = await User.findOne({
+  const pendingRegistration = await PendingRegistration.findOne({
     email,
-  }).select(
-    "+verificationOtpHash +verificationOtpExpiresAt +verificationOtpAttempts",
-  );
+  }).select("+otpHash +otpExpiresAt +otpAttempts +lastOtpSentAt");
 
-  if (!user) {
-    throw new ApiError(404, "Account not found");
+  if (!pendingRegistration) {
+    throw new ApiError(
+      404,
+      "Registration request not found. Please register again.",
+    );
   }
 
-  if (user.isVerified) {
-    throw new ApiError(400, "This account is already verified");
-  }
+  const elapsed = Date.now() - pendingRegistration.lastOtpSentAt.getTime();
 
-  if (
-    user.verificationOtpExpiresAt &&
-    user.verificationOtpExpiresAt.getTime() > Date.now()
-  ) {
-    const lastSentAt = user.verificationOtpExpiresAt.getTime() - 10 * 60 * 1000;
+  if (elapsed < RESEND_COOLDOWN_MS) {
+    const remainingSeconds = Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000);
 
-    const elapsed = Date.now() - lastSentAt;
-
-    if (elapsed < RESEND_COOLDOWN_MS) {
-      const remainingSeconds = Math.ceil((RESEND_COOLDOWN_MS - elapsed) / 1000);
-
-      throw new ApiError(
-        429,
-        `Please wait ${remainingSeconds} seconds before requesting another code.`,
-      );
-    }
+    throw new ApiError(
+      429,
+      `Please wait ${remainingSeconds} seconds before requesting another code.`,
+    );
   }
 
   const otp = generateOtp();
 
-  user.verificationOtpHash = hashOtp(otp);
-  user.verificationOtpExpiresAt = getOtpExpiry();
-  user.verificationOtpAttempts = 0;
+  const otpHash = hashOtp(otp);
 
-  await user.save();
+  const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
   try {
     await sendVerificationOtp(email, otp);
   } catch {
-    user.verificationOtpHash = "";
-    user.verificationOtpExpiresAt = undefined;
-    user.verificationOtpAttempts = 0;
-
-    await user.save();
-
     throw new ApiError(
       500,
       "Unable to send verification email. Please try again.",
     );
   }
+
+  pendingRegistration.otpHash = otpHash;
+  pendingRegistration.otpExpiresAt = otpExpiresAt;
+  pendingRegistration.otpAttempts = 0;
+  pendingRegistration.lastOtpSentAt = new Date();
+
+  await pendingRegistration.save();
 
   return {
     email,

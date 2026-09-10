@@ -1,4 +1,4 @@
-import mongoose, { Schema, } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 const pendingRegistrationSchema = new Schema({
     firstName: {
         type: String,
@@ -26,7 +26,7 @@ const pendingRegistrationSchema = new Schema({
         required: true,
         trim: true,
     },
-    passwordHash: {
+    password: {
         type: String,
         required: true,
         select: false,
@@ -60,9 +60,6 @@ const pendingRegistrationSchema = new Schema({
     timestamps: true,
     versionKey: false,
 });
-/*
- * Automatically remove expired registrations.
- */
 pendingRegistrationSchema.index({ otpExpiresAt: 1 }, { expireAfterSeconds: 0 });
 pendingRegistrationSchema.index({ email: 1 }, { unique: true });
 const PendingRegistration = mongoose.models.PendingRegistration ||

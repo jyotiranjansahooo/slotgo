@@ -192,17 +192,7 @@ function EditVehicle() {
               {message}
             </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                router.push(
-                  "/driver/vehicles",
-                )
-              }
-              className="mt-5 rounded-lg bg-white px-5 py-3 font-medium text-black"
-            >
-              Back to vehicles
-            </button>
+
           </div>
         </div>
       </main>
@@ -213,19 +203,8 @@ function EditVehicle() {
     vehicleQuery.data.data;
 
   return (
-    <main className="min-h-screen bg-zinc-950 px-4 py-10 text-white">
+    <main className="min-h-screen mt-10 bg-zinc-950 px-4 py-10 text-white">
       <div className="mx-auto max-w-2xl">
-        <button
-          type="button"
-          onClick={() =>
-            router.push(
-              "/driver/vehicles",
-            )
-          }
-          className="mb-6 text-sm text-zinc-400 hover:text-white"
-        >
-          ← Back to vehicles
-        </button>
 
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 md:p-8">
           <h1 className="text-3xl font-bold">

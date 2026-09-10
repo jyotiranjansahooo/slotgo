@@ -5,7 +5,7 @@ export interface IPendingRegistration {
     lastName: string;
     email: string;
     phoneNumber: string;
-    passwordHash: string;
+    password: string;
     role: "driver" | "parkingOwner";
     otpHash: string;
     otpExpiresAt: Date;

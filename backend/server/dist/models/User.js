@@ -28,8 +28,8 @@ const userSchema = new Schema({
     },
     phoneNumber: {
         type: String,
-        sparse: true,
         trim: true,
+        default: undefined,
         match: [/^[6-9]\d{9}$/, "Invalid phone number"],
     },
     password: {
@@ -45,6 +45,7 @@ const userSchema = new Schema({
     },
     googleId: {
         type: String,
+        trim: true,
         default: undefined,
     },
     role: {
@@ -160,9 +161,6 @@ const userSchema = new Schema({
         type: Date,
         default: null,
     },
-    /*
-     * LOGIN INFORMATION
-     */
     lastLogin: {
         type: Date,
         default: undefined,
@@ -184,9 +182,6 @@ userSchema.index({
     unique: true,
     sparse: true,
 });
-/*
- * Phone numbers.
- */
 userSchema.index({
     phoneNumber: 1,
 }, {
@@ -198,6 +193,9 @@ userSchema.pre("save", async function () {
         return;
     }
     if (!this.password) {
+        return;
+    }
+    if (this.password.startsWith("$2a$") || this.password.startsWith("$2b$")) {
         return;
     }
     this.password = await bcrypt.hash(this.password, 12);

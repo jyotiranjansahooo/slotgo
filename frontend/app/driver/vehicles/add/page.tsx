@@ -78,23 +78,12 @@ function AddVehicle() {
         <div className="absolute -bottom-48 left-1/3 h-[500px] w-[500px] rounded-full bg-teal-500/10 blur-[130px]" />
       </div>
 
-   
       <div className="relative z-10 mx-auto w-full max-w-5xl px-2 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-
-        <button
-          type="button"
-          onClick={() => router.push("/driver/vehicles")}
-          className="group mb-4 inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white/70 backdrop-blur-xl transition hover:border-emerald-400/20 hover:bg-white/[0.07] hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          Back to vehicles
-        </button>
-
 
         <div className="mb-8 max-w-2xl">
           
 
-          <div className="flex items-start gap-4">
+          <div className="flex mt-6 items-start gap-4">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-emerald-400/20 bg-emerald-400/10 shadow-lg shadow-emerald-950/30">
               <Car className="h-7 w-7 text-emerald-300" />
             </div>

@@ -5,20 +5,18 @@ import {
   type ResendOtpData,
 } from "../../services/auth/resend-otp.service.js";
 
-export const resendOtpController = asyncHandler(
-  async (req, res) => {
-    const data = req.body as ResendOtpData;
+export const resendOtpController = asyncHandler(async (req, res) => {
+  const data = req.body as ResendOtpData;
 
-    const result = await resendOtpService(data);
+  const result = await resendOtpService(data);
 
-    res.status(200).json(
-      new ApiResponse(
-        200,
-        {
-          email: result.email,
-        },
-        result.message,
-      ),
-    );
-  },
-);
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        email: result.email,
+      },
+      result.message,
+    ),
+  );
+});
