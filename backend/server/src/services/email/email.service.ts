@@ -1,17 +1,8 @@
-import { Resend } from "resend";
+const googleAppsScriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL;
 
-const apiKey = process.env.RESEND_API_KEY;
-const emailFrom = process.env.EMAIL_FROM;
-
-if (!apiKey) {
-  throw new Error("RESEND_API_KEY is not configured.");
+if (!googleAppsScriptUrl) {
+  throw new Error("GOOGLE_APPS_SCRIPT_URL is not configured.");
 }
-
-if (!emailFrom) {
-  throw new Error("EMAIL_FROM is not configured.");
-}
-
-const resend = new Resend(apiKey);
 
 export const verifySmtpConnection = async (): Promise<void> => {
   console.log("Email service ready.");
@@ -22,58 +13,59 @@ export const sendVerificationOtp = async (
   otp: string,
 ): Promise<void> => {
   try {
-    const result = await resend.emails.send({
-      from: emailFrom,
-      to: [email],
-      subject: "Verify your SlotGo account",
-      text:
-        `Your SlotGo verification code is ${otp}. ` +
-        "It expires in 10 minutes.",
-      html: `
-        <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto">
-          <h2>Verify your SlotGo account</h2>
-
-          <p>
-            Use the verification code below to complete your registration.
-          </p>
-
-          <div
-            style="
-              font-size:32px;
-              font-weight:700;
-              letter-spacing:8px;
-              margin:24px 0;
-            "
-          >
-            ${otp}
-          </div>
-
-          <p>
-            This code expires in <strong>10 minutes</strong>.
-          </p>
-
-          <p>
-            If you did not request this code,
-            you can safely ignore this email.
-          </p>
-        </div>
-      `,
+    const response = await fetch(googleAppsScriptUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        otp,
+      }),
+      redirect: "follow",
     });
 
-    if (result.error) {
-      console.error("Resend email failed:", result.error);
+    const responseText = await response.text();
 
-      throw new Error(result.error.message);
+    console.log("Google Apps Script status:", response.status);
+    console.log("Google Apps Script response:", responseText);
+
+    if (!response.ok) {
+      throw new Error(
+        `Google Apps Script returned HTTP ${response.status}`,
+      );
     }
 
-    console.log(
-      `Verification email sent successfully to ${email}`,
-    );
+    let result: {
+      success?: boolean;
+      message?: string;
+    };
+
+    try {
+      result = JSON.parse(responseText) as {
+        success?: boolean;
+        message?: string;
+      };
+    } catch {
+      throw new Error(
+        `Google Apps Script returned a non-JSON response: ${responseText.slice(0, 300)}`,
+      );
+    }
+
+    if (!result.success) {
+      throw new Error(
+        result.message ?? "Google Apps Script failed to send the email.",
+      );
+    }
+
+    console.log(`Verification email sent successfully to ${email}`);
   } catch (error) {
     console.error("Email sending failed:", error);
 
     throw new Error(
-      "Unable to send verification email. Please try again.",
+      error instanceof Error
+        ? error.message
+        : "Unable to send verification email. Please try again.",
     );
   }
 };
