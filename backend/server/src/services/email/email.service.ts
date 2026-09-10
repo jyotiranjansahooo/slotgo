@@ -17,25 +17,12 @@ const transportOptions: SMTPTransport.Options = {
     pass: process.env.SMTP_PASSWORD,
   },
 
-  connectionTimeout: 10_000,
-  greetingTimeout: 10_000,
-  socketTimeout: 15_000,
+  connectionTimeout: 15_000,
+  greetingTimeout: 15_000,
+  socketTimeout: 20_000,
 };
 
 const transporter = nodemailer.createTransport(transportOptions);
-
-export const verifySmtpConnection = async (): Promise<void> => {
-  try {
-    await transporter.verify();
-
-    console.log("SMTP connection verified successfully");
-  } catch (error) {
-    console.error("SMTP connection failed:");
-    console.error(error);
-
-    throw error;
-  }
-};
 
 export const sendVerificationOtp = async (
   email: string,
@@ -45,7 +32,6 @@ export const sendVerificationOtp = async (
     await transporter.sendMail({
       from: `"SlotGo" <${process.env.SMTP_FROM}>`,
       to: email,
-
       subject: "Verify your SlotGo account",
 
       text: `Your SlotGo verification code is ${otp}. It expires in 10 minutes.`,
@@ -83,8 +69,7 @@ export const sendVerificationOtp = async (
 
     console.log(`Verification email sent successfully to ${email}`);
   } catch (error) {
-    console.error("Nodemailer sendMail failed:");
-    console.error(error);
+    console.error("Nodemailer sendMail failed:", error);
 
     throw new Error("Unable to send verification email. Please try again.");
   }

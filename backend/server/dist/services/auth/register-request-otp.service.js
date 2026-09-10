@@ -1,10 +1,11 @@
+import bcrypt from "bcrypt";
 import ApiError from "../../utils/ApiError.js";
 import User from "../../models/User.js";
 import PendingRegistration from "../../models/PendingRegistration.js";
 import { generateOtp, hashOtp } from "../../utils/otp.js";
 import { sendVerificationOtp } from "../email/email.service.js";
 export const registerRequestOtp = async (data) => {
-    const { firstName, lastName, email, phoneNumber, password, role } = data;
+    const { firstName, lastName, email, phoneNumber, password, role, } = data;
     const normalizedEmail = email.toLowerCase().trim();
     const normalizedPhoneNumber = phoneNumber.trim();
     const existingUser = await User.findOne({
@@ -23,20 +24,16 @@ export const registerRequestOtp = async (data) => {
         email: normalizedEmail,
     }).select("+lastOtpSentAt");
     if (existingPending) {
-        const elapsed = Date.now() - existingPending.lastOtpSentAt.getTime();
+        const elapsed = Date.now() -
+            existingPending.lastOtpSentAt.getTime();
         if (elapsed < 60_000) {
             throw new ApiError(429, "Please wait before requesting another OTP.");
         }
     }
     const otp = generateOtp();
     const otpHash = hashOtp(otp);
+    const passwordHash = await bcrypt.hash(password, 12);
     const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    try {
-        await sendVerificationOtp(normalizedEmail, otp);
-    }
-    catch {
-        throw new ApiError(500, "Unable to send verification email. Please try again.");
-    }
     await PendingRegistration.findOneAndUpdate({
         email: normalizedEmail,
     }, {
@@ -44,7 +41,7 @@ export const registerRequestOtp = async (data) => {
         lastName: lastName.trim(),
         email: normalizedEmail,
         phoneNumber: normalizedPhoneNumber,
-        password,
+        passwordHash,
         role,
         otpHash,
         otpExpiresAt,
@@ -55,8 +52,15 @@ export const registerRequestOtp = async (data) => {
         new: true,
         setDefaultsOnInsert: true,
     });
+    try {
+        await sendVerificationOtp(normalizedEmail, otp);
+    }
+    catch {
+        throw new ApiError(500, "Unable to send verification email. Please try again.");
+    }
     return {
         email: normalizedEmail,
         message: "Verification OTP sent to your email.",
     };
 };
+//# sourceMappingURL=register-request-otp.service.js.map

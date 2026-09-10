@@ -1,4 +1,6 @@
 import nodemailer from "nodemailer";
+import dns from "node:dns";
+dns.setDefaultResultOrder("ipv4first");
 const smtpPort = Number(process.env.SMTP_PORT ?? 587);
 const transportOptions = {
     host: process.env.SMTP_HOST,
@@ -8,22 +10,11 @@ const transportOptions = {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
     },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 20_000,
 };
 const transporter = nodemailer.createTransport(transportOptions);
-export const verifySmtpConnection = async () => {
-    try {
-        await transporter.verify();
-        console.log("SMTP connection verified successfully");
-    }
-    catch (error) {
-        console.error("SMTP connection failed:");
-        console.error(error);
-        throw error;
-    }
-};
 export const sendVerificationOtp = async (email, otp) => {
     try {
         await transporter.sendMail({
@@ -64,8 +55,7 @@ export const sendVerificationOtp = async (email, otp) => {
         console.log(`Verification email sent successfully to ${email}`);
     }
     catch (error) {
-        console.error("Nodemailer sendMail failed:");
-        console.error(error);
+        console.error("Nodemailer sendMail failed:", error);
         throw new Error("Unable to send verification email. Please try again.");
     }
 };

@@ -99,7 +99,6 @@ const bookingCheckoutSchema = new Schema({
     },
     expiresAt: {
         type: Date,
-        index: true,
     },
 }, {
     timestamps: true,

@@ -19,7 +19,6 @@ const pendingRegistrationSchema = new Schema({
         required: true,
         lowercase: true,
         trim: true,
-        index: true,
     },
     phoneNumber: {
         type: String,

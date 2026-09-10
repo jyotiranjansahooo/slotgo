@@ -39,9 +39,7 @@ class VehicleService {
     async update(ownerId, vehicleId, data) {
         const vehicle = await this.getById(ownerId, vehicleId);
         // Normalize registration number if provided
-        const registrationNumber = data.registrationNumber
-            ?.trim()
-            .toUpperCase();
+        const registrationNumber = data.registrationNumber?.trim().toUpperCase();
         // Check duplicate registration number
         if (registrationNumber &&
             registrationNumber !== vehicle.registrationNumber) {
