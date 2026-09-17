@@ -120,7 +120,9 @@ export default function ProfilePage() {
       {/* NAVBAR */}
       {/* ===================================================== */}
 
-<header className="relative z-20 border-b border-white/10 bg-white/[0.04] backdrop-blur-xl">        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
+      <header className="relative z-20 border-b border-white/10 bg-white/[0.04] backdrop-blur-xl">
+        {" "}
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-10">
           {/* LOGO */}
 
           <Link
@@ -316,47 +318,6 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-
-        {/* =================================================== */}
-        {/* QUICK LINKS */}
-        {/* =================================================== */}
-
-        <div className="mt-12">
-          <div className="mb-6">
-            <p className="text-sm font-medium text-white/50">
-              Account shortcuts
-            </p>
-
-            <h2 className="mt-1 text-2xl font-bold">Manage your SlotGo</h2>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-3">
-            <ProfileAction
-              href="/vehicles"
-              icon={<Car size={22} />}
-              title="My Vehicles"
-              description="Manage your registered vehicles."
-            />
-
-            <ProfileAction
-              href="/bookings"
-              icon={<CalendarDays size={22} />}
-              title="My Bookings"
-              description="View your current and past bookings."
-            />
-
-            <ProfileAction
-              href="/parking"
-              icon={<MapPin size={22} />}
-              title="Find Parking"
-              description="Search and reserve nearby parking."
-            />
-          </div>
-        </div>
-
-        {/* =================================================== */}
-        {/* LOGOUT */}
-        {/* =================================================== */}
 
         <div className="mt-12 rounded-[2rem] border border-red-200/10 bg-red-400/5 p-7 shadow-xl backdrop-blur-xl">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
